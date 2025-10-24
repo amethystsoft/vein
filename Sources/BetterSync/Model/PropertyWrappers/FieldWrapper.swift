@@ -2,21 +2,29 @@ import Foundation
 
 @MainActor
 @propertyWrapper
-public struct Field<T: Persistable> {
+public class LazyField<T: Persistable>: PersistedField {
     public typealias WrappedType = T
     
     public var key: String?
     public weak var context: ManagedObjectContext?
     public weak var model: PersistentModel?
     
-    private var store: T
+    package var store: T
     
     public var wrappedValue: T {
         get {
-            store
+            if let context {
+                return store
+            } else {
+                return store
+            }
         }
         set {
-            store = newValue
+            if let context {
+                
+            } else {
+                store = newValue
+            }
         }
     }
     

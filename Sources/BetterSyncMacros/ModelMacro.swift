@@ -21,7 +21,7 @@ public struct ModelMacro: MemberMacro, ExtensionMacro {
                 let hasFieldAttribute = varDecl.attributes.contains { attr in
                     if let attrSyntax = attr.as(AttributeSyntax.self),
                        let name = attrSyntax.attributeName.as(IdentifierTypeSyntax.self) {
-                        return name.name.text == "Field"
+                        return name.name.text == "LazyField"
                     }
                     return false
                 }
@@ -33,36 +33,24 @@ public struct ModelMacro: MemberMacro, ExtensionMacro {
             varDecl.bindings.first?.pattern.as(IdentifierPatternSyntax.self)?.identifier.text
         }
         
-        /*let idVarName: String? = classDecl.memberBlock.members
-            .compactMap { member in
-                guard let varDecl = member.decl.as(VariableDeclSyntax.self) else {
-                    return Optional<String>.none
-                }
-                
-                let patternName = varDecl.bindings.first?
-                    .pattern.as(IdentifierPatternSyntax.self)?
-                    .identifier.text
-                
-                return patternName == "id" ? patternName : nil
-            }.first
-        
-        guard let idVarName = idVarName else {
-            throw MacroError.noIDVariable
-        }*/
-        
         var fieldBodys = [String]()
+        var fieldAccessorBodies = [String]()
+        
+        fieldAccessorBodies.append("self._id")
         
         for name in fieldNames {
             fieldBodys.append("self._\(name).model = self")
             fieldBodys.append("self._\(name).key = \"\(name)\"")
+            fieldAccessorBodies.append("self._\(name)")
         }
         
         fieldBodys.append("self._id.model = self")
+        
         let fieldSetup = fieldBodys.joined(separator: "\n        ")
+        let fieldAccessorSetup = fieldAccessorBodies.joined(separator: ",\n   ")
         
         let body =
 """
-
     @PrimaryKey
     var id: UUID?
 
@@ -76,7 +64,16 @@ public struct ModelMacro: MemberMacro, ExtensionMacro {
         \(fieldSetup)
     }
 
+    func getSchema() -> String {
+        return Self.schema
+    }
+
     var context: ManagedObjectContext? = nil
+    var fields: [any BetterSync.PersistedField] {
+        [
+            \(fieldAccessorSetup)
+        ]
+    }
 """
         
         return [DeclSyntax(stringLiteral: body)]

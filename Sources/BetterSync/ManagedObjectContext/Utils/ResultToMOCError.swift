@@ -7,7 +7,7 @@ package extension SQLite.Result {
             case .error(let message, let code, _):
                 mapCode(code, msg: message)
             default:
-                .other(self.localizedDescription)
+                .other(message: self.localizedDescription)
         }
     }
     
