@@ -1,0 +1,1 @@
+extension Bool: Persistable {}
