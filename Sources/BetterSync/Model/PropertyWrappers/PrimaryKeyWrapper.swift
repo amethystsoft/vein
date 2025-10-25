@@ -12,6 +12,14 @@ public struct PrimaryKey: PersistedField {
         }
     }
     
+    public var isLazy: Bool {
+        false
+    }
+    
+    public static var sqliteTypeName: SQLiteTypeName {
+        UUID.sqliteTypeName
+    }
+    
     public weak var model: PersistentModel?
     
     public var projectedValue: PersistanceChecker {

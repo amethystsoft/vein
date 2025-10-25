@@ -54,7 +54,7 @@ public struct ModelMacro: MemberMacro, ExtensionMacro {
     @PrimaryKey
     var id: UUID?
 
-    init() {
+    required init() {
         setupFields()
     }
 

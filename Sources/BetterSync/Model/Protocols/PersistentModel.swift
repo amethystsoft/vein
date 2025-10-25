@@ -9,6 +9,8 @@ public protocol PersistentModel: class, Identifiable {
     
     func getSchema() -> String
     var fields: [PersistedField] { get }
+    
+    init()
 }
 
 struct AnyPersistentModelType: Hashable {

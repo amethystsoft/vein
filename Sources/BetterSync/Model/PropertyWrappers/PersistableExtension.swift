@@ -9,6 +9,24 @@ extension Bool: Persistable {
         self = representation >= 1 ? true: false
     }
 }
+extension Data: Persistable {
+    public typealias PersistentRepresentation = Data
+    public var asPersistentRepresentation: PersistentRepresentation {
+        self
+    }
+    public init?(fromPersistent representation: PersistentRepresentation) {
+        self = representation
+    }
+}
+extension String: Persistable {
+    public typealias PersistentRepresentation = String
+    public var asPersistentRepresentation: PersistentRepresentation {
+        self
+    }
+    public init?(fromPersistent representation: PersistentRepresentation) {
+        self = representation
+    }
+}
 extension UUID: Persistable {
     public typealias PersistentRepresentation = String
     public var asPersistentRepresentation: PersistentRepresentation {

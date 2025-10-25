@@ -41,7 +41,7 @@ public struct EncryptedValue<T: Codable>: Codable {
 public struct Encrypted<T: Codable>: EncryptedValueType {
     public typealias WrappedType = T
     private let provider: EncryptionProvider?
-    private var encryptedData: Data
+    public var encryptedData: Data
     
     public var wrappedValue: T {
         get {
@@ -82,3 +82,30 @@ public struct Encrypted<T: Codable>: EncryptedValueType {
     }
 }
 
+extension Encrypted: Persistable, ColumnType where WrappedType: Persistable {
+    public init?(fromPersistent representation: Data) {
+        self.encryptedData = representation
+        self.provider = nil
+    }
+    
+    public static func decode(sqliteValue: SqliteValue) throws(MOCError) -> Encrypted<T> {
+        let data = try Data.decode(sqliteValue: sqliteValue)
+        return Self(fromPersistent: data)!
+    }
+    
+    public typealias PersistentRepresentation = Data
+    
+    public var asPersistentRepresentation: PersistentRepresentation {
+        encryptedData
+    }
+    
+    public static var sqliteTypeName: SQLiteTypeName { .blob }
+    
+    public var sqliteValue: SqliteValue {
+        .blob(encryptedData)
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case encryptedData
+    }
+}

@@ -4,6 +4,13 @@ public enum SQLiteTypeName: Sendable, Hashable {
     case integer, real, text, blob
     indirect case null(SQLiteTypeName)
     
+    var isNull: Bool {
+        return switch self {
+            case .null: true
+            default: false
+        }
+    }
+    
     public static func notNull(_ type: SQLiteTypeName) -> SQLiteTypeName {
         if case .null(let inner) = type {
             return .notNull(inner)
@@ -36,10 +43,11 @@ public enum SqliteValue: Sendable, Hashable {
     case null
 }
 
-public protocol ColumnType: Sendable {
+@MainActor
+public protocol ColumnType {
     static var sqliteTypeName: SQLiteTypeName { get }
     var sqliteValue: SqliteValue { get }
-    static func decode(sqliteValue: SqliteValue) -> Self?
+    static func decode(sqliteValue: SqliteValue) throws(MOCError) -> Self
 }
 
 extension ColumnType {
@@ -55,11 +63,14 @@ extension Int16: ColumnType {
         .integer(Int64(self))
     }
     
-    public static func decode(sqliteValue: SqliteValue) -> Int16? {
-        if case .integer(let value) = sqliteValue {
-            return Int16(exactly: value)
+    public static func decode(sqliteValue: SqliteValue) throws(MOCError) -> Int16 {
+        if
+            case .integer(let value) = sqliteValue,
+            let value = Int16(exactly: value)
+        {
+            return value
         } else {
-            return nil
+            throw MOCError.propertyDecode(message: "\(Self.self)")
         }
     }
 }
@@ -71,11 +82,14 @@ extension Int32: ColumnType {
         .integer(Int64(self))
     }
     
-    public static func decode(sqliteValue: SqliteValue) -> Int32? {
-        if case .integer(let value) = sqliteValue {
-            return Int32(exactly: value)
+    public static func decode(sqliteValue: SqliteValue) throws(MOCError) -> Int32 {
+        if
+            case .integer(let value) = sqliteValue,
+            let value = Int32(exactly: value)
+        {
+            return value
         } else {
-            return nil
+            throw MOCError.propertyDecode(message: "\(Self.self)")
         }
     }
 }
@@ -87,11 +101,11 @@ extension Int64: ColumnType {
         .integer(self)
     }
     
-    public static func decode(sqliteValue: SqliteValue) -> Int64? {
+    public static func decode(sqliteValue: SqliteValue) throws(MOCError) -> Int64 {
         if case .integer(let value) = sqliteValue {
             return value
         } else {
-            return nil
+            throw MOCError.propertyDecode(message: "\(Self.self)")
         }
     }
 }
@@ -105,11 +119,11 @@ extension Double: ColumnType {
         .real(self)
     }
     
-    public static func decode(sqliteValue: SqliteValue) -> Double? {
+    public static func decode(sqliteValue: SqliteValue) throws(MOCError) -> Double {
         if case .real(let value) = sqliteValue {
             return value
         } else {
-            return nil
+            throw MOCError.propertyDecode(message: "\(Self.self)")
         }
     }
 }
@@ -123,11 +137,11 @@ extension Float: ColumnType {
         .real(Double(self))
     }
     
-    public static func decode(sqliteValue: SqliteValue) -> Float? {
+    public static func decode(sqliteValue: SqliteValue) throws(MOCError) -> Float {
         if case .real(let value) = sqliteValue {
             return Float(value)
         } else {
-            return nil
+            throw MOCError.propertyDecode(message: "\(Self.self)")
         }
     }
 }
@@ -141,14 +155,14 @@ extension Bool: ColumnType {
         .integer(self ? 1 : 0)
     }
     
-    public static func decode(sqliteValue: SqliteValue) -> Bool? {
+    public static func decode(sqliteValue: SqliteValue) throws(MOCError) -> Bool {
         switch sqliteValue {
             case .integer(0):
                 return false
             case .integer(1):
                 return true
             default:
-                return nil
+                throw MOCError.propertyDecode(message: "\(Self.self)")
         }
     }
 }
@@ -162,11 +176,14 @@ extension URL: ColumnType {
         .text(absoluteString)
     }
     
-    public static func decode(sqliteValue: SqliteValue) -> URL? {
-        if case .text(let value) = sqliteValue {
-            return URL(string: value)
+    public static func decode(sqliteValue: SqliteValue) throws(MOCError) -> URL {
+        if
+            case .text(let value) = sqliteValue,
+            let value = URL(string: value)
+        {
+            return value
         } else {
-            return nil
+            throw MOCError.propertyDecode(message: "\(Self.self)")
         }
     }
 }
@@ -180,11 +197,11 @@ extension String: ColumnType {
         .text(self)
     }
     
-    public static func decode(sqliteValue: SqliteValue) -> String? {
+    public static func decode(sqliteValue: SqliteValue) throws(MOCError) -> String {
         if case .text(let value) = sqliteValue {
             return value
         } else {
-            return nil
+            throw MOCError.propertyDecode(message: "\(Self.self)")
         }
     }
 }
@@ -198,11 +215,11 @@ extension Data: ColumnType {
         .blob(self)
     }
     
-    public static func decode(sqliteValue: SqliteValue) -> Data? {
+    public static func decode(sqliteValue: SqliteValue) throws(MOCError) -> Data {
         if case .blob(let value) = sqliteValue {
             return value
         } else {
-            return nil
+            throw MOCError.propertyDecode(message: "\(Self.self)")
         }
     }
 }
@@ -220,12 +237,16 @@ extension Date: ColumnType {
         .text(self.ISO8601Format(Date.sqliteFormatStyle))
     }
     
-    public static func decode(sqliteValue: SqliteValue) -> Date? {
+    public static func decode(sqliteValue: SqliteValue) throws(MOCError) -> Date {
         switch sqliteValue {
             case .text(let string):
-                try? sqliteFormatStyle.parse(string)
+                do {
+                    return try sqliteFormatStyle.parse(string)
+                } catch {
+                    throw MOCError.propertyDecode(message: "recieved data couldn't be converted to 'Date'")
+                }
             default:
-                nil
+                throw MOCError.propertyDecode(message: "\(Self.self)")
         }
     }
 }
@@ -239,12 +260,15 @@ extension UUID: ColumnType {
         .text(uuidString)
     }
     
-    public static func decode(sqliteValue: SqliteValue) -> UUID? {
+    public static func decode(sqliteValue: SqliteValue) throws(MOCError) -> UUID {
         switch sqliteValue {
             case .text(let string):
-                UUID(uuidString: string)
+                if let uuid = UUID(uuidString: string) {
+                    return uuid
+                }
+                throw MOCError.propertyDecode(message: "'\(string)' not compatible with UUID.uuidString")
             default:
-                nil
+                throw MOCError.propertyDecode(message: "\(Self.self)")
         }
     }
 }
@@ -257,19 +281,19 @@ extension Optional: ColumnType where Wrapped: ColumnType {
     public var sqliteValue: SqliteValue {
         switch self {
             case .none:
-                    .null
+                .null
             case .some(let value):
                 value.sqliteValue
         }
     }
     
-    public static func decode(sqliteValue: SqliteValue) -> Wrapped?? {
+    public static func decode(sqliteValue: SqliteValue) throws(MOCError) -> Wrapped? {
         if case .null = sqliteValue {
-            return .some(.none)
-        } else if let wrapped = Wrapped.decode(sqliteValue: sqliteValue) {
-            return .some(.some(wrapped))
-        } else {
             return .none
+        } else if let wrapped = try? Wrapped.decode(sqliteValue: sqliteValue) {
+            return .some(wrapped)
+        } else {
+            throw MOCError.propertyDecode(message: "\(Self.self)")
         }
     }
 }
