@@ -1,12 +1,12 @@
 import SQLite
 import Foundation
 
-@MainActor
-public protocol PersistedField {
+public protocol PersistedField: Sendable {
     associatedtype WrappedType: Persistable
     var key: String? { get }
     var wrappedValue: WrappedType { get set }
     var isLazy: Bool { get }
+    var model: PersistentModel? { get }
     
     static var sqliteTypeName: SQLiteTypeName { get }
 }
@@ -17,6 +17,23 @@ extension PersistedField {
             fatalError(MOCError.keyMissing(message: "raised by Field property of Type '\(WrappedType.self)'").localizedDescription)
         }
         return key
+    }
+    
+    var instanceSchema: String {
+        guard let model else {
+            fatalError(MOCError.modelReference(message: "raised by Field property of Type '\(WrappedType.self)'").localizedDescription)
+        }
+        return model.getSchema()
+    }
+    
+    var instanceID: UUID {
+        guard let model else {
+            fatalError(MOCError.modelReference(message: "raised by Field property of Type '\(WrappedType.self)'").localizedDescription)
+        }
+        guard let id = model.id else {
+            fatalError(MOCError.idMissing(message: "raised by model of Type '\(model.self)'").localizedDescription)
+        }
+        return id
     }
     
     var expressible: Expressible {
@@ -90,5 +107,14 @@ extension PersistedField {
         } catch {
             fatalError(error.localizedDescription)
         }
+    }
+    
+    public func asDTO() -> PersistedFieldDTO {
+        PersistedFieldDTO(
+            key: instanceKey,
+            id: instanceID,
+            schema: instanceSchema,
+            sqliteType: wrappedValue.sqliteTypeName
+        )
     }
 }

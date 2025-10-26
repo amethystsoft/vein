@@ -1,4 +1,5 @@
 import Foundation
+import SQLite
 
 public enum SQLiteTypeName: Sendable, Hashable {
     case integer, real, text, blob
@@ -41,9 +42,78 @@ public enum SqliteValue: Sendable, Hashable {
     case text(String)
     case blob(Data)
     case null
+    
+    package init(typeName: SQLiteTypeName, key: String, row: SQLite.Row) {
+        if typeName.isNull {
+            switch SQLiteTypeName.notNull(typeName) {
+                case .integer:
+                    if let value = row[Expression<Int64?>(key)] {
+                        self = .integer(value)
+                    }
+                    self = .null
+                case .real:
+                    if let value = row[Expression<Double?>(key)] {
+                        self = .real(value)
+                    }
+                    self = .null
+                case .text:
+                    if let value = row[Expression<String?>(key)] {
+                        self = .text(value)
+                    }
+                    self = .null
+                case .blob:
+                    if let value = row[Expression<Data?>(key)] {
+                        self = .blob(value)
+                    }
+                    self = .null
+                case .null:
+                    self = .null
+            }
+            return
+        }
+        switch typeName {
+            case .integer:
+                self = .integer(row[Expression<Int64>(key)])
+            case .real:
+                self = .real(row[Expression<Double>(key)])
+            case .text:
+                self = .text(row[Expression<String>(key)])
+            case .blob:
+                self = .blob(row[Expression<Data>(key)])
+            case .null:
+                fatalError("unexpectedly found SQLiteTypeName.null in SqliteValue.init")
+        }
+    }
 }
 
-@MainActor
+extension SqliteValue {
+    func setter(withKey key: String, andTypeName typeName: SQLiteTypeName) -> SQLite.Setter {
+        return switch self {
+            case .integer(let int):
+                Expression<Int64>(key) <- Expression<Int64>(value: int)
+            case .real(let double):
+                Expression<Double>(key) <- Expression<Double>(value: double)
+            case .text(let string):
+                Expression<String>(key) <- Expression<String>(value: string)
+            case .blob(let data):
+                Expression<Data>(key) <- Expression<Data>(value: data)
+            case .null:
+                switch SQLiteTypeName.notNull(typeName) {
+                    case .integer:
+                        Expression<Int64?>(key) <- Expression<Int64?>(value: nil)
+                    case .real:
+                        Expression<Double?>(key) <- Expression<Double?>(value: nil)
+                    case .text:
+                        Expression<String?>(key) <- Expression<String?>(value: nil)
+                    case .blob:
+                        Expression<Data?>(key) <- Expression<Data?>(value: nil)
+                    default:
+                        fatalError("unexpectedly recieved SQLiteTypeName of null")
+                }
+        }
+    }
+}
+
 public protocol ColumnType {
     static var sqliteTypeName: SQLiteTypeName { get }
     var sqliteValue: SqliteValue { get }

@@ -1,14 +1,13 @@
 import Foundation
 
-public final class EncryptionManager {
-    @MainActor
-    public static var shared: EncryptionProvider?
+public final class EncryptionManager: @unchecked Sendable {
+    public static let shared = EncryptionManager()
+    public var provider: EncryptionProvider?
     
-    @MainActor
-    public static var instance: EncryptionProvider {
-        guard let shared else {
+    public var instance: EncryptionProvider {
+        guard let provider else {
             fatalError("EncryptionManager.shared not set")
         }
-        return shared
+        return provider
     }
 }

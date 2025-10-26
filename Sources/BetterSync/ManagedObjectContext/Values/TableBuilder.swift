@@ -1,6 +1,5 @@
 import SQLite
 
-@MainActor
 public struct TableBuilder {
     private let context: ManagedObjectContext
     private let schemaName: String
@@ -39,12 +38,16 @@ public struct TableBuilder {
     }
     
     @discardableResult
-    public func run() throws {
-        try context.connection.run(Table(schemaName).create{ t in
+    public func run() async throws {
+        try await context.run(Table(schemaName).create{ t in
             guard let t = t as? SQLite.TableBuilder else {
                 fatalError("Error while trying to create table \(schemaName): closure passed Type is not conform to SQLite.TableBuilder")
             }
             schema(t)
         })
+    }
+    
+    public func run() {
+        
     }
 }

@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol PersistentModel: class, Identifiable {
+public protocol PersistentModel: class, Sendable {
     associatedtype SchemaMigration: ModelSchemaMigration
     
     static var schema: String { get }
@@ -9,8 +9,9 @@ public protocol PersistentModel: class, Identifiable {
     
     func getSchema() -> String
     var fields: [PersistedField] { get }
+    static var fieldInformation: [FieldInformation] { get }
     
-    init()
+    init(id: UUID, fields: [String: SqliteValue])
 }
 
 struct AnyPersistentModelType: Hashable {
@@ -31,8 +32,8 @@ struct AnyPersistentModelType: Hashable {
     }
 }
 
-public protocol ModelSchemaMigration {
-    func prepare(in context: ManagedObjectContext) throws
+public protocol ModelSchemaMigration: Sendable {
+    nonisolated func prepare(in context: ManagedObjectContext)
     init()
 }
 

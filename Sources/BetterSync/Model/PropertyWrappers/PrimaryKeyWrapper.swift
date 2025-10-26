@@ -1,13 +1,25 @@
 import Foundation
 
 @propertyWrapper
-public struct PrimaryKey: PersistedField {
+public nonisolated struct PrimaryKey: PersistedField, @unchecked Sendable {
     public typealias WrappedType = UUID?
     
     public let key: String? = "id"
     
+    private let lock = NSLock()
+    
+    private var store: UUID?
+    
     public var wrappedValue: UUID? {
-        didSet {
+        get {
+            lock.withLock({
+                return store
+            })
+        }
+        set {
+            lock.withLock({
+                store = newValue
+            })
         }
     }
     

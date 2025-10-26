@@ -1,8 +1,8 @@
 import Foundation
 
-@attached(member, names: named(init), named(id), named(setupFields), named(context), named(getSchema), named(fields))
-@attached(extension, conformances: PersistentModel)
-public macro Model<each P: Protocol>(_ constraints: repeat each P) = #externalMacro(
+@attached(member, names: named(init), named(id), named(setupFields), named(context), named(getSchema), named(fields), named(fieldInformation))
+@attached(extension, conformances: PersistentModel, Sendable, Identifiable)
+public macro Model(namespace: String? = nil) = #externalMacro(
     module: "BetterSyncMacros",
     type: "ModelMacro"
 )

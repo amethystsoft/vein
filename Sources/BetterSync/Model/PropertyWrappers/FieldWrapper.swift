@@ -3,15 +3,17 @@ import Foundation
 import SwiftUI
 #endif
 
-@MainActor
 @propertyWrapper
-public class LazyField<T: Persistable>: PersistedField {
-    public typealias WrappedType = T
+public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendable {
+    public typealias WrappedType = T?
     
+    private let lock = NSLock()
+    private var store: T?
+    
+    /// ONLY LET MACRO SET
     public var key: String?
+    /// ONLY LET MACRO SET
     public weak var model: PersistentModel?
-    
-    package var store: T?
     
     public var isLazy: Bool {
         true
@@ -34,35 +36,87 @@ public class LazyField<T: Persistable>: PersistedField {
     }
     #endif
     
-    public var isPopulated: Bool {
-        store != nil
-    }
-    
-    public var wrappedValue: T {
+    public var wrappedValue: T? {
         get {
-            if let store {
-                return store
+            lock.withLock {
+                if let store { return store }
+                if let context = model?.context {
+                    do {
+                        let result = try context.fetchSingleProperty(field: self)
+                        lock.withLock {
+                            store = result
+                        }
+                        return result
+                    } catch { fatalError(error.localizedDescription) }
+                }
+                return nil
             }
-            if let context = model?.context {
-                do {
-                    let result = try context.fetchSingleProperty(field: self)
-                    store = result
-                    return result
-                } catch { fatalError(error.localizedDescription) }
-            }
-            fatalError()
         }
         set {
+            lock.withLock {
+                store = newValue
+            }
+            
             if let context = model?.context {
                 do {
-                    try context.update(field: self, newValue: newValue)
+                    context.updateDetached(field: self, newValue: newValue)
                 } catch {
                     fatalError(error.localizedDescription)
                 }
-                store = newValue
-            } else {
-                store = newValue
             }
+        }
+    }
+    
+    public func load() async throws {
+        guard let context = model?.context else { return }
+        let result = try await context.fetchSingleProperty(field: self)
+        lock.withLock {
+            store = result
+        }
+    }
+    
+    public init(wrappedValue: T?) {
+        self.store = wrappedValue
+        self.key = nil
+    }
+}
+
+@propertyWrapper
+public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
+    public typealias WrappedType = T
+    
+    public var key: String?
+    public weak var model: PersistentModel?
+    
+    package var store: T
+    
+    public var isLazy: Bool {
+        false
+    }
+    
+    public static var sqliteTypeName: SQLiteTypeName {
+        T.sqliteTypeName
+    }
+    
+#if canImport(SwiftUI)
+    public var projectedValue: Binding<WrappedType> {
+        Binding<WrappedType> (
+            get: {
+                self.wrappedValue
+            },
+            set: { newValue in
+                self.wrappedValue = newValue
+            }
+        )
+    }
+#endif
+    
+    public var wrappedValue: T {
+        get {
+            return store
+        }
+        set {
+            store = newValue
         }
     }
     
@@ -71,3 +125,4 @@ public class LazyField<T: Persistable>: PersistedField {
         self.key = nil
     }
 }
+

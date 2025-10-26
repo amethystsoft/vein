@@ -1,7 +1,7 @@
 import Crypto
 import Foundation
 
-public class AESGCMProvider: EncryptionProvider {
+public final class AESGCMProvider: EncryptionProvider {
     private let key: SymmetricKey
     private let nonce: AES.GCM.Nonce
     

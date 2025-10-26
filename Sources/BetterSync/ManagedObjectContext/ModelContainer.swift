@@ -1,4 +1,3 @@
-@MainActor
 public struct ModelContainer {
     private var migration: SchemaMigrationPlan.Type
     private var managedModels: Set<AnyPersistentModelType>

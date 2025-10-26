@@ -4,10 +4,9 @@ public struct EncryptedValue<T: Codable>: Codable {
     public let encrypted: Data
     private let provider: EncryptionProvider?
     
-    @MainActor
     public init(_ value: T, provider: EncryptionProvider? = nil) throws {
         let encoded = try JSONEncoder().encode(value)
-        let provider = provider ?? EncryptionManager.instance
+        let provider = provider ?? EncryptionManager.shared.instance
         self.encrypted = try provider.encrypt(encoded)
         self.provider = provider
     }
@@ -24,9 +23,8 @@ public struct EncryptedValue<T: Codable>: Codable {
         try encoder.encode(self.encrypted, forKey: .encrypted)
     }
     
-    @MainActor
     public func decrypt() throws -> T {
-        let provider = provider ?? EncryptionManager.instance
+        let provider = provider ?? EncryptionManager.shared.instance
         let decrypted = try provider.decrypt(encrypted)
         return try JSONDecoder().decode(T.self, from: decrypted)
     }
@@ -36,7 +34,6 @@ public struct EncryptedValue<T: Codable>: Codable {
     }
 }
 
-@MainActor
 @propertyWrapper
 public class Encrypted<T: Codable>: EncryptedValueType {
     public typealias WrappedType = T
@@ -46,7 +43,6 @@ public class Encrypted<T: Codable>: EncryptedValueType {
     public var wrappedValue: T {
         get {
             let result = try! read()
-            //print("decrypted")
             return result
         }
         set {
@@ -56,19 +52,19 @@ public class Encrypted<T: Codable>: EncryptedValueType {
     }
     
     private func read() throws -> T {
-        let provider = provider ?? EncryptionManager.instance
+        let provider = provider ?? EncryptionManager.shared.instance
         return try JSONDecoder().decode(T.self, from: provider.decrypt(encryptedData))
     }
     
     private func write(_ newValue: T) throws {
-        let provider = provider ?? EncryptionManager.instance
+        let provider = provider ?? EncryptionManager.shared.instance
         let encoded = try JSONEncoder().encode(newValue)
         encryptedData = try provider.encrypt(encoded)
     }
     
     public init(wrappedValue: T, provider: EncryptionProvider? = nil) {
         self.provider = provider
-        let provider = provider ?? EncryptionManager.instance
+        let provider = provider ?? EncryptionManager.shared.instance
         do {
             let encoded = try JSONEncoder().encode(wrappedValue)
             self.encryptedData = try provider.encrypt(encoded)
