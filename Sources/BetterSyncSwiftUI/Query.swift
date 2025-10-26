@@ -1,46 +1,64 @@
 import SwiftUI
 import BetterSync
+import Combine
+
+/*@propertyWrapper
+public struct Query<T: PersistentModel>: DynamicProperty {
+    @State private var results: [T] = []
+    
+    public init() {}
+    
+    public var wrappedValue: [T] {
+        results
+    }
+    
+    public func update() {
+        do {
+            results = try ManagedObjectContext.instance.fetchAll(T.self)
+        } catch {
+            print("Fetch error: \(error)")
+            results = []
+        }
+    }
+}*/
+/*
+@propertyWrapper
+public struct Query<T: PersistentModel>: DynamicProperty {
+    @State private var results: [T] = []
+    
+    public init() {}
+    
+    public var wrappedValue: [T] {
+        results
+    }
+    
+    public var projectedValue: Binding<[T]> {
+        $results
+    }
+}
+*/
 
 @MainActor
 @propertyWrapper
 public class Query<M: PersistentModel>: DynamicProperty {
     public typealias WrappedType = [M]
     
-    @State private var items = WrappedType()
-    
-    @State private var task: Task<Void, Never>?
+    @State private var cachedItems: [M]?
     
     public var wrappedValue: [M] {
-        items
-    }
-    
-    public var projectedValue: Binding<[M]> {
-        Binding(
-            get: { self.items },
-            set: { self.items = $0 }
-        )
-    }
-    
-    // must be called at View.onAppear time
-    public func load() {
-        task = Task {
-            do {
-                let fetched = try await ManagedObjectContext.instance.fetchAll(M.self)
-                await MainActor.run {
-                    self.items = fetched
-                }
-                // Subscribe to changes
-                await setupObserver()
-            } catch {
-                print("Query fetch error: \(error)")
-            }
+        if let cached = cachedItems {
+            return cached
         }
-    }
-    
-    private func setupObserver() async {
-        /*await ManagedObjectContext.instance.observeChanges(for: M.schema) { [weak self] _ in
-            self?.load()
-        }*/
+        do {
+            let items = try ManagedObjectContext.instance.fetchAll(M.self)
+            
+            self.cachedItems = items
+            
+            return items
+            
+        } catch {
+            fatalError(error.localizedDescription)
+        }
     }
     
     public init() { }

@@ -4,10 +4,8 @@ import Foundation
 extension Connection: @unchecked Sendable {}
 
 public actor ManagedObjectContext {
-    @MainActor
-    public static var shared: ManagedObjectContext?
-    @MainActor
-    public static var instance: ManagedObjectContext {
+    public static nonisolated(unsafe) var shared: ManagedObjectContext?
+    public static nonisolated(unsafe) var instance: ManagedObjectContext {
         guard let shared else {
             fatalError("ManagedObjectContext.shared not set")
         }
@@ -90,11 +88,13 @@ public actor ManagedObjectContext {
         }
     }
     
-    public func fetchAll<T: PersistentModel>(_ modelType: T.Type) throws(MOCError) -> [T] {
+    public nonisolated func fetchAll<T: PersistentModel>(_ modelType: T.Type) throws(MOCError) -> [T] {
         do {
             let table = Table(modelType.schema)
             let eagerLoadedFields = modelType.fieldInformation.eagerLoaded
-            let select = table.select(distinct: eagerLoadedFields.map { $0.expressible })
+            var fieldsToLoad = eagerLoadedFields.map { $0.expressible }
+            fieldsToLoad.append(Expression<String>("id"))
+            let select = table.select(distinct: fieldsToLoad)
             
             var models = [T]()
             

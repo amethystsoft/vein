@@ -43,10 +43,8 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
                 if let context = model?.context {
                     do {
                         let result = try context.fetchSingleProperty(field: self)
-                        lock.withLock {
-                            store = result
-                        }
-                        return result
+                        store = result
+                        return result!
                     } catch { fatalError(error.localizedDescription) }
                 }
                 return nil

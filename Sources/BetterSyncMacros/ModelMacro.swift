@@ -93,11 +93,11 @@ public struct ModelMacro: MemberMacro, ExtensionMacro {
         
         var fieldInformation = lazyFields.map { key, value in
             let value = value.drop(while: { $0 == " " || $0 == ":" })
-            return "BetterSync.FieldInformation(\(value).sqliteTypeName, \"key\", false)"
+            return "BetterSync.FieldInformation(\(value).sqliteTypeName, \"\(key)\", false)"
         }
         fieldInformation.append(contentsOf: eagerFields.map { key, value in
             let value = value.drop(while: { $0 == " " || $0 == ":" })
-            return "BetterSync.FieldInformation(\(value).sqliteTypeName, \"key\", true)"
+            return "BetterSync.FieldInformation(\(value).sqliteTypeName, \"\(key)\", true)"
         })
         
         let fieldInformationString = fieldInformation.joined(separator: ",\n        ")
@@ -158,7 +158,6 @@ public struct ModelMacro: MemberMacro, ExtensionMacro {
         let literalValue = arg?.as(StringLiteralExprSyntax.self)?.representedLiteralValue
         
         namespace = literalValue*/
-        namespace = enclosingTypeName(of: classDecl)
         
         namespace?.append(".")
         
@@ -169,27 +168,8 @@ public struct ModelMacro: MemberMacro, ExtensionMacro {
         return [extensionDecl]
     }
 }
-func enclosingTypeName(of declaration: some DeclSyntaxProtocol) -> String? {
-    var node: Syntax = Syntax(declaration)
-    
-    while let parent = node.parent {
-        // If the parent itself is an enum declaration -> return its identifier
-        if let enumDecl = parent.as(EnumDeclSyntax.self) {
-            return enumDecl.identifier.text
-        }
-        
-        // If we hit a struct/class and you specifically want enums only,
-        // skip them; otherwise you could also return those names.
-        // if let structDecl = parent.as(StructDeclSyntax.self) { ... }
-        
-        // If inside an extension, use the extended type text as a fallback name.
-        if let ext = parent.as(ExtensionDeclSyntax.self) {
-            return ext.extendedType.description
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-        }
-        
-        // Move up one level and continue searching.
-        node = parent
-    }
-    return nil
+struct DebugDiag: DiagnosticMessage {
+    let message: String
+    var diagnosticID: MessageID { .init(domain: "BetterSyncMacros", id: "debug") }
+    var severity: DiagnosticSeverity { .warning }
 }
