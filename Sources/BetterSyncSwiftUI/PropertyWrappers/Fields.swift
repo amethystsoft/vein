@@ -41,9 +41,7 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
                     return store
                 }
                 guard let context = model?.context else {
-                    return lock.withLock {
-                        return store
-                    }
+                    return store
                 }
                 do {
                     let result = try context.fetchSingleProperty(field: self)

@@ -107,11 +107,11 @@ public struct ModelMacro: MemberMacro, ExtensionMacro {
         let body =
 """
     @PrimaryKey
-    var id: UUID?
+    var id: Int64?
     
     let objectWillChange = PassthroughSubject<Void, Never>()
     
-    required init(id: UUID, fields: [String: BetterSync.SqliteValue]) {
+    required init(id: Int64, fields: [String: BetterSync.SQLiteValue]) {
         self.id = id
         \(eagerVarInit)
         setupFields()

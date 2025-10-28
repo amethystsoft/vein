@@ -3,7 +3,7 @@ import SQLite
 
 public struct PersistedFieldDTO: Sendable {
     let key: String
-    let id: UUID
+    let id: Int64
     let schema: String
     let sqliteType: SQLiteTypeName
 }

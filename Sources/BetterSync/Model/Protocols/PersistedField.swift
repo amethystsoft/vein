@@ -26,7 +26,7 @@ extension PersistedField {
         return model.getSchema()
     }
     
-    var instanceID: UUID {
+    var instanceID: Int64 {
         guard let model else {
             fatalError(MOCError.modelReference(message: "raised by Field property of Type '\(WrappedType.self)'").localizedDescription)
         }
@@ -57,49 +57,49 @@ extension PersistedField {
         }
     }
     
-    public func decode(_ row: SQLite.Row) -> WrappedType {
+    public func decode(_ row: SQLite.Row) -> WrappedType.PersistentRepresentation {
         do {
             let typeName = WrappedType.sqliteTypeName
             
             switch typeName {
                 case .integer:
                     let value = row[Expression<Int64>(instanceKey)]
-                    return try WrappedType.decode(sqliteValue: .integer(value))
+                    return try WrappedType.PersistentRepresentation.decode(sqliteValue: .integer(value))
                 case .real:
                     let value = row[Expression<Double>(instanceKey)]
-                    return try WrappedType.decode(sqliteValue: .real(value))
+                    return try WrappedType.PersistentRepresentation.decode(sqliteValue: .real(value))
                 case .text:
                     let value = row[Expression<String>(instanceKey)]
-                    return try WrappedType.decode(sqliteValue: .text(value))
+                    return try WrappedType.PersistentRepresentation.decode(sqliteValue: .text(value))
                 case .blob:
                     let value = row[Expression<Data>(instanceKey)]
-                    return try WrappedType.decode(sqliteValue: .blob(value))
+                    return try WrappedType.PersistentRepresentation.decode(sqliteValue: .blob(value))
                 case .null:
                     switch SQLiteTypeName.notNull(typeName) {
                         case .integer:
                             let value = row[Expression<Int64?>(instanceKey)]
                             if let value {
-                                return try WrappedType.decode(sqliteValue: .integer(value))
+                                return try WrappedType.PersistentRepresentation.decode(sqliteValue: .integer(value))
                             }
-                            return try WrappedType.decode(sqliteValue: .null)
+                            return try WrappedType.PersistentRepresentation.decode(sqliteValue: .null)
                         case .real:
                             let value = row[Expression<Double?>(instanceKey)]
                             if let value {
-                                return try WrappedType.decode(sqliteValue: .real(value))
+                                return try WrappedType.PersistentRepresentation.decode(sqliteValue: .real(value))
                             }
-                            return try WrappedType.decode(sqliteValue: .null)
+                            return try WrappedType.PersistentRepresentation.decode(sqliteValue: .null)
                         case .text:
                             let value = row[Expression<String?>(instanceKey)]
                             if let value {
-                                return try WrappedType.decode(sqliteValue: .text(value))
+                                return try WrappedType.PersistentRepresentation.decode(sqliteValue: .text(value))
                             }
-                            return try WrappedType.decode(sqliteValue: .null)
+                            return try WrappedType.PersistentRepresentation.decode(sqliteValue: .null)
                         case .blob:
                             let value = row[Expression<Data?>(instanceKey)]
                             if let value {
-                                return try WrappedType.decode(sqliteValue: .blob(value))
+                                return try WrappedType.PersistentRepresentation.decode(sqliteValue: .blob(value))
                             }
-                            return try WrappedType.decode(sqliteValue: .null)
+                            return try WrappedType.PersistentRepresentation.decode(sqliteValue: .null)
                         default:
                             fatalError("unexpectedly received SQLiteTypeName of null")
                     }
@@ -114,7 +114,7 @@ extension PersistedField {
             key: instanceKey,
             id: instanceID,
             schema: instanceSchema,
-            sqliteType: wrappedValue.sqliteTypeName
+            sqliteType: wrappedValue.asPersistentRepresentation.sqliteTypeName
         )
     }
 }

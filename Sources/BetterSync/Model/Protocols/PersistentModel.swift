@@ -10,14 +10,14 @@ public protocol PersistentModel: class, Sendable {
     var objectWillChange: PassthroughSubject<Void, Never> { get }
     
     static var schema: String { get }
-    var id: UUID? { get set }
+    var id: Int64? { get set }
     var context: ManagedObjectContext? { get set }
     
     func getSchema() -> String
     var fields: [PersistedField] { get }
     static var fieldInformation: [FieldInformation] { get }
     
-    init(id: UUID, fields: [String: SqliteValue])
+    init(id: Int64, fields: [String: SQLiteValue])
 }
 #else
 public protocol PersistentModel: class, Sendable {
@@ -31,7 +31,7 @@ public protocol PersistentModel: class, Sendable {
     var fields: [PersistedField] { get }
     static var fieldInformation: [FieldInformation] { get }
     
-    init(id: UUID, fields: [String: SqliteValue])
+    init(id: UUID, fields: [String: SQLiteValue])
 }
 #endif
 

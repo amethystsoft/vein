@@ -43,7 +43,7 @@ public actor ManagedObjectContext {
         do {
             guard model.context == nil else {
                 if let id = model.id {
-                    throw MOCError.insertManagedModel(message: "raised by model of type '\(M.self)' with id \(id.uuidString)")
+                    throw MOCError.insertManagedModel(message: "raised by model of type '\(M.self)' with id \(id)")
                 } else {
                     throw MOCError.idMissing(message: "raised by model of Type '\(M.self)'")
                 }
@@ -52,14 +52,13 @@ public actor ManagedObjectContext {
             let table = Table(model.getSchema())
             try connection.transaction {
                 try connection.run(table.insert(model.fields.map {
-                    return $0.wrappedValue.asPersistentRepresentation.sqliteValue.setter(withKey: $0.instanceKey, andTypeName: $0.wrappedValue.sqliteTypeName)
+                    return $0.wrappedValue.asPersistentRepresentation.sqliteValue.setter(withKey: $0.instanceKey, andTypeName: $0.wrappedValue.asPersistentRepresentation.sqliteTypeName)
                 }))
                 
                 if
-                    let row = try connection.pluck(table.order(Expression<Int64>("rowid").desc).limit(1)),
-                    let id = UUID(uuidString: row[Expression<String>("id")])
+                    let row = try connection.pluck(table.order(Expression<Int64>("rowid").desc).limit(1))
                 {
-                    model.id = id
+                    model.id = row[Expression<Int64>("id")]
                     model.context = self
                 } else {
                     throw MOCError.idAfterCreation(message: "raised by Model of Type '\(M.self)'")
@@ -79,7 +78,7 @@ public actor ManagedObjectContext {
         do {
             guard model.context == nil else {
                 if let id = model.id {
-                    throw MOCError.insertManagedModel(message: "raised by model of type '\(M.self)' with id \(id.uuidString)")
+                    throw MOCError.insertManagedModel(message: "raised by model of type '\(M.self)' with id \(id)")
                 } else {
                     throw MOCError.idMissing(message: "raised by model of Type '\(M.self)'")
                 }
@@ -88,14 +87,13 @@ public actor ManagedObjectContext {
             let table = Table(model.getSchema())
             try connection.transaction {
                 try connection.run(table.insert(model.fields.map {
-                    return $0.wrappedValue.asPersistentRepresentation.sqliteValue.setter(withKey: $0.instanceKey, andTypeName: $0.wrappedValue.sqliteTypeName)
+                    return $0.wrappedValue.asPersistentRepresentation.sqliteValue.setter(withKey: $0.instanceKey, andTypeName: $0.wrappedValue.asPersistentRepresentation.sqliteTypeName)
                 }))
                 
                 if
-                    let row = try connection.pluck(table.order(Expression<Int64>("rowid").desc).limit(1)),
-                    let id = UUID(uuidString: row[Expression<String>("id")])
+                    let row = try connection.pluck(table.order(Expression<Int64>("rowid").desc).limit(1))
                 {
-                    model.id = id
+                    model.id = row[Expression<Int64>("id")]
                     model.context = self
                 } else {
                     throw MOCError.idAfterCreation(message: "raised by Model of Type '\(M.self)'")
@@ -110,9 +108,9 @@ public actor ManagedObjectContext {
         }
     }
     
-    public func update(field: PersistedFieldDTO, newValue: SqliteValue) throws(ManagedObjectContextError) {
+    public func update(field: PersistedFieldDTO, newValue: SQLiteValue) throws(ManagedObjectContextError) {
         do {
-            let filtered = Table(field.schema).filter(Expression<String>("id") == field.id.uuidString)
+            let filtered = Table(field.schema).filter(Expression<Int64>("id") == field.id)
             try connection.run(
                 filtered
                     .update(newValue.setter(withKey: field.key, andTypeName: field.sqliteType))
@@ -136,11 +134,11 @@ public actor ManagedObjectContext {
             var models = [T]()
             
             for row in try connection.prepare(select) {
-                var id = UUID(uuidString: row[Expression<String>("id")])!
-                var fields = [String: SqliteValue]()
+                var id = row[Expression<Int64>("id")]
+                var fields = [String: SQLiteValue]()
                 
                 for field in eagerLoadedFields {
-                    fields[field.key] = SqliteValue(typeName: field.typeName, key: field.key, row: row)
+                    fields[field.key] = SQLiteValue(typeName: field.typeName, key: field.key, row: row)
                 }
                 
                 let model = T(id: id, fields: fields)
@@ -156,7 +154,7 @@ public actor ManagedObjectContext {
         }
     }
     
-    public nonisolated func fetchSingleProperty<Field: PersistedField>(field: Field) throws(MOCError) -> Field.WrappedType {
+    public nonisolated func fetchSingleProperty<Field: PersistedField>(field: Field) throws(MOCError) -> Field.WrappedType.PersistentRepresentation {
         typealias T = Field.WrappedType
         guard let key = field.key else {
             if let model = field.model {
@@ -170,14 +168,14 @@ public actor ManagedObjectContext {
             throw MOCError.idMissing(message: "raised by model of Type '\(model.self)'")
         }
         
-        let table = Table(model.getSchema()).filter(Expression<String>("id") == id.uuidString)
+        let table = Table(model.getSchema()).filter(Expression<Int64>("id") == id)
         let select = table.select(distinct: [field.expressible]).limit(1)
         
         do {
             for row in try connection.prepare(select) {
                 return try field.decode(row)
             }
-            throw MOCError.unexpectedlyEmptyResult(message: "raised by field with property name '\(key)' of Model '\(T.self)' with id \(id.uuidString)")
+            throw MOCError.unexpectedlyEmptyResult(message: "raised by field with property name '\(key)' of Model '\(T.self)' with id \(id)")
         } catch let error as ManagedObjectContextError { throw error }
         catch let error as SQLite.Result {
             throw error.parse()
@@ -188,7 +186,7 @@ public actor ManagedObjectContext {
     
     public nonisolated func updateDetached(field: PersistedField, newValue: Persistable) {
         let fieldDTO = field.asDTO()
-        let valueDTO = newValue.sqliteValue
+        let valueDTO = newValue.asPersistentRepresentation.sqliteValue
         Task {
             do {
                 try await self.update(field: fieldDTO, newValue: valueDTO)

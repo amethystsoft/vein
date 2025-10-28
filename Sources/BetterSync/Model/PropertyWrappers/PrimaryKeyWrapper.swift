@@ -2,15 +2,15 @@ import Foundation
 
 @propertyWrapper
 public struct PrimaryKey: PersistedField, @unchecked Sendable {
-    public typealias WrappedType = UUID?
+    public typealias WrappedType = Int64?
     
     public let key: String? = "id"
     
     private let lock = NSLock()
     
-    private var store: UUID?
+    private var store: Int64?
     
-    public var wrappedValue: UUID? {
+    public var wrappedValue: Int64? {
         get {
             lock.withLock({
                 return store
@@ -39,7 +39,7 @@ public struct PrimaryKey: PersistedField, @unchecked Sendable {
         }
     }
     
-    public init(wrappedValue: UUID?) {
+    public init(wrappedValue: Int64?) {
         self.wrappedValue = wrappedValue
     }
 }
