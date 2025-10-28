@@ -39,26 +39,29 @@ public class Encrypted<T: Codable>: EncryptedValueType {
     public typealias WrappedType = T
     private let provider: EncryptionProvider?
     public var encryptedData: Data
+    private var decrypted: T?
     
     public var wrappedValue: T {
         get {
-            let result = try! read()
-            return result
+            return try! read()
         }
         set {
             try! write(newValue)
-            print("encrypted")
         }
     }
     
     private func read() throws -> T {
+        if let decrypted { return decrypted }
         let provider = provider ?? EncryptionManager.shared.instance
-        return try JSONDecoder().decode(T.self, from: provider.decrypt(encryptedData))
+        let result = try JSONDecoder().decode(T.self, from: provider.decrypt(encryptedData))
+        decrypted = result
+        return result
     }
     
     private func write(_ newValue: T) throws {
         let provider = provider ?? EncryptionManager.shared.instance
         let encoded = try JSONEncoder().encode(newValue)
+        decrypted = newValue
         encryptedData = try provider.encrypt(encoded)
     }
     

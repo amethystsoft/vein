@@ -1,14 +1,14 @@
 import Foundation
-#if canImport(SwiftUI)
+import BetterSync
 import SwiftUI
-#endif
 
 @propertyWrapper
 public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendable {
     public typealias WrappedType = T?
     
     private let lock = NSLock()
-    private var store: T?
+    private var store: WrappedType
+    private var useStore: Bool = false
     
     /// ONLY LET MACRO SET
     public var key: String?
@@ -23,7 +23,6 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
         T.sqliteTypeName
     }
     
-    #if canImport(SwiftUI)
     public var projectedValue: Binding<WrappedType> {
         Binding<WrappedType> (
             get: {
@@ -34,27 +33,31 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
             }
         )
     }
-    #endif
     
-    public var wrappedValue: T? {
+    public var wrappedValue: WrappedType {
         get {
-            lock.withLock {
-                if let store { return store }
-                if let context = model?.context {
-                    do {
-                        let result = try context.fetchSingleProperty(field: self)
-                        store = result
-                        return result!
-                    } catch { fatalError(error.localizedDescription) }
+            return lock.withLock {
+                if useStore {
+                    return store
                 }
-                return nil
+                guard let context = model?.context else {
+                    return lock.withLock {
+                        return store
+                    }
+                }
+                do {
+                    let result = try context.fetchSingleProperty(field: self)
+                    store = result
+                    useStore = true
+                    return result
+                } catch { fatalError(error.localizedDescription) }
             }
         }
         set {
             lock.withLock {
+                useStore = true
                 store = newValue
             }
-            
             if let context = model?.context {
                 do {
                     context.updateDetached(field: self, newValue: newValue)
@@ -62,23 +65,20 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
                     fatalError(error.localizedDescription)
                 }
             }
-            #if canImport(SwiftUI)
             model?.objectWillChange.send()
-            #endif
         }
     }
     
-    public func load() async throws {
-        guard let context = model?.context else { return }
-        let result = try await context.fetchSingleProperty(field: self)
-        lock.withLock {
-            store = result
+    public func readAsynchronously() async throws -> T? {
+        guard let context = model?.context else {
+            return store
         }
+        return try await context.fetchSingleProperty(field: self)
     }
     
     public init(wrappedValue: T?) {
-        self.store = wrappedValue
         self.key = nil
+        self.store = wrappedValue
     }
 }
 
@@ -88,6 +88,7 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
     
     public var key: String?
     public weak var model: PersistentModel?
+    private let lock = NSLock()
     
     package var store: T
     
@@ -99,7 +100,6 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
         T.sqliteTypeName
     }
     
-#if canImport(SwiftUI)
     public var projectedValue: Binding<WrappedType> {
         Binding<WrappedType> (
             get: {
@@ -110,17 +110,25 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
             }
         )
     }
-#endif
     
     public var wrappedValue: T {
         get {
-            return store
+            return lock.withLock {
+                return store
+            }
         }
         set {
-            store = newValue
-#if canImport(SwiftUI)
+            lock.withLock {
+                store = newValue
+            }
+            if let context = model?.context {
+                do {
+                    context.updateDetached(field: self, newValue: newValue)
+                } catch {
+                    fatalError(error.localizedDescription)
+                }
+            }
             model?.objectWillChange.send()
-#endif
         }
     }
     
@@ -129,4 +137,3 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
         self.key = nil
     }
 }
-

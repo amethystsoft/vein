@@ -101,9 +101,7 @@ public actor ManagedObjectContext {
                     throw MOCError.idAfterCreation(message: "raised by Model of Type '\(M.self)'")
                 }
             }
-            if let query = registeredQueries["\(M.self)"] as? QueryObserver<M> {
-                scheduleNotification(model)
-            }
+            scheduleNotification(model)
         } catch let error as ManagedObjectContextError { throw error }
         catch let error as SQLite.Result {
             throw error.parse()
@@ -158,7 +156,8 @@ public actor ManagedObjectContext {
         }
     }
     
-    public nonisolated func fetchSingleProperty<T: Persistable>(field: LazyField<T>) throws(MOCError) -> T? {
+    public nonisolated func fetchSingleProperty<Field: PersistedField>(field: Field) throws(MOCError) -> Field.WrappedType {
+        typealias T = Field.WrappedType
         guard let key = field.key else {
             if let model = field.model {
                 throw MOCError.keyMissing(message: "raised by schema \(model.getSchema()) on property of type '\(T.self)'")
@@ -214,15 +213,22 @@ public actor ManagedObjectContext {
     }
     
     @MainActor
-    private var registeredQueries = [String: AnyObject]()
+    private var registeredQueries = [String: AnyQueryObserver]()
     
     @MainActor
-    public func registerQuery<M: PersistentModel>(_ observer: QueryObserver<M>) {
-        registeredQueries["\(M.self)"] = observer
+    public func getOrCreateQueryObserver(_ key: String, createWith block: @escaping () -> AnyQueryObserver) -> AnyQueryObserver {
+        if let observer = registeredQueries[key] {
+            return observer
+        }
+        let newObserver = block()
+        registeredQueries[key] = newObserver
+        print("registered new observer")
+        return newObserver
     }
     
     @MainActor
     private var pendingNotifications: [String: [AnyObject]] = [:]
+    
     @MainActor
     private var notificationTask: Task<Void, Never>?
     
@@ -233,6 +239,7 @@ public actor ManagedObjectContext {
         let key = "\(M.self)"
         pendingActorNotifications[key, default: []].append(model)
     }
+    
     @MainActor
     private func flushActorNotifications() async {
         let notifications = await pendingActorNotifications
@@ -283,34 +290,3 @@ public actor ManagedObjectContext {
         await flushActorNotifications()
     }
 }
-
-internal protocol AnyQueryObserver: AnyObject {
-    func appendAny(_ models: [AnyObject])
-}
-
-#if canImport(Combine)
-import Combine
-
-public final class QueryObserver<M: PersistentModel>: ObservableObject, @unchecked Sendable, @MainActor AnyQueryObserver {
-    typealias ModelType = M
-    public let objectWillChange = PassthroughSubject<Void, Never>()
-    
-    @MainActor
-    public var results: [M]? = nil
-    
-    
-    @MainActor
-    public func append(_ model: [M]) {
-        results?.append(contentsOf: model)
-        objectWillChange.send()
-    }
-    
-    @MainActor
-    internal func appendAny(_ models: [AnyObject]) {
-        guard let typedModel = models as? [M] else { return }
-        append(typedModel)
-    }
-    
-    public init() {}
-}
-#endif
