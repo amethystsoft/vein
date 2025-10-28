@@ -3,6 +3,7 @@ import Foundation
 
 extension Connection: @unchecked Sendable {}
 
+public typealias ModelContext = ManagedObjectContext
 public actor ManagedObjectContext {
     public static nonisolated(unsafe) var shared: ManagedObjectContext?
     public static nonisolated(unsafe) var instance: ManagedObjectContext {
@@ -63,6 +64,7 @@ public actor ManagedObjectContext {
                 } else {
                     throw MOCError.idAfterCreation(message: "raised by Model of Type '\(M.self)'")
                 }
+                identityMap.startTracking(model, type: M.self, id: model.id!)
             }
             scheduleActorNotification(model)
         } catch let error as ManagedObjectContextError { throw error }
@@ -98,6 +100,7 @@ public actor ManagedObjectContext {
                 } else {
                     throw MOCError.idAfterCreation(message: "raised by Model of Type '\(M.self)'")
                 }
+                identityMap.startTracking(model, type: M.self, id: model.id!)
             }
             scheduleNotification(model)
         } catch let error as ManagedObjectContextError { throw error }
@@ -132,18 +135,26 @@ public actor ManagedObjectContext {
             let select = table.select(distinct: fieldsToLoad)
             
             var models = [T]()
-            
-            for row in try connection.prepare(select) {
-                var id = row[Expression<Int64>("id")]
-                var fields = [String: SQLiteValue]()
-                
-                for field in eagerLoadedFields {
-                    fields[field.key] = SQLiteValue(typeName: field.typeName, key: field.key, row: row)
+            let results = try connection.prepare(select)
+            identityMap.batched { getTracked, startTracking in
+                for row in results {
+                    var id = row[Expression<Int64>("id")]
+                    
+                    if let alreadyTrackedModel = getTracked(T.self, id) {
+                        models.append(alreadyTrackedModel)
+                        continue
+                    }
+                    var fields = [String: SQLiteValue]()
+                    
+                    for field in eagerLoadedFields {
+                        fields[field.key] = SQLiteValue(typeName: field.typeName, key: field.key, row: row)
+                    }
+                    
+                    let model = T(id: id, fields: fields)
+                    model.context = self
+                    models.append(model)
+                    startTracking(model, T.self, id)
                 }
-                
-                let model = T(id: id, fields: fields)
-                model.context = self
-                models.append(model)
             }
             return models
         } catch let error as ManagedObjectContextError { throw error }
@@ -271,6 +282,8 @@ public actor ManagedObjectContext {
         }
     }
     
+    private nonisolated(unsafe) var identityMap = ThreadSafeIdentityMap()
+    
     public func updateAfterCompletion(with block: () async -> Void) async {
         await block()
         await flushActorNotifications()
@@ -286,5 +299,72 @@ public actor ManagedObjectContext {
     public func insertAndFlush<M: PersistentModel>(_ model: M) async throws {
         try insertInBackground(model)
         await flushActorNotifications()
+    }
+    
+    public nonisolated var trackedObjectCount: Int {
+        identityMap.getTrackedCount()
+    }
+}
+
+private nonisolated final class ThreadSafeIdentityMap {
+    private let lock = NSLock()
+    private var cache: [ObjectIdentifier: [Int64: WeakModel]] = [:]
+    
+    func getTracked<T: PersistentModel>(_ type: T.Type, id: Int64) -> T? {
+        lock.withLock {
+            get(type, id: id)
+        }
+    }
+    
+    func getTrackedCount() -> Int {
+        lock.withLock {
+            cache.reduce(0, { $0 + $1.value.count })
+        }
+    }
+    
+    func startTracking<T: PersistentModel>(_ object: T, type: T.Type, id: Int64) {
+        lock.withLock {
+            track(object, type: type, id: id)
+        }
+    }
+    
+    func batched<T: PersistentModel>(
+        _ block: (
+            (T.Type, Int64) -> T?,
+            (T, T.Type, Int64) -> Void
+        ) -> Void
+    ) {
+        lock.withLock {
+            block(get, track)
+        }
+    }
+    
+    @inline(__always)
+    private func track<T: PersistentModel>(_ object: T, type: T.Type, id: Int64) {
+        cache[Self.key(type), default: [:]][id] = WeakModel(wrappedValue: object)
+    }
+    
+    @inline(__always)
+    private func get<T: PersistentModel>(_ type: T.Type, id: Int64) -> T? {
+        cache[Self.key(type)]?[id] as? T
+    }
+    
+    func remove<T: PersistentModel>(_ type: T.Type, id: Int64) {
+        lock.withLock {
+            cache[Self.key(type)]?.removeValue(forKey: id)
+        }
+    }
+    
+    @inline(__always)
+    private static func key<T: PersistentModel>(_ type: T.Type) -> ObjectIdentifier {
+        ObjectIdentifier(type)
+    }
+}
+
+private struct WeakModel {
+    private weak var wrappedValue: AnyObject?
+    
+    init(wrappedValue: AnyObject? = nil) {
+        self.wrappedValue = wrappedValue
     }
 }
