@@ -5,6 +5,10 @@
 //  Created by Mia Koring on 27.10.25.
 //
 @MainActor
-public protocol AnyQueryObserver: AnyObject {
+package protocol AnyQueryObserver: AnyObject {
     func appendAny(_ models: [AnyObject])
+}
+
+struct WeakQueryObserver {
+    weak var query: AnyQueryObserver?
 }

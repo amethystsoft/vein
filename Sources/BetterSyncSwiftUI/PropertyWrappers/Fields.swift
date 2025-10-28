@@ -63,7 +63,9 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
                     fatalError(error.localizedDescription)
                 }
             }
-            model?.objectWillChange.send()
+            if let model {
+                model.objectWillChange.send()
+            }
         }
     }
     

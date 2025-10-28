@@ -133,7 +133,6 @@ public actor ManagedObjectContext {
             var fieldsToLoad = eagerLoadedFields.map { $0.expressible }
             fieldsToLoad.append(Expression<String>("id"))
             let select = table.select(distinct: fieldsToLoad)
-            
             var models = [T]()
             let results = try connection.prepare(select)
             identityMap.batched { getTracked, startTracking in
@@ -222,15 +221,15 @@ public actor ManagedObjectContext {
     }
     
     @MainActor
-    private var registeredQueries = [Int: AnyQueryObserver]()
+    private var registeredQueries = [Int: WeakQueryObserver]()
     
     @MainActor
-    public func getOrCreateQueryObserver(_ key: Int, createWith block: @escaping () -> AnyQueryObserver) -> AnyQueryObserver {
-        if let observer = registeredQueries[key] {
+    package func getOrCreateQueryObserver(_ key: Int, createWith block: @escaping () -> AnyQueryObserver) -> AnyQueryObserver {
+        if let observer = registeredQueries[key]?.query {
             return observer
         }
         let newObserver = block()
-        registeredQueries[key] = newObserver
+        registeredQueries[key] = WeakQueryObserver(query: newObserver)
         return newObserver
     }
     
@@ -347,7 +346,7 @@ private nonisolated final class ThreadSafeIdentityMap {
     
     @inline(__always)
     private func get<T: PersistentModel>(_ type: T.Type, id: Int64) -> T? {
-        cache[Self.key(type)]?[id] as? T
+        cache[Self.key(type)]?[id]?.wrappedValue as? T
     }
     
     func remove<T: PersistentModel>(_ type: T.Type, id: Int64) {
@@ -376,7 +375,7 @@ private nonisolated final class ThreadSafeIdentityMap {
 }
 
 private struct WeakModel {
-    private weak var wrappedValue: AnyObject?
+    weak var wrappedValue: AnyObject?
     var isDeallocated: Bool { wrappedValue.isNil }
     
     init(wrappedValue: AnyObject? = nil) {
