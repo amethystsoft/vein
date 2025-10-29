@@ -9,6 +9,7 @@ public protocol PersistedField: Sendable {
     var model: PersistentModel? { get }
     
     static var sqliteTypeName: SQLiteTypeName { get }
+    func setValue(to: WrappedType)
 }
 
 extension PersistedField {
@@ -17,6 +18,13 @@ extension PersistedField {
             fatalError(MOCError.keyMissing(message: "raised by Field property of Type '\(WrappedType.self)'").localizedDescription)
         }
         return key
+    }
+    
+    var instanceObjectID: ObjectIdentifier {
+        guard let model else {
+            fatalError(MOCError.modelReference(message: "raised by Field property of Type '\(WrappedType.self)'").localizedDescription)
+        }
+        return model.typeIdentifier
     }
     
     var instanceSchema: String {
@@ -114,7 +122,8 @@ extension PersistedField {
             key: instanceKey,
             id: instanceID,
             schema: instanceSchema,
-            sqliteType: wrappedValue.asPersistentRepresentation.sqliteTypeName
+            sqliteType: wrappedValue.asPersistentRepresentation.sqliteTypeName,
+            enclosingObjectID: instanceObjectID
         )
     }
 }

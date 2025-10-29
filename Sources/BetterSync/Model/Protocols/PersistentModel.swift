@@ -36,6 +36,11 @@ public protocol PersistentModel: class, Sendable {
 }
 #endif
 
+extension PersistentModel {
+    public static var typeIdentifier: ObjectIdentifier { ObjectIdentifier(Self.self) }
+    public var typeIdentifier: ObjectIdentifier { ObjectIdentifier(Self.self) }
+}
+
 struct AnyPersistentModelType: Hashable {
     let type: PersistentModel.Type
     let createMigration: () -> ModelSchemaMigration

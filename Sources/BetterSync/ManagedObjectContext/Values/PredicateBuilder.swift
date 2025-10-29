@@ -7,7 +7,7 @@ public protocol PredicateConstructor: Sendable {
     init()
 }
 
-public struct PredicateBuilder<T: PersistentModel>: Sendable, Hashable {
+public struct PredicateBuilder<T: PersistentModel>: Sendable, Hashable, AnyPredicateBuilder {
     public static func == (lhs: PredicateBuilder<T>, rhs: PredicateBuilder<T>) -> Bool {
         lhs.hashValue == rhs.hashValue
     }

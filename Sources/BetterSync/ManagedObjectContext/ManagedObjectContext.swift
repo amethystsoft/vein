@@ -194,12 +194,33 @@ public actor ManagedObjectContext {
         }
     }
     
-    public nonisolated func updateDetached(field: PersistedField, newValue: Persistable) {
+    public nonisolated func updateDetached<F: PersistedField>(field: F, newValue: F.WrappedType) {
         let fieldDTO = field.asDTO()
         let valueDTO = newValue.asPersistentRepresentation.sqliteValue
         Task {
             do {
                 try await self.update(field: fieldDTO, newValue: valueDTO)
+                Task { @MainActor in
+                    var matchedBefore = Set<Int>()
+                    guard
+                        let queries = registeredQueries[fieldDTO.enclosingObjectID],
+                        let model = field.model
+                    else { return }
+                    for (key, query) in queries {
+                        guard let query = query.query else {
+                            continue
+                        }
+                        if query.doesMatch(model) {
+                            matchedBefore.insert(query.usedPredicate.hashValue)
+                        }
+                    }
+                    field.setValue(to: newValue)
+                    for query in queries.values {
+                        if let query = query.query {
+                            query.handleUpdate(model, matchedBeforeChange: matchedBefore.contains(query.usedPredicate.hashValue))
+                        }
+                    }
+                }
             } catch {
                 fatalError(error.localizedDescription)
             }
@@ -221,45 +242,61 @@ public actor ManagedObjectContext {
     }
     
     @MainActor
-    private var registeredQueries = [Int: WeakQueryObserver]()
+    private var registeredQueries = [ObjectIdentifier: [Int: WeakQueryObserver]]()
     
     @MainActor
-    package func getOrCreateQueryObserver(_ key: Int, createWith block: @escaping () -> AnyQueryObserver) -> AnyQueryObserver {
-        if let observer = registeredQueries[key]?.query {
+    package func getOrCreateQueryObserver(for identifier: ObjectIdentifier, _ key: Int, createWith block: @escaping () -> AnyQueryObserver) -> AnyQueryObserver {
+        if let observer = registeredQueries[identifier]?[key]?.query {
             return observer
         }
         let newObserver = block()
-        registeredQueries[key] = WeakQueryObserver(query: newObserver)
+        registeredQueries[identifier, default: [:]][key] = WeakQueryObserver(query: newObserver)
         return newObserver
     }
     
     @MainActor
-    private var pendingNotifications: [Int: [AnyObject]] = [:]
+    private var pendingNotifications: [ObjectIdentifier: [Int: [AnyObject]]] = [:]
     
     @MainActor
     private var notificationTask: Task<Void, Never>?
     
-    private nonisolated(unsafe) var pendingActorNotifications: [Int: [AnyObject]] = [:]
+    private nonisolated(unsafe) var pendingActorNotifications: [ObjectIdentifier: [Int: [AnyObject]]] = [:]
     private var actorNotificationTask: Task<Void, Never>?
     
     private func scheduleActorNotification<M: PersistentModel>(_ model: M) {
-        pendingActorNotifications[PredicateBuilder<M>().hashValue, default: []].append(model)
+        pendingActorNotifications[
+            M.typeIdentifier,
+            default: [:]
+        ][
+            PredicateBuilder<M>().hashValue,
+            default: []
+        ]
+            .append(model)
     }
     
     @MainActor
     private func flushActorNotifications() async {
         let notifications = await pendingActorNotifications
         pendingActorNotifications.removeAll()
-        for (key, models) in notifications {
-            if let query = registeredQueries[key] as? AnyQueryObserver {
-                query.appendAny(models)
+        for (identifier, queryDict) in notifications {
+            for (key, models) in queryDict {
+                if let query = registeredQueries[identifier]?[key] as? AnyQueryObserver {
+                    query.appendAny(models)
+                }
             }
         }
     }
     
     @MainActor
     private func scheduleNotification<M: PersistentModel>(_ model: M) {
-        pendingNotifications[PredicateBuilder<M>().hashValue, default: []].append(model)
+        pendingNotifications[
+            M.typeIdentifier,
+            default: [:]
+        ][
+            PredicateBuilder<M>().hashValue,
+            default: []
+        ]
+            .append(model)
         notificationTask?.cancel()
         notificationTask = Task {
             try? await Task.sleep(for: .milliseconds(10))
@@ -271,9 +308,11 @@ public actor ManagedObjectContext {
     private func flushNotifications() {
         let notifications = pendingNotifications
         pendingNotifications.removeAll()
-        for (key, models) in notifications {
-            if let query = registeredQueries[key] as? AnyQueryObserver {
-                query.appendAny(models)
+        for (identifier, queryDict) in notifications {
+            for (key, models) in queryDict {
+                if let query = registeredQueries[identifier]?[key] as? AnyQueryObserver {
+                    query.appendAny(models)
+                }
             }
         }
     }

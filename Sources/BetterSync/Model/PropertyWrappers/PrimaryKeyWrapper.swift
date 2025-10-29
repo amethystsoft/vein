@@ -42,6 +42,8 @@ public struct PrimaryKey: PersistedField, @unchecked Sendable {
     public init(wrappedValue: Int64?) {
         self.wrappedValue = wrappedValue
     }
+    
+    public func setValue(to newValue: WrappedType) {}
 }
 
 

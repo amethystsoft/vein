@@ -4,7 +4,7 @@ import SwiftUI
 
 @propertyWrapper
 public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendable {
-    public typealias WrappedType = T?
+   public typealias WrappedType = T?
     
     private let lock = NSLock()
     private var store: WrappedType
@@ -52,19 +52,18 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
             }
         }
         set {
-            lock.withLock {
-                useStore = true
-                store = newValue
-            }
             if let context = model?.context {
                 do {
                     context.updateDetached(field: self, newValue: newValue)
                 } catch {
                     fatalError(error.localizedDescription)
                 }
-            }
-            if let model {
-                model.objectWillChange.send()
+            } else {
+                lock.withLock {
+                    useStore = true
+                    store = newValue
+                    model?.objectWillChange.send()
+                }
             }
         }
     }
@@ -79,6 +78,11 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
     public init(wrappedValue: T?) {
         self.key = nil
         self.store = wrappedValue
+    }
+    
+    public func setValue(to newValue: T?) {
+        self.store = newValue
+        model?.objectWillChange.send()
     }
 }
 
@@ -118,22 +122,28 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
             }
         }
         set {
-            lock.withLock {
-                store = newValue
-            }
             if let context = model?.context {
                 do {
                     context.updateDetached(field: self, newValue: newValue)
                 } catch {
                     fatalError(error.localizedDescription)
                 }
+            } else {
+                lock.withLock {
+                    store = newValue
+                    model?.objectWillChange.send()
+                }
             }
-            model?.objectWillChange.send()
         }
     }
     
     public init(wrappedValue: T) {
         self.store = wrappedValue
         self.key = nil
+    }
+    
+    public func setValue(to newValue: T) {
+        self.store = newValue
+        model?.objectWillChange.send()
     }
 }

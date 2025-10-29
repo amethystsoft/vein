@@ -6,6 +6,7 @@ public struct PersistedFieldDTO: Sendable {
     let id: Int64
     let schema: String
     let sqliteType: SQLiteTypeName
+    let enclosingObjectID: ObjectIdentifier
 }
 
 public struct FieldInformation: Sendable {
