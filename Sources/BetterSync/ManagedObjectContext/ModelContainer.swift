@@ -17,7 +17,7 @@ public final class ModelContainer: Sendable {
         self.path = path
     }
     
-    package func migrate() async throws {
+    public func migrate() async throws {
         guard
             let latestSchema = migration.schemas.sorted(by: {
                 $0.version > $1.version

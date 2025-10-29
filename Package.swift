@@ -8,20 +8,15 @@ let package = Package(
     name: "BetterSync",
     platforms: [.macOS(.v13), .iOS(.v14), .tvOS(.v14), .macCatalyst(.v14), .visionOS(.v1)],
     products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
             name: "BetterSync",
             targets: ["BetterSync"]
-        ),
-        .library(
-            name: "BetterSyncSwiftUI",
-            targets: ["BetterSyncSwiftUI", "BetterSyncMacros"]
         )
     ],
     dependencies: [
         .package(url: "https://github.com/stephencelis/SQLite.swift.git", from: "0.15.4"),
         .package(url: "https://github.com/apple/swift-crypto.git", "1.0.0" ..< "5.0.0"),
-        .package(url: "https://github.com/apple/swift-syntax.git", from: "602.0.0"),
+        .package(url: "https://github.com/swiftlang/swift-syntax.git", "600.0.0" ..< "601.0.0"),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -31,20 +26,6 @@ let package = Package(
             dependencies: [
                 .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "SQLite", package: "SQLite.swift"),
-            ]
-        ),
-        .macro(
-            name: "BetterSyncMacros",
-            dependencies: [
-                .product(name: "SwiftSyntax", package: "swift-syntax"),
-                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
-                .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
-            ]
-        ),
-        .target(
-            name: "BetterSyncSwiftUI",
-            dependencies: [
-                .target(name: "BetterSync"),
             ]
         ),
         .testTarget(

@@ -278,7 +278,7 @@ public actor ManagedObjectContext {
     private var registeredQueries = [ObjectIdentifier: [Int: WeakQueryObserver]]()
     
     @MainActor
-    package func getOrCreateQueryObserver(for identifier: ObjectIdentifier, _ key: Int, createWith block: @escaping () -> AnyQueryObserver) -> AnyQueryObserver {
+    public func getOrCreateQueryObserver(for identifier: ObjectIdentifier, _ key: Int, createWith block: @escaping () -> AnyQueryObserver) -> AnyQueryObserver {
         if let observer = registeredQueries[identifier]?[key]?.query {
             return observer
         }

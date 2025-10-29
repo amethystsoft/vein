@@ -5,7 +5,7 @@
 //  Created by Mia Koring on 27.10.25.
 //
 @MainActor
-package protocol AnyQueryObserver: AnyObject {
+public protocol AnyQueryObserver: AnyObject {
     func appendAny(_ models: [AnyObject])
     func handleUpdate(_ model: PersistentModel, matchedBeforeChange: Bool)
     func doesMatch(_ model: any PersistentModel) -> Bool
@@ -13,7 +13,7 @@ package protocol AnyQueryObserver: AnyObject {
     var usedPredicate: AnyPredicateBuilder { get }
 }
 
-package protocol AnyPredicateBuilder {
+public protocol AnyPredicateBuilder {
     var hashValue: Int { get }
 }
 
