@@ -24,8 +24,8 @@ public struct Query<M: PersistentModel>: DynamicProperty {
         }
     }
     
-    public init(_ predicate: PredicateBuilder<M> = PredicateBuilder<M>()) {
-        self._queryObserver = StateObject(wrappedValue: QueryObserver<M>(predicate))
+    public init(_ predicate: M._PredicateHelper = M._PredicateHelper()) {
+        self._queryObserver = StateObject(wrappedValue: QueryObserver<M>(predicate._builder()))
     }
 }
 

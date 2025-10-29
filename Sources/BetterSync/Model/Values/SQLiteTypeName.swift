@@ -61,6 +61,32 @@ public enum SQLiteTypeName: Sendable, Hashable {
         }
     }
     
+    func fieldIsNotEqualToExpression(key: String, value: SQLite.Value?) -> SQLite.Expression<Bool?> {
+        switch self {
+            case .integer:
+                Expression<Bool?>(Expression<Int64>(key) != value as! Int64)
+            case .real:
+                Expression<Bool?>(Expression<Double>(key) != value as! Double)
+            case .text:
+                Expression<Bool?>(Expression<String>(key) != value as! String)
+            case .blob:
+                Expression<Bool?>(Expression<Data>(key) != value as! Data)
+            case .null(let typeName):
+                switch Self.notNull(typeName) {
+                    case .integer:
+                        Expression<Bool?>(Expression<Int64?>(key) != value as! Int64?)
+                    case .real:
+                        Expression<Bool?>(Expression<Double?>(key) != value as! Double?)
+                    case .text:
+                        Expression<Bool?>(Expression<String?>(key) != value as! String?)
+                    case .blob:
+                        Expression<Bool?>(Expression<Data?>(key) != value as! Data?)
+                    default:
+                        Expression<Bool?>(value: nil)
+                }
+        }
+    }
+    
     func fieldIsBiggerToExpression(key: String, value: SQLite.Value?) -> SQLite.Expression<Bool?> {
         switch self {
             case .integer:
@@ -206,15 +232,26 @@ public enum SQLiteValue: Sendable, Hashable {
         if typeName.isNull {
             switch self {
                 case .integer(let int64):
-                    return Int64?.none
+                    return int64 as Int64?
                 case .real(let double):
-                    return Double?.none
+                    return double as Double?
                 case .text(let string):
-                    return String?.none
+                    return string as String?
                 case .blob(let data):
-                    return Data?.none
+                    return data as Data?
                 case .null:
-                    fatalError("found null while expecting not null")
+                    switch SQLiteTypeName.notNull(typeName) {
+                        case .integer:
+                            return Int64?.none
+                        case .real:
+                            return Double?.none
+                        case .text:
+                            return String?.none
+                        case .blob:
+                            return Data?.none
+                        case .null:
+                            fatalError("found null while expecting not null")
+                    }
             }
         }
         switch self {
@@ -228,6 +265,128 @@ public enum SQLiteValue: Sendable, Hashable {
                 return data
             case .null:
                 fatalError("found null while expecting not null")
+        }
+    }
+    
+    func fieldIsEqualTo(_ value: SQLite.Value?, withTypeName typeName: SQLiteTypeName) -> Bool {
+        if typeName.isNull {
+            switch self {
+                case .integer(let int64):
+                    return int64 == value as! Int64?
+                case .real(let double):
+                    return double == value as! Double?
+                case .text(let string):
+                    return string == value as! String?
+                case .blob(let data):
+                    return data == value as! Data?
+                case .null:
+                    return value.isNil
+            }
+        }
+        switch self {
+            case .integer(let int64):
+                return int64 == value as! Int64
+            case .real(let double):
+                return double == value as! Double
+            case .text(let string):
+                return string == value as! String
+            case .blob(let data):
+                return data == value as! Data
+            case .null:
+                return false
+        }
+    }
+    
+    func fieldIsNotEqualTo(_ value: SQLite.Value?, withTypeName typeName: SQLiteTypeName) -> Bool {
+        if typeName.isNull {
+            switch self {
+                case .integer(let int64):
+                    return int64 != value as! Int64?
+                case .real(let double):
+                    return double != value as! Double?
+                case .text(let string):
+                    return string != value as! String?
+                case .blob(let data):
+                    return data != value as! Data?
+                case .null:
+                    return value.isNil
+            }
+        }
+        switch self {
+            case .integer(let int64):
+                return int64 != value as! Int64
+            case .real(let double):
+                return double != value as! Double
+            case .text(let string):
+                return string != value as! String
+            case .blob(let data):
+                return data != value as! Data
+            case .null:
+                return false
+        }
+    }
+    
+    func fieldIsBiggerThan(_ value: SQLite.Value?, withTypeName typeName: SQLiteTypeName) -> Bool {
+        guard let value else { return false }
+        switch self {
+            case .integer(let int64):
+                return int64 > value as! Int64
+            case .real(let double):
+                return double > value as! Double
+            case .text(let string):
+                return string > value as! String
+            case .blob(let data):
+                return false
+            case .null:
+                return false
+        }
+    }
+    
+    func fieldIsSmallerThan(_ value: SQLite.Value?, withTypeName typeName: SQLiteTypeName) -> Bool {
+        guard let value else { return false }
+        switch self {
+            case .integer(let int64):
+                return int64 < value as! Int64
+            case .real(let double):
+                return double < value as! Double
+            case .text(let string):
+                return string < value as! String
+            case .blob(let data):
+                return false
+            case .null:
+                return false
+        }
+    }
+    
+    func fieldIsSmallerOrEqual(_ value: SQLite.Value?, withTypeName typeName: SQLiteTypeName) -> Bool {
+        guard let value else { return self == .null }
+        switch self {
+            case .integer(let int64):
+                return int64 <= value as! Int64
+            case .real(let double):
+                return double <= value as! Double
+            case .text(let string):
+                return string <= value as! String
+            case .blob(let data):
+                return data == value as! Data
+            case .null:
+                return false
+        }
+    }
+    
+    func fieldIsBiggerOrEqual(_ value: SQLite.Value?, withTypeName typeName: SQLiteTypeName) -> Bool {
+        guard let value else { return self == .null }
+        switch self {
+            case .integer(let int64):
+                return int64 >= value as! Int64
+            case .real(let double):
+                return double >= value as! Double
+            case .text(let string):
+                return string >= value as! String
+            case .blob(let data):
+                return data == value as! Data
+            case .null:
+                return false
         }
     }
 }

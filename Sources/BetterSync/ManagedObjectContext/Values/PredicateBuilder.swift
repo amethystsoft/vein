@@ -1,29 +1,42 @@
 import SQLite
 
-public struct PredicateBuilder<T: PersistentModel>: Hashable {
+public protocol PredicateConstructor: Sendable {
+    associatedtype Model: PersistentModel
+    func _builder() -> PredicateBuilder<Model>
+    
+    init()
+}
+
+public struct PredicateBuilder<T: PersistentModel>: Sendable, Hashable {
     public static func == (lhs: PredicateBuilder<T>, rhs: PredicateBuilder<T>) -> Bool {
         lhs.hashValue == rhs.hashValue
     }
     
     public private(set) var hashValue: Int
-    private var conditions = [Expression<Bool?>]()
+    private var conditions = Expression<Bool?>(value: true)
+    private var checkMatching: (T) -> Bool = { _ in true }
     
     public init() {
         self.hashValue = ObjectIdentifier(T.self).hashValue
     }
     
-    public func filterTrueBools() -> Self {
-        var old = self
-        let next = Expression<Bool?>("someValue") == true
-        old.conditions.append(next)
-        old.hashValue = newHash(next, .integer(1))
-        return old
-    }
-    /*
+    /// Its unsafe to call this yourself.
+    /// It will likely result in a crash.
+    /// Only intended to get used by macro generated code.
     @discardableResult
-    public func equal<V: Persistable>(_ keyPath: KeyPath<T, V>,
+    public func addCheck<V: Persistable>(_ op: ComparisonOperator, _ key: String, _ value: V) -> Self {
+        switch op {
+            case .isEqualTo: equal(key, value)
+            case .isNotEqualTo: notEqual(key, value)
+            case .isBiggerThan: bigger(key, value)
+            case .isSmallerThan: smaller(key, value)
+            case .isBiggerOrEqualTo: biggerOrEqual(key, value)
+            case .isSmallerOrEqualTo: smallerOrEqual(key, value)
+        }
+    }
+    
+    private func equal<V: Persistable>(_ key: String,
                              _ value: V) -> Self {
-        let key = T._key(forPath: keyPath as! KeyPath<T, V>)
         let sqliteValue = sqliteValue(from: value)
             
         let next = V.sqliteTypeName.fieldIsEqualToExpression(
@@ -32,15 +45,71 @@ public struct PredicateBuilder<T: PersistentModel>: Hashable {
                 withTypeName: V.sqliteTypeName
             )
         )
-        conditions.append(next)
-        hashValue = newHash(next, sqliteValue)
-        return self
+        
+        var old = self
+        old.checkMatching = { model in
+            checkMatching(model) &&
+            self.sqliteValue(
+                from: model
+                    ._fields
+                    .first(
+                        where: { $0.instanceKey == key }
+                    )!
+                    .wrappedValue as! V
+            )
+            .fieldIsEqualTo(
+                sqliteValue
+                    .underlyingValue(
+                        withTypeName: V.sqliteTypeName
+                    ),
+                withTypeName:
+                    value.asPersistentRepresentation
+                    .sqliteTypeName
+            )
+        }
+        old.conditions = old.conditions && next
+        old.hashValue = newHash(next, sqliteValue)
+        return old
     }
     
-    @discardableResult
-    public func bigger<V: Persistable>(_ keyPath: KeyPath<T, V>,
-                               _ value: V) -> Self {
-        let key = T._key(forPath: keyPath as! KeyPath<T, V>)
+    private func notEqual<V: Persistable>(_ key: String,
+                                       _ value: V) -> Self {
+        let sqliteValue = sqliteValue(from: value)
+        
+        let next = V.sqliteTypeName.fieldIsEqualToExpression(
+            key: key,
+            value: sqliteValue.underlyingValue(
+                withTypeName: V.sqliteTypeName
+            )
+        )
+        var old = self
+        old.checkMatching = { model in
+            checkMatching(model) &&
+            self.sqliteValue(
+                from: model
+                    ._fields
+                    .first(
+                        where: { $0.instanceKey == key }
+                    )!
+                    .wrappedValue as! V
+            )
+            .fieldIsNotEqualTo(
+                sqliteValue
+                    .underlyingValue(
+                        withTypeName: V.sqliteTypeName
+                    ),
+                withTypeName:
+                    value.asPersistentRepresentation
+                    .sqliteTypeName
+            )
+        }
+        old.conditions = old.conditions && next
+        old.hashValue = newHash(next, sqliteValue)
+        return old
+    }
+    
+    private func bigger<V: Persistable>(_ key: String,
+                                       _ value: V) -> Self {
         let sqliteValue = sqliteValue(from: value)
         
         let next = V.sqliteTypeName.fieldIsBiggerToExpression(
@@ -50,15 +119,34 @@ public struct PredicateBuilder<T: PersistentModel>: Hashable {
                     withTypeName: V.sqliteTypeName
                 )
         )
-        conditions.append(next)
-        hashValue = newHash(next, sqliteValue)
-        return self
+        var old = self
+        old.checkMatching = { model in
+            checkMatching(model) &&
+            self.sqliteValue(
+                from: model
+                    ._fields
+                    .first(
+                        where: { $0.instanceKey == key }
+                    )!
+                    .wrappedValue as! V
+            )
+            .fieldIsBiggerThan(
+                sqliteValue
+                    .underlyingValue(
+                        withTypeName: V.sqliteTypeName
+                    ),
+                withTypeName:
+                    value.asPersistentRepresentation
+                    .sqliteTypeName
+            )
+        }
+        old.conditions = old.conditions && next
+        old.hashValue = newHash(next, sqliteValue)
+        return old
     }
     
-    @discardableResult
-    public func smaller<V: Persistable>(_ keyPath: KeyPath<T, V>,
-                                   _ value: V) -> Self {
-        let key = T._key(forPath: keyPath as! KeyPath<T, V>)
+    private func smaller<V: Persistable>(_ key: String,
+                                        _ value: V) -> Self {
         let sqliteValue = sqliteValue(from: value)
         
         let next = V.sqliteTypeName.fieldIsSmallerToExpression(
@@ -68,15 +156,34 @@ public struct PredicateBuilder<T: PersistentModel>: Hashable {
                     withTypeName: V.sqliteTypeName
                 )
         )
-        conditions.append(next)
-        hashValue = newHash(next, sqliteValue)
-        return self
+        var old = self
+        old.checkMatching = { model in
+            checkMatching(model) &&
+            self.sqliteValue(
+                from: model
+                    ._fields
+                    .first(
+                        where: { $0.instanceKey == key }
+                    )!
+                    .wrappedValue as! V
+            )
+            .fieldIsSmallerThan(
+                sqliteValue
+                    .underlyingValue(
+                        withTypeName: V.sqliteTypeName
+                    ),
+                withTypeName:
+                    value.asPersistentRepresentation
+                    .sqliteTypeName
+            )
+        }
+        old.conditions = old.conditions && next
+        old.hashValue = newHash(next, sqliteValue)
+        return old
     }
     
-    @discardableResult
-    public func smallerOrEqual<V: Persistable>(_ keyPath: KeyPath<T, V>,
-                                    _ value: V) -> Self {
-        let key = T._key(forPath: keyPath as! KeyPath<T, V>)
+    private func smallerOrEqual<V: Persistable>(_ key: String,
+                                               _ value: V) -> Self {
         let sqliteValue = sqliteValue(from: value)
         
         let next = V.sqliteTypeName.fieldIsSmallerOrEqualToExpression(
@@ -86,15 +193,34 @@ public struct PredicateBuilder<T: PersistentModel>: Hashable {
                     withTypeName: V.sqliteTypeName
                 )
         )
-        conditions.append(next)
-        hashValue = newHash(next, sqliteValue)
-        return self
+        var old = self
+        old.checkMatching = { model in
+            checkMatching(model) &&
+            self.sqliteValue(
+                from: model
+                    ._fields
+                    .first(
+                        where: { $0.instanceKey == key }
+                    )!
+                    .wrappedValue as! V
+            )
+            .fieldIsSmallerOrEqual(
+                sqliteValue
+                    .underlyingValue(
+                        withTypeName: V.sqliteTypeName
+                    ),
+                withTypeName:
+                    value.asPersistentRepresentation
+                    .sqliteTypeName
+            )
+        }
+        old.conditions = old.conditions && next
+        old.hashValue = newHash(next, sqliteValue)
+        return old
     }
     
-    @discardableResult
-    public func biggerOrEqual<V: Persistable>(_ keyPath: KeyPath<T, V>,
-                                           _ value: V) -> Self {
-        let key = T._key(forPath: keyPath as! KeyPath<T, V>)
+    private func biggerOrEqual<V: Persistable>(_ key: String,
+                                              _ value: V) -> Self {
         let sqliteValue = sqliteValue(from: value)
         
         let next = V.sqliteTypeName.fieldIsBiggerOrEqualToExpression(
@@ -104,17 +230,34 @@ public struct PredicateBuilder<T: PersistentModel>: Hashable {
                     withTypeName: V.sqliteTypeName
                 )
         )
-        conditions.append(next)
-        hashValue = newHash(next, sqliteValue)
-        return self
-    }*/
+        var old = self
+        old.checkMatching = { model in
+            checkMatching(model) &&
+            self.sqliteValue(
+                from: model
+                    ._fields
+                    .first(
+                        where: { $0.instanceKey == key }
+                    )!
+                    .wrappedValue as! V
+            )
+            .fieldIsBiggerOrEqual(
+                sqliteValue
+                    .underlyingValue(
+                        withTypeName: V.sqliteTypeName
+                    ),
+                withTypeName:
+                    value.asPersistentRepresentation
+                    .sqliteTypeName
+            )
+        }
+        old.conditions = old.conditions && next
+        old.hashValue = newHash(next, sqliteValue)
+        return old
+    }
     
     func finalize() -> Expression<Bool?> {
-        var currentExpression = Expression<Bool?>(value: true)
-        for condition in conditions {
-            currentExpression = currentExpression && condition
-        }
-        return currentExpression
+        return conditions
     }
     
     private func newHash(_ expression: Expression<Bool?>, _ value: SQLiteValue) -> Int {
@@ -129,5 +272,9 @@ public struct PredicateBuilder<T: PersistentModel>: Hashable {
         value
             .asPersistentRepresentation
             .sqliteValue
+    }
+    
+    public func doesMatch(_ model: T) -> Bool {
+        checkMatching(model)
     }
 }

@@ -4,7 +4,7 @@ import SwiftSyntaxMacroExpansion
 import SwiftDiagnostics
 import Foundation
 
-public struct ModelMacro: MemberMacro, ExtensionMacro {
+public struct ModelMacro: MemberMacro, ExtensionMacro, PeerMacro {
     public static func expansion(
         of node: SwiftSyntax.AttributeSyntax,
         providingMembersOf declaration: some SwiftSyntax.DeclGroupSyntax,
@@ -74,7 +74,7 @@ public struct ModelMacro: MemberMacro, ExtensionMacro {
         
         var fieldBodys = [String]()
         var fieldAccessorBodies = [String]()
-        var keyPathToKeyBodys = [String]()
+        var constraintCheckBodies = [String]()
         
         fieldAccessorBodies.append("self._id")
         
@@ -82,7 +82,6 @@ public struct ModelMacro: MemberMacro, ExtensionMacro {
             fieldBodys.append("self._\(name).model = self")
             fieldBodys.append("self._\(name).key = \"\(name)\"")
             fieldAccessorBodies.append("self._\(name)")
-            keyPathToKeyBodys.append("case \\Self.\(name): \"\(name)\"")
         }
         
         fieldBodys.append("self._id.model = self")
@@ -105,10 +104,10 @@ public struct ModelMacro: MemberMacro, ExtensionMacro {
         })
         
         let fieldInformationString = fieldInformation.joined(separator: ",\n        ")
-        let keyPathToKeyString = keyPathToKeyBodys.joined(separator: "\n            ")
         
         let body =
 """
+    typealias _PredicateHelper = _\(className)PredicateHelper
     @PrimaryKey
     var id: Int64?
     
@@ -140,13 +139,6 @@ public struct ModelMacro: MemberMacro, ExtensionMacro {
     static var _fieldInformation: [FieldInformation] = [
         \(fieldInformationString)
     ]
-
-    public static func _key<V: Persistable>(forPath keyPath: KeyPath<\(className), V>) -> String {
-        switch keyPath {
-            \(keyPathToKeyString)
-            default: ""
-        }
-    }
 """
         
         return [DeclSyntax(stringLiteral: body)]
@@ -178,6 +170,82 @@ public struct ModelMacro: MemberMacro, ExtensionMacro {
         #endif
         
         return [extensionDecl]
+    }
+    
+    public static func expansion(
+        of node: SwiftSyntax.AttributeSyntax,
+        providingPeersOf declaration: some SwiftSyntax.DeclSyntaxProtocol,
+        in context: some SwiftSyntaxMacros.MacroExpansionContext
+    ) throws -> [SwiftSyntax.DeclSyntax] {
+        guard let classDecl = declaration.as(ClassDeclSyntax.self) else {
+            throw MacroError.onlyApplicableToClasses
+        }
+        
+        let className = classDecl.name.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let persistedFields: [VariableDeclSyntax] = classDecl.memberBlock.members
+            .compactMap { member in
+                guard let varDecl = member.decl.as(VariableDeclSyntax.self) else {
+                    return nil
+                }
+                
+                let hasFieldAttribute = varDecl.attributes.contains { attr in
+                    if let attrSyntax = attr.as(AttributeSyntax.self),
+                       let name = attrSyntax.attributeName.as(IdentifierTypeSyntax.self) {
+                        return
+                        name.name.text == "LazyField" ||
+                        name.name.text == "Field"
+                    }
+                    return false
+                }
+                
+                return hasFieldAttribute ? varDecl : nil
+            }
+        
+        var fieldNamesAndTypes = [String: String]()
+        for varDecl in persistedFields {
+            guard let binding = varDecl.bindings.first else { continue }
+            guard
+                let name = binding.pattern.as(IdentifierPatternSyntax.self)?.identifier.text,
+                let datatype = binding.typeAnnotation?.description
+            else { continue }
+            fieldNamesAndTypes[name] = datatype.dropFirst().trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        fieldNamesAndTypes["id"] = "Int64"
+        
+        let methods = fieldNamesAndTypes.map { (name, type) in
+            """
+            func \(name)(_ op: BetterSync.ComparisonOperator, _ value: \(type)) -> Self {
+                var copy = self
+                copy.builder = builder.addCheck(op, \"\(name)\", value)
+                return copy
+            }
+            
+            static func \(name)(_ op: BetterSync.ComparisonOperator, _ value: \(type)) -> Self {
+                var copy = Self()
+                copy.builder = copy.builder.addCheck(op, \"\(name)\", value)
+                return copy
+            }
+            """
+        }.joined(separator: "\n    ")
+        
+        let predicateBuilder = """
+        struct _\(className)PredicateHelper: BetterSync.PredicateConstructor {
+            typealias Model = \(className)
+            private var builder: PredicateBuilder<\(className)>
+            
+            init() {
+                self.builder = PredicateBuilder<\(className)>()
+            }
+            
+            \(methods)
+        
+            func _builder() -> PredicateBuilder<\(className)> {
+                return builder
+            }
+        }
+        """
+        
+        return [DeclSyntax(stringLiteral: predicateBuilder)]
     }
 }
 struct DebugDiag: DiagnosticMessage {
