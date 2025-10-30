@@ -1,4 +1,4 @@
-public struct ModelVersion: Comparable, Equatable {
+public struct ModelVersion: Comparable, Equatable, Sendable {
     let major: UInt32
     let minor: UInt32
     let patch: UInt32
