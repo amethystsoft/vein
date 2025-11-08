@@ -6,7 +6,7 @@ import CompilerPluginSupport
 
 let package = Package(
     name: "BetterSync",
-    platforms: [.macOS(.v13), .iOS(.v14), .tvOS(.v14), .macCatalyst(.v14), .visionOS(.v1)],
+    platforms: [.macOS(.v13), .iOS(.v16), .tvOS(.v16), .macCatalyst(.v16), .visionOS(.v1)],
     products: [
         .library(
             name: "BetterSync",

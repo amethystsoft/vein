@@ -110,6 +110,20 @@ extension Int64: Persistable, ColumnType {
     }
 }
 
+extension Int: Persistable {
+    public typealias PersistentRepresentation = Int64
+    
+    public static var sqliteTypeName: SQLiteTypeName {
+        .integer
+    }
+    
+    public var asPersistentRepresentation: Int64 { Int64(self) }
+    
+    public init?(fromPersistent representation: Int64) {
+        self = Int(representation)
+    }
+}
+
 extension Double: Persistable, ColumnType {
     public var sqliteTypeRepresentation: Double  { self }
     
