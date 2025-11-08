@@ -1,5 +1,4 @@
 import SQLite
-import SQLite3.Ext
 
 package extension SQLite.Result {
     func parse() -> ManagedObjectContextError {
@@ -13,11 +12,11 @@ package extension SQLite.Result {
     
     private func mapCode(_ code: Int32, msg: String) -> ManagedObjectContextError {
         switch code {
-            case SQLITE_PERM:
+            case 3: //PERM
                 .insufficientPermissions(message: msg)
-            case SQLITE_READONLY:
+            case 8: //READONLY
                 .writeInReadonly(message: msg)
-            case SQLITE_IOERR:
+            case 10: //IOERR
                 .io(message: msg, code: code)
             default:
                 .unknownSQLite(message: msg, code: code)
