@@ -1,4 +1,4 @@
-import SwiftUI
+import Foundation
 
 public final class ModelContainer: Sendable {
     private let migration: SchemaMigrationPlan.Type
