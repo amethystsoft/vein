@@ -1,7 +1,7 @@
 import SQLite
 import Foundation
 
-extension Connection: @unchecked Sendable {}
+extension Connection: @unchecked @retroactive Sendable {}
 
 public typealias ModelContext = ManagedObjectContext
 public actor ManagedObjectContext {
@@ -137,7 +137,7 @@ public actor ManagedObjectContext {
             let results = try connection.prepare(select)
             identityMap.batched { getTracked, startTracking in
                 for row in results {
-                    var id = row[Expression<Int64>("id")]
+                    let id = row[Expression<Int64>("id")]
                     
                     if let alreadyTrackedModel = getTracked(T.self, id) {
                         models.append(alreadyTrackedModel)
@@ -183,7 +183,7 @@ public actor ManagedObjectContext {
         
         do {
             for row in try connection.prepare(select) {
-                return try field.decode(row)
+                return field.decode(row)
             }
             throw MOCError.unexpectedlyEmptyResult(message: "raised by field with property name '\(key)' of Model '\(T.self)' with id \(id)")
         } catch let error as ManagedObjectContextError { throw error }
@@ -206,7 +206,7 @@ public actor ManagedObjectContext {
                         let queries = registeredQueries[fieldDTO.enclosingObjectID],
                         let model = field.model
                     else { return }
-                    for (key, query) in queries {
+                    for (_, query) in queries {
                         guard let query = query.query else {
                             continue
                         }
@@ -227,7 +227,7 @@ public actor ManagedObjectContext {
         }
     }
     
-    public nonisolated func delete(_ model: PersistentModel) throws(MOCError) {
+    public nonisolated func delete(_ model: any PersistentModel) throws(MOCError) {
         guard
             let _ = model.context,
             let id = model.id
@@ -240,7 +240,7 @@ public actor ManagedObjectContext {
                 guard
                     let queries = registeredQueries[model.typeIdentifier]
                 else { return }
-                for (key, query) in queries {
+                for (_, query) in queries {
                     guard let query = query.query else {
                         continue
                     }
@@ -267,7 +267,7 @@ public actor ManagedObjectContext {
     package nonisolated func runDetached(_ query: String) {
         Task {
             do {
-                await try self.run(query)
+                try await self.run(query)
             } catch {
                 fatalError(error.localizedDescription)
             }
@@ -305,20 +305,20 @@ public actor ManagedObjectContext {
         
         actorNotificationTask = Task {
             try? await Task.sleep(for: .milliseconds(50))
-            Task {@MainActor in
-                await flushActorNotifications()
+            Task { @MainActor in
+                flushActorNotifications()
             }
         }
     }
     
     @MainActor
-    private func flushActorNotifications() async {
-        let notifications = await pendingActorNotifications
+    private func flushActorNotifications() {
+        let notifications = pendingActorNotifications
         pendingActorNotifications.removeAll()
         for (identifier, models) in notifications {
             if let queries = registeredQueries[identifier] {
                 for (_, query) in queries {
-                    if let query = query.query as? AnyQueryObserver {
+                    if let query = query.query {
                         query.appendAny(models)
                     }
                 }
@@ -347,7 +347,7 @@ public actor ManagedObjectContext {
         for (identifier, models) in notifications {
             if let queries = registeredQueries[identifier] {
                 for (_, query) in queries {
-                    if let query = query.query as? AnyQueryObserver {
+                    if let query = query.query {
                         query.appendAny(models)
                     }
                 }
@@ -428,7 +428,7 @@ private nonisolated final class ThreadSafeIdentityMap {
     
     func remove<T: PersistentModel>(_ type: T.Type, id: Int64) {
         lock.withLock {
-            cache[Self.key(type)]?.removeValue(forKey: id)
+            _ = cache[Self.key(type)]?.removeValue(forKey: id)
         }
     }
     

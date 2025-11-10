@@ -296,7 +296,7 @@ extension Data: Persistable, ColumnType {
 }
 
 extension Date: Persistable, ColumnType {
-    public var sqliteTypeRepresentation: String { ISO8601Format(Date.sqliteFormatStyle) }
+    public var sqliteTypeRepresentation: String { ISO8601Format(Date.sqliteFormatStyle) }
     
     public typealias SQLiteType = String
     
@@ -364,7 +364,7 @@ extension UUID: Persistable, ColumnType {
     }
 }
 
-extension Optional: Persistable, ColumnType, Equatable where Wrapped: Persistable {    
+extension Optional: Persistable, ColumnType where Wrapped: Persistable {    
     public typealias PersistentRepresentation = Self
     
     public var asPersistentRepresentation: Self { self }

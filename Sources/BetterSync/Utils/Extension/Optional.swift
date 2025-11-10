@@ -1,3 +1,3 @@
 package extension Optional {
-    package var isNil: Bool { self == nil }
+    var isNil: Bool { self == nil }
 }

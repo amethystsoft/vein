@@ -31,7 +31,7 @@ public struct PrimaryKey: PersistedField, @unchecked Sendable {
         UUID.sqliteTypeName
     }
     
-    public weak var model: PersistentModel?
+    public weak var model: (any PersistentModel)?
     
     public var projectedValue: PersistanceChecker {
         PersistanceChecker {

@@ -14,7 +14,6 @@ public struct TableBuilder {
     @discardableResult
     public func id() -> Self {
         var copy = self
-        let previous = copy.schema
         copy.schema = { t in
             t.column(Expression<Int64>("id"), primaryKey: true)
         }
@@ -37,12 +36,8 @@ public struct TableBuilder {
         return copy
     }
     
-    @discardableResult
     public func run() async throws {
         try await context.run(Table(schemaName).create{ t in
-            guard let t = t as? SQLite.TableBuilder else {
-                fatalError("Error while trying to create table \(schemaName): closure passed Type is not conform to SQLite.TableBuilder")
-            }
             schema(t)
         })
     }

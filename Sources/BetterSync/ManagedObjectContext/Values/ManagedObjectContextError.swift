@@ -43,7 +43,7 @@ extension ManagedObjectContextError: LocalizedError {
             case .unexpectedlyEmptyResult(let message):
                 return "Unexpectedly recieved empty result: \(message)"
             case .io(let message, let code):
-                return "IOError: \(message)"
+                return "IOError \(code): \(message)"
             case .unknownSQLite(let message, let code):
                 return "SQLite raised an error with code \(code): \(message)"
             case .other(let message):

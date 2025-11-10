@@ -1,4 +1,4 @@
-import SQLite
+@preconcurrency import SQLite
 
 public protocol PredicateConstructor: Sendable {
     associatedtype Model: PersistentModel
@@ -12,12 +12,12 @@ public struct PredicateBuilder<T: PersistentModel>: Sendable, Hashable, AnyPredi
         lhs.hashValue == rhs.hashValue
     }
     
-    public private(set) var hashValue: Int
+    public private(set) var hash: Int
     private var conditions = Expression<Bool?>(value: true)
-    private var checkMatching: (T) -> Bool = { _ in true }
+    private var checkMatching: @Sendable (T) -> Bool = { _ in true }
     
     public init() {
-        self.hashValue = ObjectIdentifier(T.self).hashValue
+        self.hash = ObjectIdentifier(T.self).hashValue
     }
     
     /// Its unsafe to call this yourself.
@@ -68,7 +68,7 @@ public struct PredicateBuilder<T: PersistentModel>: Sendable, Hashable, AnyPredi
             )
         }
         old.conditions = old.conditions && next
-        old.hashValue = newHash(next, sqliteValue)
+        old.hash = newHash(next, sqliteValue)
         return old
     }
     
@@ -104,7 +104,7 @@ public struct PredicateBuilder<T: PersistentModel>: Sendable, Hashable, AnyPredi
             )
         }
         old.conditions = old.conditions && next
-        old.hashValue = newHash(next, sqliteValue)
+        old.hash = newHash(next, sqliteValue)
         return old
     }
     
@@ -141,7 +141,7 @@ public struct PredicateBuilder<T: PersistentModel>: Sendable, Hashable, AnyPredi
             )
         }
         old.conditions = old.conditions && next
-        old.hashValue = newHash(next, sqliteValue)
+        old.hash = newHash(next, sqliteValue)
         return old
     }
     
@@ -178,7 +178,7 @@ public struct PredicateBuilder<T: PersistentModel>: Sendable, Hashable, AnyPredi
             )
         }
         old.conditions = old.conditions && next
-        old.hashValue = newHash(next, sqliteValue)
+        old.hash = newHash(next, sqliteValue)
         return old
     }
     
@@ -215,7 +215,7 @@ public struct PredicateBuilder<T: PersistentModel>: Sendable, Hashable, AnyPredi
             )
         }
         old.conditions = old.conditions && next
-        old.hashValue = newHash(next, sqliteValue)
+        old.hash = newHash(next, sqliteValue)
         return old
     }
     
@@ -252,7 +252,7 @@ public struct PredicateBuilder<T: PersistentModel>: Sendable, Hashable, AnyPredi
             )
         }
         old.conditions = old.conditions && next
-        old.hashValue = newHash(next, sqliteValue)
+        old.hash = newHash(next, sqliteValue)
         return old
     }
     
@@ -276,5 +276,9 @@ public struct PredicateBuilder<T: PersistentModel>: Sendable, Hashable, AnyPredi
     
     public func doesMatch(_ model: T) -> Bool {
         checkMatching(model)
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(hash)
     }
 }

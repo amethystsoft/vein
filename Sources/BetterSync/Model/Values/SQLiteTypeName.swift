@@ -35,7 +35,7 @@ public enum SQLiteTypeName: Sendable, Hashable {
         }
     }
     
-    func fieldIsEqualToExpression(key: String, value: SQLite.Value?) -> SQLite.Expression<Bool?> {
+    func fieldIsEqualToExpression(key: String, value: (any SQLite.Value)?) -> SQLite.Expression<Bool?> {
         switch self {
             case .integer:
                 Expression<Bool?>(Expression<Int64>(key) == value as! Int64)
@@ -61,7 +61,7 @@ public enum SQLiteTypeName: Sendable, Hashable {
         }
     }
     
-    func fieldIsNotEqualToExpression(key: String, value: SQLite.Value?) -> SQLite.Expression<Bool?> {
+    func fieldIsNotEqualToExpression(key: String, value: (any SQLite.Value)?) -> SQLite.Expression<Bool?> {
         switch self {
             case .integer:
                 Expression<Bool?>(Expression<Int64>(key) != value as! Int64)
@@ -87,7 +87,7 @@ public enum SQLiteTypeName: Sendable, Hashable {
         }
     }
     
-    func fieldIsBiggerToExpression(key: String, value: SQLite.Value?) -> SQLite.Expression<Bool?> {
+    func fieldIsBiggerToExpression(key: String, value: (any SQLite.Value)?) -> SQLite.Expression<Bool?> {
         switch self {
             case .integer:
                 Expression<Bool?>(Expression<Int64>(key) > value as! Int64)
@@ -97,12 +97,12 @@ public enum SQLiteTypeName: Sendable, Hashable {
                 Expression<Bool?>(Expression<String>(key) > value as! String)
             case .blob:
                 Expression<Bool?>(value: nil)
-            case .null(let typeName):
+            case .null:
                 Expression<Bool?>(value: nil)
         }
     }
     
-    func fieldIsSmallerToExpression(key: String, value: SQLite.Value?) -> SQLite.Expression<Bool?> {
+    func fieldIsSmallerToExpression(key: String, value: (any SQLite.Value)?) -> SQLite.Expression<Bool?> {
         switch self {
             case .integer:
                 Expression<Bool?>(Expression<Int64>(key) < value as! Int64)
@@ -112,12 +112,12 @@ public enum SQLiteTypeName: Sendable, Hashable {
                 Expression<Bool?>(Expression<String>(key) < value as! String)
             case .blob:
                 Expression<Bool?>(value: nil)
-            case .null(let typeName):
+            case .null:
                 Expression<Bool?>(value: nil)
         }
     }
     
-    func fieldIsSmallerOrEqualToExpression(key: String, value: SQLite.Value?) -> SQLite.Expression<Bool?> {
+    func fieldIsSmallerOrEqualToExpression(key: String, value: (any SQLite.Value)?) -> SQLite.Expression<Bool?> {
         switch self {
             case .integer:
                 Expression<Bool?>(Expression<Int64>(key) <= value as! Int64)
@@ -127,12 +127,12 @@ public enum SQLiteTypeName: Sendable, Hashable {
                 Expression<Bool?>(Expression<String>(key) <= value as! String)
             case .blob:
                 Expression<Bool?>(value: nil)
-            case .null(let typeName):
+            case .null:
                 Expression<Bool?>(value: nil)
         }
     }
     
-    func fieldIsBiggerOrEqualToExpression(key: String, value: SQLite.Value?) -> SQLite.Expression<Bool?> {
+    func fieldIsBiggerOrEqualToExpression(key: String, value: (any SQLite.Value)?) -> SQLite.Expression<Bool?> {
         switch self {
             case .integer:
                 Expression<Bool?>(Expression<Int64>(key) >= value as! Int64)
@@ -142,7 +142,7 @@ public enum SQLiteTypeName: Sendable, Hashable {
                 Expression<Bool?>(Expression<String>(key) >= value as! String)
             case .blob:
                 Expression<Bool?>(value: nil)
-            case .null(let typeName):
+            case .null:
                 Expression<Bool?>(value: nil)
         }
     }
@@ -157,13 +157,13 @@ public enum SQLiteValue: Sendable, Hashable {
     
     var intval: Int {
         switch self {
-            case .integer(let int64):
+            case .integer:
                 1
-            case .real(let double):
+            case .real:
                 2
-            case .text(let string):
+            case .text:
                 3
-            case .blob(let data):
+            case .blob:
                 4
             case .null:
                 5
@@ -228,7 +228,7 @@ public enum SQLiteValue: Sendable, Hashable {
         }
     }
     
-    func underlyingValue(withTypeName typeName: SQLiteTypeName) -> SQLite.Value? {
+    func underlyingValue(withTypeName typeName: SQLiteTypeName) -> (any SQLite.Value)? {
         if typeName.isNull {
             switch self {
                 case .integer(let int64):
@@ -268,7 +268,7 @@ public enum SQLiteValue: Sendable, Hashable {
         }
     }
     
-    func fieldIsEqualTo(_ value: SQLite.Value?, withTypeName typeName: SQLiteTypeName) -> Bool {
+    func fieldIsEqualTo(_ value: (any SQLite.Value)?, withTypeName typeName: SQLiteTypeName) -> Bool {
         if typeName.isNull {
             switch self {
                 case .integer(let int64):
@@ -297,7 +297,7 @@ public enum SQLiteValue: Sendable, Hashable {
         }
     }
     
-    func fieldIsNotEqualTo(_ value: SQLite.Value?, withTypeName typeName: SQLiteTypeName) -> Bool {
+    func fieldIsNotEqualTo(_ value: (any SQLite.Value)?, withTypeName typeName: SQLiteTypeName) -> Bool {
         if typeName.isNull {
             switch self {
                 case .integer(let int64):
@@ -326,7 +326,7 @@ public enum SQLiteValue: Sendable, Hashable {
         }
     }
     
-    func fieldIsBiggerThan(_ value: SQLite.Value?, withTypeName typeName: SQLiteTypeName) -> Bool {
+    func fieldIsBiggerThan(_ value: (any SQLite.Value)?, withTypeName typeName: SQLiteTypeName) -> Bool {
         guard let value else { return false }
         switch self {
             case .integer(let int64):
@@ -335,14 +335,14 @@ public enum SQLiteValue: Sendable, Hashable {
                 return double > value as! Double
             case .text(let string):
                 return string > value as! String
-            case .blob(let data):
+            case .blob:
                 return false
             case .null:
                 return false
         }
     }
     
-    func fieldIsSmallerThan(_ value: SQLite.Value?, withTypeName typeName: SQLiteTypeName) -> Bool {
+    func fieldIsSmallerThan(_ value: (any SQLite.Value)?, withTypeName typeName: SQLiteTypeName) -> Bool {
         guard let value else { return false }
         switch self {
             case .integer(let int64):
@@ -351,14 +351,14 @@ public enum SQLiteValue: Sendable, Hashable {
                 return double < value as! Double
             case .text(let string):
                 return string < value as! String
-            case .blob(let data):
+            case .blob:
                 return false
             case .null:
                 return false
         }
     }
     
-    func fieldIsSmallerOrEqual(_ value: SQLite.Value?, withTypeName typeName: SQLiteTypeName) -> Bool {
+    func fieldIsSmallerOrEqual(_ value: (any SQLite.Value)?, withTypeName typeName: SQLiteTypeName) -> Bool {
         guard let value else { return self == .null }
         switch self {
             case .integer(let int64):
@@ -374,7 +374,7 @@ public enum SQLiteValue: Sendable, Hashable {
         }
     }
     
-    func fieldIsBiggerOrEqual(_ value: SQLite.Value?, withTypeName typeName: SQLiteTypeName) -> Bool {
+    func fieldIsBiggerOrEqual(_ value: (any SQLite.Value)?, withTypeName typeName: SQLiteTypeName) -> Bool {
         guard let value else { return self == .null }
         switch self {
             case .integer(let int64):

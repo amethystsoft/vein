@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol PersistentModel: class, Sendable {
+public protocol PersistentModel: AnyObject, Sendable {
     associatedtype SchemaMigration: ModelSchemaMigration
     associatedtype _PredicateHelper: PredicateConstructor where _PredicateHelper.Model == Self
 
@@ -11,19 +11,19 @@ public protocol PersistentModel: class, Sendable {
     var context: ManagedObjectContext? { get set }
     
     func _getSchema() -> String
-    var _fields: [PersistedField] { get }
+    var _fields: [any PersistedField] { get }
     static var _fieldInformation: [FieldInformation] { get }
     
     init(id: Int64, fields: [String: SQLiteValue])
 }
 
 extension PersistentModel {
-    public static var typeIdentifier: ObjectIdentifier { ObjectIdentifier(Self.self) }
-    public var typeIdentifier: ObjectIdentifier { ObjectIdentifier(Self.self) }
+    public static var typeIdentifier: ObjectIdentifier { ObjectIdentifier(Self.self) }
+    public var typeIdentifier: ObjectIdentifier { ObjectIdentifier(Self.self) }
 }
 
 struct AnyPersistentModelType: Hashable {
-    let type: PersistentModel.Type
+    let type: any PersistentModel.Type
     let createMigration: () -> ModelSchemaMigration
     
     init<M: PersistentModel>(_ type: M.Type) {
@@ -51,7 +51,7 @@ public protocol VersionedSchema {
     static var models: [any PersistentModel.Type] { get }
 }
 
-public protocol SchemaMigrationPlan {
+public protocol SchemaMigrationPlan: Sendable {
     static var stages: [MigrationStage] { get }
     
     static var schemas: [VersionedSchema.Type] { get }

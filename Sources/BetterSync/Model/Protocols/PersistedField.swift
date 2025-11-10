@@ -6,7 +6,7 @@ public protocol PersistedField: Sendable {
     var key: String? { get }
     var wrappedValue: WrappedType { get set }
     var isLazy: Bool { get }
-    var model: PersistentModel? { get }
+    var model: (any PersistentModel)? { get }
     
     static var sqliteTypeName: SQLiteTypeName { get }
     func setValue(to: WrappedType)

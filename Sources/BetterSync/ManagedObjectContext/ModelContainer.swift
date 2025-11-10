@@ -7,7 +7,7 @@ public final class ModelContainer: Sendable {
     public let context: ManagedObjectContext
     
     public init(
-        models: PersistentModel.Type...,
+        models: any PersistentModel.Type...,
         migration: SchemaMigrationPlan.Type,
         at path: String
     ) throws(ManagedObjectContextError) {
@@ -28,7 +28,7 @@ public final class ModelContainer: Sendable {
         guard !managedModels.isEmpty else {
             fatalError("ModelContainer must have one or more managed Models.")
         }
-        for model in latestSchema.models.map { AnyPersistentModelType($0) } {
+        for model in latestSchema.models.map({ AnyPersistentModelType($0) }) {
             guard managedModels.contains(model) else {
                 continue
             }

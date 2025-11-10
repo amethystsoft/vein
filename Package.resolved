@@ -1,13 +1,13 @@
 {
-  "originHash" : "7fe36890950e001e421c562155313a8b5b7cf56027c9119ff261a59db16d3252",
+  "originHash" : "d14b8da61093bf4c9626eb754e8133ea39a4fc13489cb0ac7c8d5f6917e72d5f",
   "pins" : [
     {
       "identity" : "sqlite.swift",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/stephencelis/SQLite.swift.git",
+      "location" : "https://github.com/miakoring/SQLite.swift.git",
       "state" : {
-        "revision" : "392dd6058624d9f6c5b4c769d165ddd8c7293394",
-        "version" : "0.15.4"
+        "branch" : "master",
+        "revision" : "2857e54ddc82e4bf294eea307ed348aaefca9811"
       }
     },
     {
@@ -29,21 +29,12 @@
       }
     },
     {
-      "identity" : "swift-syntax",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-syntax.git",
-      "state" : {
-        "revision" : "4799286537280063c85a32f09884cfbca301b1a1",
-        "version" : "602.0.0"
-      }
-    },
-    {
       "identity" : "swift-toolchain-sqlite",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swiftlang/swift-toolchain-sqlite",
       "state" : {
-        "revision" : "b626d3002773b1a1304166643e7f118f724b2132",
-        "version" : "1.0.4"
+        "revision" : "b45b80b943e88db3cb8ddea798fa3fa9912375ff",
+        "version" : "1.0.7"
       }
     }
   ],
