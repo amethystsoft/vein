@@ -1,1 +1,1 @@
-# BetterSync
+# Amethyst Vein

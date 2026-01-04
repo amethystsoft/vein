@@ -18,6 +18,7 @@ public actor ManagedObjectContext {
     init(path: String) throws(ManagedObjectContextError) {
         do {
             self.connection = try Connection(path)
+            try self.connection.execute("PRAGMA journal_mode=WAL;")
         } catch let error as SQLite.Result {
             throw error.parse()
         } catch {
@@ -197,32 +198,48 @@ public actor ManagedObjectContext {
     public nonisolated func updateDetached<F: PersistedField>(field: F, newValue: F.WrappedType) {
         let fieldDTO = field.asDTO()
         let valueDTO = newValue.asPersistentRepresentation.sqliteValue
+        
         Task {
             do {
+                // 1. Persist to SQLite (Actor-isolated)
                 try await self.update(field: fieldDTO, newValue: valueDTO)
-                Task { @MainActor in
+                
+                // 2. get copy of registered queries in a threadsafe way
+                let observers = registeredQueries.value[fieldDTO.enclosingObjectID]
+                
+                // 3. If no one is watching, just update the model reference and exit
+                guard let observers, !observers.isEmpty else {
+                    field.setValue(to: newValue)
+                    return
+                }
+                
+                // 4. If there are observers, move to MainActor for both
+                // the state change AND the UI notification to ensure consistency.
+                await MainActor.run {
+                    guard let model = field.model else { return }
+                    
+                    // Determine matches BEFORE updating the value
                     var matchedBefore = Set<Int>()
-                    guard
-                        let queries = registeredQueries[fieldDTO.enclosingObjectID],
-                        let model = field.model
-                    else { return }
-                    for (_, query) in queries {
-                        guard let query = query.query else {
-                            continue
-                        }
+                    for query in observers.values.compactMap({ $0.query }) {
                         if query.doesMatch(model) {
                             matchedBefore.insert(query.usedPredicate.hashValue)
                         }
                     }
+                    
+                    // Update the actual model value on the Main Thread
+                    // to prevent races with the UI/SwiftUI.
                     field.setValue(to: newValue)
-                    for query in queries.values {
-                        if let query = query.query {
-                            query.handleUpdate(model, matchedBeforeChange: matchedBefore.contains(query.usedPredicate.hashValue))
-                        }
+                    
+                    // Notify observers
+                    for query in observers.values.compactMap({ $0.query }) {
+                        query.handleUpdate(
+                            model,
+                            matchedBeforeChange: matchedBefore.contains(query.usedPredicate.hashValue)
+                        )
                     }
                 }
             } catch {
-                fatalError(error.localizedDescription)
+                fatalError("Database update failed: \(error.localizedDescription)")
             }
         }
     }
@@ -237,19 +254,22 @@ public actor ManagedObjectContext {
             try connection.run(filter.delete())
             model.context = nil
             model.id = nil
+            
             Task { @MainActor in
+                let observers = registeredQueries.value[model.typeIdentifier]
+                
+                guard let observers else { return }
+                
                 var matchedBefore = [AnyQueryObserver]()
-                guard
-                    let queries = registeredQueries[model.typeIdentifier]
-                else { return }
-                for (_, query) in queries {
-                    guard let query = query.query else {
-                        continue
-                    }
+                
+                for (_, query) in observers {
+                    guard let query = query.query else { continue }
+                    
                     if query.doesMatch(model) {
                         matchedBefore.append(query)
                     }
                 }
+                
                 for query in matchedBefore {
                     query.remove(model)
                 }
@@ -276,16 +296,19 @@ public actor ManagedObjectContext {
         }
     }
     
-    @MainActor
-    private var registeredQueries = [ObjectIdentifier: [Int: WeakQueryObserver]]()
+    private nonisolated(unsafe) var registeredQueries = {
+        Atomic([ObjectIdentifier: [Int: WeakQueryObserver]]())
+    }()
     
     @MainActor
     public func getOrCreateQueryObserver(for identifier: ObjectIdentifier, _ key: Int, createWith block: @escaping () -> AnyQueryObserver) -> AnyQueryObserver {
-        if let observer = registeredQueries[identifier]?[key]?.query {
+        if let observer = registeredQueries.value[identifier]?[key]?.query {
             return observer
         }
         let newObserver = block()
-        registeredQueries[identifier, default: [:]][key] = WeakQueryObserver(query: newObserver)
+        registeredQueries.mutate { queries in
+            queries[identifier, default: [:]][key] = WeakQueryObserver(query: newObserver)
+        }
         return newObserver
     }
     
@@ -295,16 +318,19 @@ public actor ManagedObjectContext {
     @MainActor
     private var notificationTask: Task<Void, Never>?
     
-    private nonisolated(unsafe) var pendingActorNotifications: [ObjectIdentifier: [AnyObject]] = [:]
+    private nonisolated(unsafe) var pendingActorNotifications = Atomic([ObjectIdentifier: [AnyObject]]())
     private var actorNotificationTask: Task<Void, Never>?
     
     private func scheduleActorNotification<M: PersistentModel>(_ model: M) {
-        pendingActorNotifications[
-            M.typeIdentifier,
-            default: []
-        ]
-            .append(model)
+        pendingActorNotifications.mutate { pending in
+            pending[
+                M.typeIdentifier,
+                default: []
+            ]
+                .append(model)
+        }
         
+        actorNotificationTask?.cancel()
         actorNotificationTask = Task {
             try? await Task.sleep(for: .milliseconds(50))
             Task { @MainActor in
@@ -315,11 +341,17 @@ public actor ManagedObjectContext {
     
     @MainActor
     private func flushActorNotifications() {
-        let notifications = pendingActorNotifications
-        pendingActorNotifications.removeAll()
+        let notifications = pendingActorNotifications.mutate { pending in
+            let copy = pending
+            pending.removeAll()
+            return copy
+        }
+        
         for (identifier, models) in notifications {
-            if let queries = registeredQueries[identifier] {
-                for (_, query) in queries {
+            let observers = registeredQueries.value[identifier]
+            
+            if let observers {
+                for (_, query) in observers {
                     if let query = query.query {
                         query.appendAny(models)
                     }
@@ -335,6 +367,7 @@ public actor ManagedObjectContext {
             default: []
         ]
             .append(model)
+        
         notificationTask?.cancel()
         notificationTask = Task {
             try? await Task.sleep(for: .milliseconds(50))
@@ -346,9 +379,12 @@ public actor ManagedObjectContext {
     private func flushNotifications() {
         let notifications = pendingNotifications
         pendingNotifications.removeAll()
+        
         for (identifier, models) in notifications {
-            if let queries = registeredQueries[identifier] {
-                for (_, query) in queries {
+            let observers = registeredQueries.value[identifier]
+            
+            if let observers {
+                for (_, query) in observers {
                     if let query = query.query {
                         query.appendAny(models)
                     }
@@ -386,25 +422,18 @@ public actor ManagedObjectContext {
 }
 
 private nonisolated final class ThreadSafeIdentityMap {
-    private let lock = NSLock()
-    private var cache: [ObjectIdentifier: [Int64: WeakModel]] = [:]
+    private var cache = Atomic([ObjectIdentifier: [Int64: WeakModel]]())
     
     func getTracked<T: PersistentModel>(_ type: T.Type, id: Int64) -> T? {
-        lock.withLock {
-            get(type, id: id)
-        }
+        get(type, id: id)
     }
     
     func getTrackedCount() -> Int {
-        lock.withLock {
-            cache.reduce(0, { $0 + $1.value.count })
-        }
+        cache.value.reduce(0, { $0 + $1.value.count })
     }
     
     func startTracking<T: PersistentModel>(_ object: T, type: T.Type, id: Int64) {
-        lock.withLock {
-            track(object, type: type, id: id)
-        }
+        track(object, type: type, id: id)
     }
     
     func batched<T: PersistentModel>(
@@ -413,24 +442,24 @@ private nonisolated final class ThreadSafeIdentityMap {
             (T, T.Type, Int64) -> Void
         ) -> Void
     ) {
-        lock.withLock {
-            block(get, track)
-        }
+        block(get, track)
     }
     
     @inline(__always)
     private func track<T: PersistentModel>(_ object: T, type: T.Type, id: Int64) {
-        cache[Self.key(type), default: [:]][id] = WeakModel(wrappedValue: object)
+        cache.mutate { cache in
+            cache[Self.key(type), default: [:]][id] = WeakModel(wrappedValue: object)
+        }
     }
     
     @inline(__always)
     private func get<T: PersistentModel>(_ type: T.Type, id: Int64) -> T? {
-        cache[Self.key(type)]?[id]?.wrappedValue as? T
+        cache.value[Self.key(type)]?[id]?.wrappedValue as? T
     }
     
     func remove<T: PersistentModel>(_ type: T.Type, id: Int64) {
-        lock.withLock {
-            _ = cache[Self.key(type)]?.removeValue(forKey: id)
+        cache.mutate { contents in
+            _ = contents[Self.key(type)]?.removeValue(forKey: id)
         }
     }
     
@@ -440,9 +469,9 @@ private nonisolated final class ThreadSafeIdentityMap {
     }
     
     func compact() {
-        lock.withLock {
+        cache.mutate { cache in
             for (type, var references) in cache {
-                references = references.filter { _, box in box.isDeallocated }
+                references = references.filter { _, box in !box.isDeallocated }
                 if references.isEmpty {
                     cache.removeValue(forKey: type)
                 } else {

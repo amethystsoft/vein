@@ -5,12 +5,12 @@ import PackageDescription
 import CompilerPluginSupport
 
 let package = Package(
-    name: "BetterSync",
+    name: "AmethystVein",
     platforms: [.macOS(.v13), .iOS(.v16), .tvOS(.v16), .macCatalyst(.v16), .visionOS(.v1)],
     products: [
         .library(
-            name: "BetterSync",
-            targets: ["BetterSync"]
+            name: "Vein",
+            targets: ["Vein"]
         )
     ],
     dependencies: [
@@ -21,15 +21,15 @@ let package = Package(
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "BetterSync",
+            name: "Vein",
             dependencies: [
                 .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "SQLite", package: "SQLite.swift"),
             ]
         ),
         .testTarget(
-            name: "BetterSyncTests",
-            dependencies: ["BetterSync"]
+            name: "VeinTests",
+            dependencies: ["Vein"]
         ),
     ]
 )
