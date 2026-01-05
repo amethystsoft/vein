@@ -51,7 +51,7 @@ extension PersistedField {
     var expressible: Expressible {
         return switch Self.sqliteTypeName.isNull {
             case true:
-                switch Self.sqliteTypeName {
+                switch SQLiteTypeName.notNull(Self.sqliteTypeName){
                     case .integer: Expression<Int64?>(instanceKey)
                     case .real: Expression<Double?>(instanceKey)
                     case .text: Expression<String?>(instanceKey)
