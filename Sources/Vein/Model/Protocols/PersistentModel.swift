@@ -13,6 +13,8 @@ public protocol PersistentModel: AnyObject, Sendable {
     var _fields: [any PersistedField] { get }
     static var _fieldInformation: [FieldInformation] { get }
     
+    func _setupFields() -> Void
+    
     init(id: Int64, fields: [String: SQLiteValue])
 }
 

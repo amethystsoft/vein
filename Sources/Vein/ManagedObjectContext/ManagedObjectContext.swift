@@ -51,6 +51,8 @@ public actor ManagedObjectContext {
                 }
             }
             
+            model._setupFields()
+            
             let table = Table(model._getSchema())
             try connection.transaction {
                 try connection.run(table.insert(model._fields.map {
@@ -86,6 +88,8 @@ public actor ManagedObjectContext {
                     throw MOCError.idMissing(message: "raised by model of Type '\(M.self)'")
                 }
             }
+            
+            model._setupFields()
             
             let table = Table(model._getSchema())
             try connection.transaction {
