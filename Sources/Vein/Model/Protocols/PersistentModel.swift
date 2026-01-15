@@ -1,7 +1,6 @@
 import Foundation
 
 public protocol PersistentModel: AnyObject, Sendable {
-    associatedtype SchemaMigration: ModelSchemaMigration
     associatedtype _PredicateHelper: PredicateConstructor where _PredicateHelper.Model == Self
 
     var notifyOfChanges: () -> Void { get }
@@ -22,15 +21,25 @@ extension PersistentModel {
     public static var typeIdentifier: ObjectIdentifier { ObjectIdentifier(Self.self) }
     public var typeIdentifier: ObjectIdentifier { ObjectIdentifier(Self.self) }
     func _getSchema() -> String { Self.schema }
+    
+    public func migrate(in context: Vein.ManagedObjectContext) throws(ManagedObjectContextError) {
+        var builder = context.createSchema(Self.schema)
+            .id()
+        
+        // dropping first to not create `id` twice
+        for field in _fields.dropFirst() {
+            field.migrate(on: &builder)
+        }
+        
+        try builder.run()
+    }
 }
 
 struct AnyPersistentModelType: Hashable {
     let type: any PersistentModel.Type
-    let createMigration: () -> ModelSchemaMigration
     
     init<M: PersistentModel>(_ type: M.Type) {
         self.type = type
-        self.createMigration = { type.SchemaMigration() }
     }
     
     func hash(into hasher: inout Hasher) {

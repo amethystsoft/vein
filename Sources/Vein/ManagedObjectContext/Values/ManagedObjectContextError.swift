@@ -16,6 +16,7 @@ public enum ManagedObjectContextError: Error {
     case propertyDecode(message: String)
     case unexpectedlyEmptyResult(message: String)
     case unknownSQLite(message: String, code: Int32)
+    case noSuchTable(message: String)
     case other(message: String)
 }
 
@@ -46,6 +47,8 @@ extension ManagedObjectContextError: LocalizedError {
                 return "IOError \(code): \(message)"
             case .unknownSQLite(let message, let code):
                 return "SQLite raised an error with code \(code): \(message)"
+            case .noSuchTable(message: let message):
+                return message
             case .other(let message):
                 return "Unexpected: \(message)"
         }
@@ -77,6 +80,8 @@ extension ManagedObjectContextError: LocalizedError {
                 return "Attempted to insert managed Model into ManagedObjectContext"
             case .unknownSQLite:
                 return "SQLite encountered an internal error"
+            case .noSuchTable:
+                return "Attempted to do work on a table that doesn't exist"
             case .other:
                 return nil
         }
@@ -102,6 +107,8 @@ extension ManagedObjectContextError: LocalizedError {
                 return "Make sure not to refresh a property of a deleted Model"
             case .unknownSQLite:
                 return "Try restarting the app."
+            case .noSuchTable:
+                return "Create the table or talk to your admin."
             case .other:
                 return nil
         }

@@ -12,6 +12,8 @@ package extension SQLite.Result {
     
     private func mapCode(_ code: Int32, msg: String) -> ManagedObjectContextError {
         switch code {
+            case 1:
+                .noSuchTable(message: msg)
             case 3: //PERM
                 .insufficientPermissions(message: msg)
             case 8: //READONLY

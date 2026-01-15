@@ -36,8 +36,8 @@ public struct TableBuilder {
         return copy
     }
     
-    public func run() async throws {
-        try await context.run(Table(schemaName).create{ t in
+    public func run() throws(ManagedObjectContextError) {
+        try context.run(Table(schemaName).create{ t in
             schema(t)
         })
     }

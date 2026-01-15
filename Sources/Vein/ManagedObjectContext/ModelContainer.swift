@@ -32,8 +32,7 @@ public final class ModelContainer: Sendable {
             guard managedModels.contains(model) else {
                 continue
             }
-            let migration: ModelSchemaMigration = model.createMigration()
-            try await migration.prepare(in: context)
         }
+        // TODO: figure out how to detect old Model Versions and run specific complex migration
     }
 }

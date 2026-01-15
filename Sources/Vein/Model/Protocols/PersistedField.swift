@@ -130,4 +130,21 @@ extension PersistedField {
             enclosingObjectID: instanceObjectID
         )
     }
+    
+    public func migrate(on builder: inout Vein.TableBuilder) {
+        let required = !WrappedType.sqliteTypeName.isNull
+        
+        builder = switch SQLiteTypeName.notNull(WrappedType.sqliteTypeName) {
+            case .integer:
+                builder.field(instanceKey, type: .int(required: required))
+            case .real:
+                builder.field(instanceKey, type: .double(required: required))
+            case .text:
+                builder.field(instanceKey, type: .string(required: required))
+            case .blob:
+                builder.field(instanceKey, type: .data(required: required))
+            case .null(_):
+                fatalError("Unexpectedly hit null SQLiteTypeName while building migration on Field \(key ?? instanceKey)")
+        }
+    }
 }

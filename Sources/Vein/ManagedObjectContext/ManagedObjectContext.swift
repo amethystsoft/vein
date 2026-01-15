@@ -72,7 +72,17 @@ public actor ManagedObjectContext {
             scheduleActorNotification(model)
         } catch let error as ManagedObjectContextError { throw error }
         catch let error as SQLite.Result {
-            throw error.parse()
+            let parsed = error.parse()
+            switch parsed {
+                case .noSuchTable:
+                    try model.migrate(in: self)
+                    
+                    // Safe under the assumtion that migrate would throw
+                    // if it failed to create the table.
+                    // Every other error thrown by insert would break the loop
+                    try insertInBackground(model)
+                default: throw parsed
+            }
         } catch {
             throw .other(message: error.localizedDescription)
         }
@@ -110,7 +120,17 @@ public actor ManagedObjectContext {
             scheduleNotification(model)
         } catch let error as ManagedObjectContextError { throw error }
         catch let error as SQLite.Result {
-            throw error.parse()
+            let parsed = error.parse()
+            switch parsed {
+                case .noSuchTable:
+                    try model.migrate(in: self)
+                    
+                    // Safe under the assumtion that migrate would throw
+                    // if it failed to create the table.
+                    // Every other error thrown by insert would break the loop
+                    try insert(model)
+                default: throw parsed
+            }
         } catch {
             throw .other(message: error.localizedDescription)
         }
@@ -163,7 +183,12 @@ public actor ManagedObjectContext {
             return models
         } catch let error as ManagedObjectContextError { throw error }
         catch let error as SQLite.Result {
-            throw error.parse()
+            let parsed = error.parse()
+            switch parsed {
+                case .noSuchTable:
+                    return []
+                default: throw parsed
+            }
         } catch {
             throw .other(message: error.localizedDescription)
         }
@@ -286,8 +311,14 @@ public actor ManagedObjectContext {
     }
 
     
-    package func run(_ query: String) throws {
-        try connection.run(query)
+    package nonisolated func run(_ query: String) throws(ManagedObjectContextError) {
+        do {
+            try connection.run(query)
+        } catch let error as SQLite.Result {
+            throw error.parse()
+        } catch {
+            throw .other(message: error.localizedDescription)
+        }
     }
     
     package nonisolated func runDetached(_ query: String) {
