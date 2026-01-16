@@ -321,6 +321,8 @@ public actor ManagedObjectContext {
         }
     }
     
+    
+    
     package nonisolated func runDetached(_ query: String) {
         Task {
             do {
@@ -525,3 +527,4 @@ private struct WeakModel {
         self.wrappedValue = wrappedValue
     }
 }
+

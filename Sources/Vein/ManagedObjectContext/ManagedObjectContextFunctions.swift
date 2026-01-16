@@ -1,6 +1,0 @@
-import SQLite
-
-extension ManagedObjectContext {
-
-}
-
