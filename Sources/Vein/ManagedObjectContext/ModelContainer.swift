@@ -1,4 +1,5 @@
 import Foundation
+import SQLite
 
 public final class ModelContainer: Sendable {
     private let migration: SchemaMigrationPlan.Type
@@ -15,24 +16,39 @@ public final class ModelContainer: Sendable {
         self.managedModels = Set(models.map { AnyPersistentModelType($0)})
         self.migration = migration
         self.path = path
+        
+        do {
+            try context.createMigrationsTable()
+        } catch let error as ManagedObjectContextError { throw error }
+        catch let error as SQLite.Result {
+            throw error.parse()
+        } catch {
+            throw .other(message: error.localizedDescription)
+        }
     }
     
-    public func migrate() async throws {
-        try context.createMigrationsTable()
-        
-        guard case let .custom(
+    @MainActor
+    public func migrate() throws {
+        guard case let .complex(
             originVersion,
             destinationVersion,
-            migrate,
+            migrationBlock,
             didFinishMigration
         ) = try determineMigrationStage() else { return }
         
-        try await migrate?(context)
+        try context.transaction {
+            try migrationBlock?(self.context)
+        }
+        
+        for model in originVersion.models {
+            try? context.deleteTable(model.schema)
+        }
         
         // TODO: Automatically upgrade table name if unchanged
         // TODO: Automatically delete old tables
     }
     
+    @MainActor
     private func determineMigrationStage() throws -> MigrationStage? {
         let version = try context.getLatestMigrationVersion()
         guard let latestRegisteredSchema = migration.schemas.sorted(by: {
@@ -42,7 +58,10 @@ public final class ModelContainer: Sendable {
         }
         
         // Already up to date, no migration is necessary
-        if version == latestRegisteredSchema.version {
+        if
+            version == latestRegisteredSchema.version ||
+            version == nil
+        {
             return nil
         }
         
@@ -60,7 +79,7 @@ public final class ModelContainer: Sendable {
         }
         
         for stage in migration.stages.reversed() {
-            if case let .custom(schema,_,_,_) = stage, schema.version == currentSchema.version {
+            if case let .complex(schema,_,_,_) = stage, schema.version == currentSchema.version {
                 return stage
             }
         }

@@ -1,4 +1,5 @@
 import SQLite
+import SQLite3
 import Foundation
 
 extension Connection: @unchecked @retroactive Sendable {}
@@ -54,7 +55,7 @@ public actor ManagedObjectContext {
             model._setupFields()
             
             let table = Table(model._getSchema())
-            try connection.transaction {
+            try connection.safeTransaction {
                 try connection.run(table.insert(model._fields.map {
                     return $0.wrappedValue.asPersistentRepresentation.sqliteValue.setter(withKey: $0.instanceKey, andTypeName: $0.wrappedValue.asPersistentRepresentation.sqliteTypeName)
                 }))
@@ -102,7 +103,7 @@ public actor ManagedObjectContext {
             model._setupFields()
             
             let table = Table(model._getSchema())
-            try connection.transaction {
+            try connection.safeTransaction {
                 try connection.run(table.insert(model._fields.map {
                     return $0.wrappedValue.asPersistentRepresentation.sqliteValue.setter(withKey: $0.instanceKey, andTypeName: $0.wrappedValue.asPersistentRepresentation.sqliteTypeName)
                 }))
@@ -456,6 +457,10 @@ public actor ManagedObjectContext {
     public nonisolated func compactIdentityMap() {
         identityMap.compact()
     }
+    
+    public nonisolated func transaction(_ block: @escaping () throws -> Void) throws {
+        try connection.safeTransaction(block)
+    }
 }
 
 private nonisolated final class ThreadSafeIdentityMap {
@@ -528,3 +533,27 @@ private struct WeakModel {
     }
 }
 
+extension Connection {
+    func safeTransaction(_ block: () throws -> Void) throws {
+        if isInTransaction {
+            let spName = "sp_\(UUID().uuidString.replacingOccurrences(of: "-", with: ""))"
+            try execute("SAVEPOINT \(spName)")
+            do {
+                try block()
+                try execute("RELEASE SAVEPOINT \(spName)")
+            } catch {
+                try execute("ROLLBACK TO SAVEPOINT \(spName)")
+                throw error
+            }
+        } else {
+            // Standard top-level transaction
+            try transaction {
+                try block()
+            }
+        }
+    }
+    
+    var isInTransaction: Bool {
+        sqlite3_get_autocommit(handle) == 0
+    }
+}

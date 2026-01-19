@@ -1,4 +1,5 @@
 import Foundation
+import SQLite
 
 public protocol PersistentModel: AnyObject, Sendable {
     associatedtype _PredicateHelper: PredicateConstructor where _PredicateHelper.Model == Self
@@ -13,6 +14,8 @@ public protocol PersistentModel: AnyObject, Sendable {
     static var _fieldInformation: [FieldInformation] { get }
     
     func _setupFields() -> Void
+    
+    static var version: ModelVersion { get }
     
     init(id: Int64, fields: [String: SQLiteValue])
 }
@@ -31,7 +34,15 @@ extension PersistentModel {
             field.migrate(on: &builder)
         }
         
-        try builder.run()
+        do {
+            try builder.run()
+            try context.registerMigration(schema: _getSchema(), version: Self.version)
+        } catch let error as ManagedObjectContextError {
+            throw error
+        } catch let error as SQLite.Result {
+            throw error.parse()
+        } catch { throw .other(message: error.localizedDescription) }
+        
     }
 }
 
@@ -63,6 +74,7 @@ public protocol VersionedSchema {
 }
 
 public protocol SchemaMigrationPlan: Sendable {
+    @MainActor
     static var stages: [MigrationStage] { get }
     
     static var schemas: [VersionedSchema.Type] { get }

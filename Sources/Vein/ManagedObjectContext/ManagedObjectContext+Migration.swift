@@ -1,4 +1,5 @@
 import SQLite
+import Foundation
 
 extension ManagedObjectContext {
     internal nonisolated func createMigrationsTable() throws {
@@ -10,27 +11,36 @@ extension ManagedObjectContext {
             t.column(MigrationTable.patch)
             t.column(MigrationTable.appliedAt)
         })
-        
-        try connection.run(
-            MigrationTable.migrationsTable.createIndex(
-                MigrationTable.tableName,
-                MigrationTable.major,
-                MigrationTable.minor,
-                MigrationTable.patch,
-                unique: true,
-                ifNotExists: true
-            )
-        )
     }
     
-    internal nonisolated func getLatestMigrationVersion() throws -> ModelVersion {
+    internal nonisolated func registerMigration(
+        schema: String,
+        version: ModelVersion
+    ) throws {
+        let query = MigrationTable.migrationsTable
+            .insert([
+                Expression<String>(MigrationTable.tableName) <- Expression<String>(value: schema),
+                Expression<Int64>(MigrationTable.major) <- Expression<Int64>(value: Int64(version.major)),
+                Expression<Int64>(MigrationTable.minor) <- Expression<Int64>(value: Int64(version.minor)),
+                Expression<Int64>(MigrationTable.patch) <- Expression<Int64>(value: Int64(version.patch)),
+                Expression<Int64>(MigrationTable.appliedAt) <- Expression<Int64>(value: Int64(Date().timeIntervalSince1970))
+            ])
+        try connection.run(query)
+    }
+    
+    internal nonisolated func deleteTable(_ schema: String) throws {
+        let query = Table(schema).drop(ifExists: true)
+        try connection.run(query)
+    }
+    
+    internal nonisolated func getLatestMigrationVersion() throws -> ModelVersion? {
         let query = MigrationTable.migrationsTable
             .select(MigrationTable.major, MigrationTable.minor, MigrationTable.patch)
             .order(MigrationTable.major.desc, MigrationTable.minor.desc, MigrationTable.patch.desc)
             .limit(1)
         
         guard let row = try connection.pluck(query) else {
-            return ModelVersion(0, 0, 0)
+            return nil
         }
         
         return ModelVersion(
