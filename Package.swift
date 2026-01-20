@@ -15,6 +15,10 @@ let package = Package(
         .library(
             name: "VeinCore",
             targets: ["VeinCore"]
+        ),
+        .library(
+            name: "CommonVeinMacroLogic",
+            targets: ["CommonVeinMacroLogic"]
         )
     ],
     dependencies: [
@@ -39,9 +43,18 @@ let package = Package(
                 "VeinCoreMacros",
             ]
         ),
+        .target(
+            name: "CommonVeinMacroLogic",
+            dependencies: [
+                .product(name: "SwiftSyntax", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+                .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
+            ]
+        ),
         .macro(
             name: "VeinCoreMacros",
             dependencies: [
+                "CommonVeinMacroLogic",
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),

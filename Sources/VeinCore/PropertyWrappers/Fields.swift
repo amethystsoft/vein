@@ -1,5 +1,5 @@
 import Foundation
-import Vein
+@_exported import Vein
 
 @propertyWrapper
 public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendable {

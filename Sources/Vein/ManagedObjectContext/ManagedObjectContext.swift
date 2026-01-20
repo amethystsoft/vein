@@ -327,7 +327,7 @@ public actor ManagedObjectContext {
     package nonisolated func runDetached(_ query: String) {
         Task {
             do {
-                try await self.run(query)
+                try self.run(query)
             } catch {
                 fatalError(error.localizedDescription)
             }

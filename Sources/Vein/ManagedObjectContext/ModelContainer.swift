@@ -31,7 +31,7 @@ public final class ModelContainer: Sendable {
     public func migrate() throws {
         guard case let .complex(
             originVersion,
-            destinationVersion,
+            _,
             migrationBlock,
             didFinishMigration
         ) = try determineMigrationStage() else { return }
@@ -43,6 +43,8 @@ public final class ModelContainer: Sendable {
         for model in originVersion.models {
             try? context.deleteTable(model.schema)
         }
+        
+        try didFinishMigration?(context)
         
         // TODO: Automatically upgrade table name if unchanged
         // TODO: Automatically delete old tables
@@ -84,6 +86,6 @@ public final class ModelContainer: Sendable {
             }
         }
         
-        fatalError("No migration for current outdated model version: \(version)")
+        fatalError("No migration for current outdated model version: \(version.debugDescription)")
     }
 }
