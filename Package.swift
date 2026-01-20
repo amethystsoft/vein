@@ -7,7 +7,7 @@ import CompilerPluginSupport
 #if !os(Android) && !os(Windows) && !os(Linux)
 let sqliteTraits: Set<Package.Dependency.Trait> = ["SystemSQLite"]
 #else
-let sqliteTraits: Set<Package.Dependency.Trait> = ["SwiftToolchainSQLite"]
+let sqliteTraits: Set<Package.Dependency.Trait> = ["SwiftToolchainCSQLite"]
 #endif
 
 let package = Package(
