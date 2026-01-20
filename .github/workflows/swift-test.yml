@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-22.04
+    runs-on: blacksmith-8vcpu-ubuntu-2404-arm
     container:
       image: swift:6.2-noble
 
