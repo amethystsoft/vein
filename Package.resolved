@@ -1,5 +1,5 @@
 {
-  "originHash" : "d14b8da61093bf4c9626eb754e8133ea39a4fc13489cb0ac7c8d5f6917e72d5f",
+  "originHash" : "4251a8c65a48acb2ccbc3b3a3f83e8e48687f1b91306f4b603e1f8b50d026b99",
   "pins" : [
     {
       "identity" : "sqlite.swift",
@@ -26,6 +26,15 @@
       "state" : {
         "revision" : "bcd2b89f2a4446395830b82e4e192765edd71e18",
         "version" : "4.0.0"
+      }
+    },
+    {
+      "identity" : "swift-syntax",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-syntax.git",
+      "state" : {
+        "revision" : "4799286537280063c85a32f09884cfbca301b1a1",
+        "version" : "602.0.0"
       }
     },
     {
