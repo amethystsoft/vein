@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-import OSLog
+import Logging
 @testable import Vein
 @testable import VeinCore
 
@@ -8,7 +8,7 @@ let testID = UUID()
 
 @MainActor
 struct MigrationTests {
-    let logger = Logger(subsystem: "VeinSwiftUITests", category: "Migration")
+    let logger = Logger(label: "de.amethystsoft.vein.test.migration")
     
     @Test
     func complexMigration() async throws {
