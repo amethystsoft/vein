@@ -19,6 +19,9 @@ public actor ManagedObjectContext {
     }
     package nonisolated let connection: Connection
     
+    @MainActor
+    package var isInActiveMigration = false
+    
     /// Connects to database at `path`, creates a new one if it doesn't exist
     init(path: String) throws(ManagedObjectContextError) {
         do {
@@ -156,7 +159,22 @@ public actor ManagedObjectContext {
         }
     }
     
+    /// Returns all models matching the predicate.
+    /// Returns [] if table doesn't exist
     public nonisolated func fetchAll<T: PersistentModel>(_ predicate: PredicateBuilder<T>) throws(MOCError) -> [T] {
+        do {
+            return try _fetchAll(predicate)
+        } catch {
+            switch error {
+                case .noSuchTable:
+                    return []
+                default: throw error
+            }
+        }
+    }
+    
+    /// Returns all models matching the predicate.
+    public nonisolated func _fetchAll<T: PersistentModel>(_ predicate: PredicateBuilder<T>) throws(MOCError) -> [T] {
         do {
             let table = Table(T.schema).filter(predicate.finalize())
             let eagerLoadedFields = T._fieldInformation.eagerLoaded
@@ -188,12 +206,7 @@ public actor ManagedObjectContext {
             return models
         } catch let error as ManagedObjectContextError { throw error }
         catch let error as SQLite.Result {
-            let parsed = error.parse()
-            switch parsed {
-                case .noSuchTable:
-                    return []
-                default: throw parsed
-            }
+            throw error.parse()
         } catch {
             throw .other(message: error.localizedDescription)
         }
@@ -325,8 +338,6 @@ public actor ManagedObjectContext {
             throw .other(message: error.localizedDescription)
         }
     }
-    
-    
     
     package nonisolated func runDetached(_ query: String) {
         Task {
@@ -465,6 +476,16 @@ public actor ManagedObjectContext {
     public nonisolated func transaction(_ block: @escaping () throws -> Void) throws {
         try connection.safeTransaction(block)
     }
+    
+    public nonisolated func getAllStoredSchemas() throws -> [String] {
+        let tables = try connection.schema.objectDefinitions(type: .table)
+        return tables.map { $0.name }.filter {
+            [
+                MigrationTable.schema,
+                "sqlite_sequence"
+            ].contains($0) == false
+        }
+    }
 }
 
 private nonisolated final class ThreadSafeIdentityMap {
@@ -561,3 +582,4 @@ extension Connection {
         sqlite3_get_autocommit(handle) == 0
     }
 }
+

@@ -49,10 +49,28 @@ extension ManagedObjectContext {
             UInt32(row[MigrationTable.patch])
         )
     }
+    
+    internal nonisolated func renameSchema(_ schema: String, to newName: String) throws {
+        let query = Table(schema)
+            .rename(Table(newName))
+        try connection.run(query)
+    }
+    
+    @MainActor
+    public func cleanupOldSchema(_ schema: any VersionedSchema.Type) throws {
+        guard isInActiveMigration else {
+            throw ManagedObjectContextError
+                .notInsideMigration("ManagedObjectContext/cleanupOldSchema")
+        }
+        for model in schema.models {
+            try deleteTable(model.schema)
+        }
+    }
 }
 
-private enum MigrationTable {
-    static let migrationsTable = Table("_vein_migrations")
+enum MigrationTable {
+    static let schema = "_vein_migrations"
+    static let migrationsTable = Table(schema)
     static let id = Expression<Int64>("id")
     static let tableName = Expression<String>("table_name")
     static let major = Expression<Int64>("major")

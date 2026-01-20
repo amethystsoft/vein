@@ -311,7 +311,7 @@ extension Date: Persistable, ColumnType {
         self = representation
     }
     
-    private static var sqliteFormatStyle: ISO8601FormatStyle {
+    package static var sqliteFormatStyle: ISO8601FormatStyle {
         .iso8601(timeZone: .gmt, includingFractionalSeconds: true, dateTimeSeparator: .space)
     }
     

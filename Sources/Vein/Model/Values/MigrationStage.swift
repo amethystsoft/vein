@@ -1,9 +1,5 @@
 @MainActor
 public enum MigrationStage {
-    case lightweight(
-        fromVersion: any VersionedSchema.Type,
-        toVersion: any VersionedSchema.Type
-    )
     case complex(
         fromVersion: any VersionedSchema.Type,
         toVersion: any VersionedSchema.Type,

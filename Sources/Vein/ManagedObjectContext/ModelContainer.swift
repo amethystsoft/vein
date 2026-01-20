@@ -7,8 +7,16 @@ public final class ModelContainer: Sendable {
     private let path: String
     public let context: ManagedObjectContext
     
-    public init(
+    public convenience init(
         models: any PersistentModel.Type...,
+        migration: SchemaMigrationPlan.Type,
+        at path: String
+    ) throws(ManagedObjectContextError) {
+        try self.init(models: Array(models), migration: migration, at: path)
+    }
+    
+    public init(
+        models: [any PersistentModel.Type],
         migration: SchemaMigrationPlan.Type,
         at path: String
     ) throws(ManagedObjectContextError) {
@@ -36,12 +44,14 @@ public final class ModelContainer: Sendable {
             didFinishMigration
         ) = try determineMigrationStage() else { return }
         
-        try context.transaction {
-            try migrationBlock?(self.context)
+        defer {
+            context.isInActiveMigration = false
         }
         
-        for model in originVersion.models {
-            try? context.deleteTable(model.schema)
+        context.isInActiveMigration = true
+        
+        try context.transaction {
+            try migrationBlock?(self.context)
         }
         
         try didFinishMigration?(context)

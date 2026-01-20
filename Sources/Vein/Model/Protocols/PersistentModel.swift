@@ -25,7 +25,7 @@ extension PersistentModel {
     public var typeIdentifier: ObjectIdentifier { ObjectIdentifier(Self.self) }
     func _getSchema() -> String { Self.schema }
     
-    public func migrate(in context: Vein.ManagedObjectContext) throws(ManagedObjectContextError) {
+    internal func migrate(in context: Vein.ManagedObjectContext) throws(ManagedObjectContextError) {
         var builder = context.createSchema(Self.schema)
             .id()
         
@@ -43,6 +43,37 @@ extension PersistentModel {
             throw error.parse()
         } catch { throw .other(message: error.localizedDescription) }
         
+    }
+    
+    @MainActor
+    public static func unchangedMigration(
+        to newModel: any PersistentModel.Type,
+        on context: ManagedObjectContext
+    ) throws {
+        guard context.isInActiveMigration else {
+            throw ManagedObjectContextError.notInsideMigration("PersistentModel/unchangedMigration")
+        }
+        
+        guard version < newModel.version else {
+            throw ManagedObjectContextError.baseNewerThanDestination(Self.self, newModel)
+        }
+        
+        guard Set(Self._fieldInformation) == Set(newModel._fieldInformation) else {
+            throw ManagedObjectContextError.fieldMismatch(Self.self, newModel)
+        }
+        
+        try context.renameSchema(schema, to: newModel.schema)
+    }
+    
+    @MainActor
+    public static func deleteMigration(
+        on context: ManagedObjectContext
+    ) throws {
+        guard context.isInActiveMigration else {
+            throw ManagedObjectContextError.notInsideMigration("PersistentModel/deleteMigration")
+        }
+        
+        try context.deleteTable(schema)
     }
 }
 
