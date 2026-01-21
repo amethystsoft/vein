@@ -65,6 +65,7 @@ extension PersistentModel {
         }
         
         try context.renameSchema(schema, to: newModel.schema)
+        try context.registerMigration(schema: newModel.schema, version: newModel.version)
     }
     
     @MainActor
@@ -124,11 +125,12 @@ extension PersistentModel {
             for information in toAddInformation {
                 try information.addRetroactively(to: newModel.schema, on: context)
             }
+            try context.registerMigration(schema: newModel.schema, version: newModel.version)
         } catch let error as SQLite.Result {
             let parsed = error.parse()
             switch parsed {
-                // Returning, because schema will be created on first Model insert
-                // Therefore noSuchTable is acceptable here
+                    // Returning, because schema will be created on first Model insert
+                    // Therefore noSuchTable is acceptable here
                 case .noSuchTable: return
                 default: throw parsed
             }
