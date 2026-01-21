@@ -7,7 +7,7 @@ import Logging
 extension MigrationTests {
     @Test
     func simpleMigration() throws {
-        let dbPath = try prepareContainerLocation(name: "tableDeletion")
+        let dbPath = try prepareContainerLocation(name: "simpleMigration")
         
         logger.info(
             "Simple migration test started with db location: \(dbPath)"
@@ -44,7 +44,119 @@ extension MigrationTests {
         #expect(newStoredSchemas == [SimpleSchemaV0_0_2.Test.schema])
     }
     
-    // TODO: test handling of errors and unpermitted actions
+    @Test
+    func unchangedFailsOutsideMigration() throws {
+        let dbPath = try prepareContainerLocation(name: "tableDeletion")
+        let container = try ModelContainer(models: SimpleSchemaV0_0_1.models, migration: SimpleMigrationSuccess.self, at: dbPath)
+        
+        
+        do {
+            try SimpleSchemaV0_0_1.Test
+                .unchangedMigration(
+                    to: SimpleSchemaV0_0_2.Test.self,
+                    on: container.context
+                )
+        } catch let error as ManagedObjectContextError {
+            if case let .notInsideMigration(function) = error {
+                #expect(function == "PersistentModel/unchangedMigration")
+                return
+            }
+            Issue.record("Thrown error does not match expectations: \(error.errorDescription)")
+        } catch {
+            Issue.record("Thrown error does not match expectations: \(error.localizedDescription)")
+        }
+        Issue.record("Unexpectedly no error was thrown")
+    }
+    
+    @Test
+    func deleteFailsOutsideMigration() throws {
+        let dbPath = try prepareContainerLocation(name: "tableDeletion")
+        let container = try ModelContainer(models: SimpleSchemaV0_0_1.models, migration: SimpleMigrationSuccess.self, at: dbPath)
+
+        do {
+            try SimpleSchemaV0_0_1.Test
+                .deleteMigration(on: container.context)
+        } catch let error as ManagedObjectContextError {
+            if case let .notInsideMigration(function) = error {
+                #expect(function == "PersistentModel/deleteMigration")
+                return
+            }
+            Issue.record("Thrown error does not match expectations: \(error.errorDescription)")
+        } catch {
+            Issue.record("Thrown error does not match expectations: \(error.localizedDescription)")
+        }
+        Issue.record("Unexpectedly no error was thrown")
+    }
+    
+    @Test
+    func versionOrderThrowsOnUnchangedMigration() throws {
+        let dbPath = try prepareContainerLocation(name: "tableDeletion")
+        let container = try ModelContainer(models: SimpleSchemaV0_0_1.models, migration: SimpleMigrationSuccess.self, at: dbPath)
+        
+        // Entering migration manually
+        // This is an internal function and not publicly exposed
+        container.context.isInActiveMigration = true
+        
+        do {
+            try SimpleSchemaV0_0_2.Test
+                .unchangedMigration(
+                    to: SimpleSchemaV0_0_1.Test.self,
+                    on: container.context
+                )
+        } catch let error as ManagedObjectContextError {
+            if
+                case let .baseNotOlderThanDestination(
+                    base,
+                    destination
+                ) = error
+            {
+                // Comparing schema because `Testing`
+                // seems to have a problem with it
+                #expect(base.schema == SimpleSchemaV0_0_2.Test.schema)
+                #expect(destination.schema == SimpleSchemaV0_0_1.Test.schema)
+                return
+            }
+            Issue.record("Thrown error does not match expectations: \(error.errorDescription)")
+        } catch {
+            Issue.record("Thrown error does not match expectations: \(error.localizedDescription)")
+        }
+        Issue.record("Unexpectedly no error was thrown")
+    }
+    
+    @Test
+    func equalVersionThrowsOnUnchangedMigration() throws {
+        let dbPath = try prepareContainerLocation(name: "tableDeletion")
+        let container = try ModelContainer(models: SimpleSchemaV0_0_1.models, migration: SimpleMigrationSuccess.self, at: dbPath)
+        
+        // Entering migration manually
+        // This is an internal function and not publicly exposed
+        container.context.isInActiveMigration = true
+        
+        do {
+            try SimpleSchemaV0_0_2.Test
+                .unchangedMigration(
+                    to: SimpleSchemaV0_0_2.Test.self,
+                    on: container.context
+                )
+        } catch let error as ManagedObjectContextError {
+            if
+                case let .baseNotOlderThanDestination(
+                    base,
+                    destination
+                ) = error
+            {
+                // Comparing schema because `Testing`
+                // seems to have a problem with it
+                #expect(base.schema == SimpleSchemaV0_0_2.Test.schema)
+                #expect(destination.schema == SimpleSchemaV0_0_2.Test.schema)
+                return
+            }
+            Issue.record("Thrown error does not match expectations: \(error.errorDescription)")
+        } catch {
+            Issue.record("Thrown error does not match expectations: \(error.localizedDescription)")
+        }
+        Issue.record("Unexpectedly no error was thrown")
+    }
 }
 
 fileprivate enum SimpleSchemaV0_0_1: VersionedSchema {

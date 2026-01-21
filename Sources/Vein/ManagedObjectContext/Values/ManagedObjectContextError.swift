@@ -17,7 +17,7 @@ public enum ManagedObjectContextError: Error {
     case unexpectedlyEmptyResult(message: String)
     case unknownSQLite(message: String, code: Int32)
     case noSuchTable(message: String)
-    case baseNewerThanDestination(any PersistentModel.Type, any PersistentModel.Type)
+    case baseNotOlderThanDestination(any PersistentModel.Type, any PersistentModel.Type)
     case fieldMismatch(any PersistentModel.Type, any PersistentModel.Type)
     case notInsideMigration(String)
     case other(message: String)
@@ -52,8 +52,8 @@ extension ManagedObjectContextError: LocalizedError {
                 return "SQLite raised an error with code \(code): \(message)"
             case .noSuchTable(message: let message):
                 return message
-            case .baseNewerThanDestination(let origin, let destination):
-                return "Version of \(origin.schema) higher than \(destination.schema)"
+            case .baseNotOlderThanDestination(let origin, let destination):
+                return "Version of \(origin.schema) not lower than \(destination.schema)"
             case .fieldMismatch(let origin, let destination):
                 return "Fields of \(origin.schema) don't match fields of \(destination.schema)"
             case .notInsideMigration(let message):
@@ -91,7 +91,7 @@ extension ManagedObjectContextError: LocalizedError {
                 return "SQLite encountered an internal error"
             case .noSuchTable:
                 return "Attempted to do work on a table that doesn't exist"
-            case .baseNewerThanDestination:
+            case .baseNotOlderThanDestination:
                 return "Migration base version number must be lower"
             case .fieldMismatch:
                 return "PersistentModel/unchangedMigration requires fields of origin and destination to have unchanged underlying types and names"
@@ -124,7 +124,7 @@ extension ManagedObjectContextError: LocalizedError {
                 return "Try restarting the app."
             case .noSuchTable:
                 return "Create the table or talk to your admin."
-            case .baseNewerThanDestination:
+            case .baseNotOlderThanDestination:
                 return "Switch the model versions to match OldModel.unchangedMigrate(to: NewModel.self, on: context)"
             case .fieldMismatch:
                 return "Make sure the fields of both versions haven't changed or migrate manually"

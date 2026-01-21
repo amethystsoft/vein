@@ -57,8 +57,6 @@ struct MigrationTests {
         #expect(newStoredSchemas == [ComplexSchemaV0_0_2.Test.schema])
     }
     
-    // TODO: test handling of errors and unpermitted actions
-    
     func prepareContainerLocation(name: String) throws -> String {
         let containerPath = FileManager.default.temporaryDirectory
         

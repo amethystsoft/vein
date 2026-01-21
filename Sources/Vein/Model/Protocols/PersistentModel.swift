@@ -51,11 +51,13 @@ extension PersistentModel {
         on context: ManagedObjectContext
     ) throws {
         guard context.isInActiveMigration else {
-            throw ManagedObjectContextError.notInsideMigration("PersistentModel/unchangedMigration")
+            throw ManagedObjectContextError
+                .notInsideMigration("PersistentModel/unchangedMigration")
         }
         
         guard version < newModel.version else {
-            throw ManagedObjectContextError.baseNewerThanDestination(Self.self, newModel)
+            throw ManagedObjectContextError
+                .baseNotOlderThanDestination(Self.self, newModel)
         }
         
         guard Set(Self._fieldInformation) == Set(newModel._fieldInformation) else {
@@ -70,7 +72,8 @@ extension PersistentModel {
         on context: ManagedObjectContext
     ) throws {
         guard context.isInActiveMigration else {
-            throw ManagedObjectContextError.notInsideMigration("PersistentModel/deleteMigration")
+            throw ManagedObjectContextError
+                .notInsideMigration("PersistentModel/deleteMigration")
         }
         
         try context.deleteTable(schema)
