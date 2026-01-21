@@ -20,6 +20,8 @@ public enum ManagedObjectContextError: Error {
     case baseNotOlderThanDestination(any PersistentModel.Type, any PersistentModel.Type)
     case fieldMismatch(any PersistentModel.Type, any PersistentModel.Type)
     case notInsideMigration(String)
+    case destinationMustHaveOnlyAddedFields(any PersistentModel.Type, any PersistentModel.Type)
+    case automaticMigrationRequiresOnlyOptionalFieldsAdded(any PersistentModel.Type, any PersistentModel.Type)
     case other(message: String)
 }
 
@@ -58,6 +60,18 @@ extension ManagedObjectContextError: LocalizedError {
                 return "Fields of \(origin.schema) don't match fields of \(destination.schema)"
             case .notInsideMigration(let message):
                 return "Function is only available during a migration: \(message)"
+            case .destinationMustHaveOnlyAddedFields(let origin, let destination):
+                return
+                    """
+                    PersistentModel/fieldsAddedMigration requires only adding Fields. \
+                    Migration between \(origin.schema) and \(destination.schema)
+                    """
+            case .automaticMigrationRequiresOnlyOptionalFieldsAdded(let origin, let destination):
+                return
+                    """
+                    PersistentModel/fieldsAddedMigration requires added fields to have nullable SQLiteValue. \
+                    Migration between \(origin.schema) and \(destination.schema)
+                    """
             case .other(let message):
                 return "Unexpected: \(message)"
         }
@@ -97,6 +111,10 @@ extension ManagedObjectContextError: LocalizedError {
                 return "PersistentModel/unchangedMigration requires fields of origin and destination to have unchanged underlying types and names"
             case .notInsideMigration:
                 return "Certain functions are only available during migrations to ensure stability"
+            case .destinationMustHaveOnlyAddedFields:
+                return "Destination model doesn't have the same fields as the origin model plus new ones"
+            case .automaticMigrationRequiresOnlyOptionalFieldsAdded:
+                return "New schema adds non-optional Fields."
             case .other:
                 return nil
         }
@@ -130,6 +148,14 @@ extension ManagedObjectContextError: LocalizedError {
                 return "Make sure the fields of both versions haven't changed or migrate manually"
             case .notInsideMigration:
                 return "Make sure to only call the function during an active migration"
+            case .destinationMustHaveOnlyAddedFields:
+                return
+                    """
+                    Use PersistentModel/unchangedMigration if the Field names and \
+                    underlying SQLite Values didn't change or migrate manually.
+                    """
+            case .automaticMigrationRequiresOnlyOptionalFieldsAdded:
+                return "Only add Fields with nullable SQLiteValue or migrate manually."
             case .other:
                 return nil
         }

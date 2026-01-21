@@ -65,6 +65,7 @@ extension PersistentModel {
         }
         
         try context.renameSchema(schema, to: newModel.schema)
+        try context.registerMigration(schema: newModel.schema, version: newModel.version)
     }
     
     @MainActor
@@ -77,6 +78,63 @@ extension PersistentModel {
         }
         
         try context.deleteTable(schema)
+    }
+    
+    @MainActor
+    public static func fieldsAddedMigration(
+        to newModel: any PersistentModel.Type,
+        on context: ManagedObjectContext
+    ) throws {
+        guard context.isInActiveMigration else {
+            throw ManagedObjectContextError
+                .notInsideMigration("PersistentModel/fieldsAddedMigration")
+        }
+        
+        guard version < newModel.version else {
+            throw ManagedObjectContextError
+                .baseNotOlderThanDestination(Self.self, newModel)
+        }
+        
+        let oldInformationSet = Set(Self._fieldInformation)
+        let newInformationSet = Set(newModel._fieldInformation)
+        
+        let toAddInformation = newInformationSet.subtracting(oldInformationSet)
+        
+        guard
+            Self._fieldInformation.count < newModel._fieldInformation.count,
+            toAddInformation.count
+            ==
+            newInformationSet.count - oldInformationSet.count
+        else {
+            throw ManagedObjectContextError
+                .destinationMustHaveOnlyAddedFields(Self.self, newModel)
+        }
+        
+        guard
+            !toAddInformation.contains(where: {
+                !$0.typeName.isNull
+            })
+        else {
+            throw ManagedObjectContextError
+                .automaticMigrationRequiresOnlyOptionalFieldsAdded(Self.self, newModel)
+        }
+        
+        do {
+            try context.renameSchema(schema, to: newModel.schema)
+            
+            for information in toAddInformation {
+                try information.addRetroactively(to: newModel.schema, on: context)
+            }
+            try context.registerMigration(schema: newModel.schema, version: newModel.version)
+        } catch let error as SQLite.Result {
+            let parsed = error.parse()
+            switch parsed {
+                    // Returning, because schema will be created on first Model insert
+                    // Therefore noSuchTable is acceptable here
+                case .noSuchTable: return
+                default: throw parsed
+            }
+        }
     }
 }
 

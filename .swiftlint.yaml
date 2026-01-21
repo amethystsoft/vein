@@ -1,3 +1,4 @@
 disabled_rules:
   - type_name
   - private_over_fileprivate
+  - switch_case_alignment
