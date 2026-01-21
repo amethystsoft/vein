@@ -86,7 +86,7 @@ extension PersistentModel {
     ) throws {
         guard context.isInActiveMigration else {
             throw ManagedObjectContextError
-                .notInsideMigration("PersistentModel/unchangedMigration")
+                .notInsideMigration("PersistentModel/fieldsAddedMigration")
         }
         
         guard version < newModel.version else {

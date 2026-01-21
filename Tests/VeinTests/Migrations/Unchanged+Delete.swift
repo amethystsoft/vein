@@ -206,7 +206,7 @@ extension MigrationTests {
         do {
             try SimpleSchemaV0_0_1.Test
                 .unchangedMigration(
-                    to: SimpleSchemaV0_0_3.Test.self,
+                    to: SimpleSchemaV0_0_4.Test.self,
                     on: container.context
                 )
         } catch let error as ManagedObjectContextError {
@@ -217,7 +217,7 @@ extension MigrationTests {
                 ) = error
             {
                 #expect(base.schema == SimpleSchemaV0_0_1.Test.schema)
-                #expect(destination.schema == SimpleSchemaV0_0_3.Test.schema)
+                #expect(destination.schema == SimpleSchemaV0_0_4.Test.schema)
                 return
             }
             Issue.record("Thrown error does not match expectations: \(error.errorDescription)")

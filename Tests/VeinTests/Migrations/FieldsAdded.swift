@@ -417,6 +417,8 @@ fileprivate enum SimpleMigration: SchemaMigrationPlan {
                 let new = SimpleSchemaV0_0_4.Test(
                     addedAt: Date(timeIntervalSince1970: Double(model.date))
                 )
+                new.additionalField = model.additionalField
+                
                 try context.delete(model)
                 try context.insert(new)
             }
