@@ -3,27 +3,24 @@ import SQLite
 
 public final class ModelContainer: Sendable {
     private let migration: SchemaMigrationPlan.Type
-    private let managedModels: Set<AnyPersistentModelType>
     private let path: String
     public let context: ManagedObjectContext
-    
-    public convenience init(
-        models: any PersistentModel.Type...,
-        migration: SchemaMigrationPlan.Type,
-        at path: String
-    ) throws(ManagedObjectContextError) {
-        try self.init(models: Array(models), migration: migration, at: path)
-    }
+    public let versionedSchema: VersionedSchema.Type
     
     public init(
-        models: [any PersistentModel.Type],
+        _ versionedSchema: VersionedSchema.Type,
         migration: SchemaMigrationPlan.Type,
         at path: String
     ) throws(ManagedObjectContextError) {
+        guard migration.schemas.contains(where: { $0.self == versionedSchema }) else {
+            throw ManagedObjectContextError.schemaNotRegisteredOnMigrationPlan(versionedSchema, migration)
+        }
+        
+        // TODO: make ManagedObjectContext only accept models from the versionedSchema or its predecessors(in migration)
         self.context = try ManagedObjectContext(path: path)
-        self.managedModels = Set(models.map { AnyPersistentModelType($0)})
         self.migration = migration
         self.path = path
+        self.versionedSchema = versionedSchema
         
         do {
             try context.createMigrationsTable()
@@ -83,22 +80,17 @@ public final class ModelContainer: Sendable {
     @MainActor
     private func determineMigrationStage() throws -> MigrationStage? {
         let version = try context.getLatestMigrationVersion()
-        guard let latestRegisteredSchema = migration.schemas.sorted(by: {
-            $0.version < $1.version
-        }).last else {
-            throw ManagedObjectContextError.emptySchemaMigrationPlan(migration)
-        }
         
         // If no current version is found the database is treated as empty and
         // no migration is required
         guard let version else { return nil }
         
         // Already up to date, no migration is necessary
-        if
-            version == latestRegisteredSchema.version
-        {
+        if version == versionedSchema.version {
             return nil
         }
+        
+        // TODO: add handling of latest table version being larger than the one context was initialized with
         
         var currentSchema: VersionedSchema.Type? = nil
         

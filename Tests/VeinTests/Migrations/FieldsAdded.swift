@@ -13,7 +13,7 @@ extension MigrationTests {
             "Field added migration test started with db location: \(dbPath)"
         )
         
-        let container = try ModelContainer(models: SimpleSchemaV0_0_3.models, migration: SimpleMigration.self, at: dbPath)
+        let container = try ModelContainer(SimpleSchemaV0_0_3.self, migration: SimpleMigration.self, at: dbPath)
         
         let test = SimpleSchemaV0_0_3.AddingFieldsModel(value: "")
         
@@ -28,7 +28,7 @@ extension MigrationTests {
         )
         
         // Create new container & trigger migration
-        let newContainer = try ModelContainer(models: SimpleSchemaV0_0_4.models, migration: SimpleMigration.self, at: dbPath)
+        let newContainer = try ModelContainer(SimpleSchemaV0_0_4.self, migration: SimpleMigration.self, at: dbPath)
         try newContainer.migrate()
         
         // Check new model was migrated correctly
@@ -47,7 +47,7 @@ extension MigrationTests {
     @Test
     func versionOrderThrowsOnFieldsAddedMigration() throws {
         let dbPath = try prepareContainerLocation(name: "errorTests")
-        let container = try ModelContainer(models: SimpleSchemaV0_0_1.models, migration: SimpleMigration.self, at: dbPath)
+        let container = try ModelContainer(SimpleSchemaV0_0_1.self, migration: SimpleMigration.self, at: dbPath)
         
         // Entering migration manually
         // This is an internal function and not publicly exposed
@@ -83,7 +83,7 @@ extension MigrationTests {
     @Test
     func equalVersionThrowsOnFieldsAddedMigration() throws {
         let dbPath = try prepareContainerLocation(name: "errorTests")
-        let container = try ModelContainer(models: SimpleSchemaV0_0_1.models, migration: SimpleMigration.self, at: dbPath)
+        let container = try ModelContainer(SimpleSchemaV0_0_1.self, migration: SimpleMigration.self, at: dbPath)
         
         // Entering migration manually
         // This is an internal function and not publicly exposed
@@ -118,7 +118,7 @@ extension MigrationTests {
     @Test
     func destinationMustHaveOnlyAddedFieldsOnFieldsAddedMigration() throws {
         let dbPath = try prepareContainerLocation(name: "errorTests")
-        let container = try ModelContainer(models: SimpleSchemaV0_0_3.models, migration: SimpleMigration.self, at: dbPath)
+        let container = try ModelContainer(SimpleSchemaV0_0_3.self, migration: SimpleMigration.self, at: dbPath)
         
         // Entering migration manually
         // This is an internal function and not publicly exposed
@@ -153,7 +153,7 @@ extension MigrationTests {
     @Test
     func requiresOnlyOptionalFieldsAddedOnFieldsAddedMigration() throws {
         let dbPath = try prepareContainerLocation(name: "errorTests")
-        let container = try ModelContainer(models: SimpleSchemaV0_0_3.models, migration: SimpleMigration.self, at: dbPath)
+        let container = try ModelContainer(SimpleSchemaV0_0_3.self, migration: SimpleMigration.self, at: dbPath)
         
         // Entering migration manually
         // This is an internal function and not publicly exposed

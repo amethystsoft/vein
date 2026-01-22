@@ -13,7 +13,7 @@ extension MigrationTests {
             "Simple migration test started with db location: \(dbPath)"
         )
         
-        let container = try ModelContainer(models: SimpleSchemaV0_0_1.models, migration: SimpleMigrationSuccess.self, at: dbPath)
+        let container = try ModelContainer(SimpleSchemaV0_0_1.self, migration: SimpleMigrationSuccess.self, at: dbPath)
         
         let timeStamp: Double = 1769097448
         
@@ -33,7 +33,7 @@ extension MigrationTests {
         )
         
         // Create new container & trigger migration
-        let newContainer = try ModelContainer(models: SimpleSchemaV0_0_4.models, migration: SimpleMigrationSuccess.self, at: dbPath)
+        let newContainer = try ModelContainer(SimpleSchemaV0_0_4.self, migration: SimpleMigrationSuccess.self, at: dbPath)
         try newContainer.migrate()
         
         // Check new model was migrated correctly
@@ -49,7 +49,7 @@ extension MigrationTests {
     @Test
     func unchangedFailsOutsideMigration() throws {
         let dbPath = try prepareContainerLocation(name: "tableDeletion")
-        let container = try ModelContainer(models: SimpleSchemaV0_0_1.models, migration: SimpleMigrationSuccess.self, at: dbPath)
+        let container = try ModelContainer(SimpleSchemaV0_0_1.self, migration: SimpleMigrationSuccess.self, at: dbPath)
         
         
         do {
@@ -73,7 +73,7 @@ extension MigrationTests {
     @Test
     func deleteFailsOutsideMigration() throws {
         let dbPath = try prepareContainerLocation(name: "tableDeletion")
-        let container = try ModelContainer(models: SimpleSchemaV0_0_1.models, migration: SimpleMigrationSuccess.self, at: dbPath)
+        let container = try ModelContainer(SimpleSchemaV0_0_1.self, migration: SimpleMigrationSuccess.self, at: dbPath)
 
         do {
             try SimpleSchemaV0_0_1.Test
@@ -93,7 +93,7 @@ extension MigrationTests {
     @Test
     func versionOrderThrowsOnUnchangedMigration() throws {
         let dbPath = try prepareContainerLocation(name: "errorTests")
-        let container = try ModelContainer(models: SimpleSchemaV0_0_1.models, migration: SimpleMigrationSuccess.self, at: dbPath)
+        let container = try ModelContainer(SimpleSchemaV0_0_1.self, migration: SimpleMigrationSuccess.self, at: dbPath)
         
         // Entering migration manually
         // This is an internal function and not publicly exposed
@@ -128,7 +128,7 @@ extension MigrationTests {
     @Test
     func equalVersionThrowsOnUnchangedMigration() throws {
         let dbPath = try prepareContainerLocation(name: "errorTests")
-        let container = try ModelContainer(models: SimpleSchemaV0_0_1.models, migration: SimpleMigrationSuccess.self, at: dbPath)
+        let container = try ModelContainer(SimpleSchemaV0_0_1.self, migration: SimpleMigrationSuccess.self, at: dbPath)
         
         // Entering migration manually
         // This is an internal function and not publicly exposed
@@ -164,7 +164,7 @@ extension MigrationTests {
     @Test
     func unchangedMigrationFieldMismatchOnSQLiteTypeChange() throws {
         let dbPath = try prepareContainerLocation(name: "errorTests")
-        let container = try ModelContainer(models: SimpleSchemaV0_0_1.models, migration: SimpleMigrationSuccess.self, at: dbPath)
+        let container = try ModelContainer(SimpleSchemaV0_0_1.self, migration: SimpleMigrationSuccess.self, at: dbPath)
         
         // Entering migration manually
         // This is an internal function and not publicly exposed
@@ -199,7 +199,7 @@ extension MigrationTests {
     @Test
     func unchangedMigrationFieldMismatchOnNameChange() throws {
         let dbPath = try prepareContainerLocation(name: "errorTests")
-        let container = try ModelContainer(models: SimpleSchemaV0_0_1.models, migration: SimpleMigrationSuccess.self, at: dbPath)
+        let container = try ModelContainer(SimpleSchemaV0_0_1.self, migration: SimpleMigrationSuccess.self, at: dbPath)
         
         // Entering migration manually
         // This is an internal function and not publicly exposed

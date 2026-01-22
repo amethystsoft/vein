@@ -18,7 +18,7 @@ struct MigrationTests {
             "Complex migration test started with db location: \(dbPath)"
         )
         
-        let container = try ModelContainer(models: ComplexSchemaV0_0_1.models, migration: ComplexMigrationSuccess.self, at: dbPath)
+        let container = try ModelContainer(ComplexSchemaV0_0_1.self, migration: ComplexMigrationSuccess.self, at: dbPath)
         
         // Create initial models
         let model = ComplexSchemaV0_0_1.Test(
@@ -42,7 +42,7 @@ struct MigrationTests {
         )
         
         // Create new container & trigger migration
-        let newContainer = try ModelContainer(models: ComplexSchemaV0_0_2.models, migration: ComplexMigrationSuccess.self, at: dbPath)
+        let newContainer = try ModelContainer(ComplexSchemaV0_0_2.self, migration: ComplexMigrationSuccess.self, at: dbPath)
         try newContainer.migrate()
         
         // Check new model was migrated correctly
@@ -60,7 +60,7 @@ struct MigrationTests {
     func prepareContainerLocation(name: String) throws -> String {
         let containerPath = FileManager.default.temporaryDirectory
         
-        let dbDir = containerPath.relativePath.appending("/\(testID.uuidString)")
+        let dbDir = containerPath.relativePath.appending("/veinTests/\(testID.uuidString)")
         
         let dbPath = dbDir.appending("/\(name).sqlite3")
         
