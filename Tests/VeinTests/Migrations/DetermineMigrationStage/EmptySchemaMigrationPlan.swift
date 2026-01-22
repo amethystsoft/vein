@@ -15,9 +15,7 @@ extension MigrationTests {
         do {
             try container.migrate()
         } catch let error as ManagedObjectContextError {
-            if
-                case let .emptySchemaMigrationPlan(migration) = error
-            {
+            if case let .emptySchemaMigrationPlan(migration) = error {
                 #expect("\(migration)" == "\(MigrationPlan.self)")
                 return
             }

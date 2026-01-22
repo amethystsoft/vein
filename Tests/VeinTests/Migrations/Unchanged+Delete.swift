@@ -15,11 +15,9 @@ extension MigrationTests {
         
         let container = try ModelContainer(models: SimpleSchemaV0_0_1.models, migration: SimpleMigrationSuccess.self, at: dbPath)
         
-        // Dates are stored as strings, so there are no milliseconds when fetching
-        // Might need to be changed in the future
-        let currentTimeStamp = Int(Date().timeIntervalSince1970)
+        let timeStamp: Double = 1769097448
         
-        let test = SimpleSchemaV0_0_1.Test(date: Date(timeIntervalSince1970: Double(currentTimeStamp)))
+        let test = SimpleSchemaV0_0_1.Test(date: Date(timeIntervalSince1970: timeStamp))
         let unused = SimpleSchemaV0_0_1.Unused(content: "whoppa")
         
         try container.context.insert(test)

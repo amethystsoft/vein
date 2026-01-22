@@ -73,12 +73,8 @@ public final class ModelContainer: Sendable {
     private func unmigratedSchemas(from version: VersionedSchema.Type) throws -> [String] {
         let tables = try context.getNonEmptySchemas()
         
-        var unhandledSchemas = [String]()
-        
-        for model in version.models {
-            if tables.contains(model.schema) {
-                unhandledSchemas.append(model.schema)
-            }
+        var unhandledSchemas = tables.filter { table in
+            version.models.contains(where: { $0.schema == table })
         }
         
         return unhandledSchemas
