@@ -52,29 +52,25 @@ public struct MigrationTester {
             throw ManagedObjectContextError.other(message: "\(migrationPlan) doesn't have any schemas")
         }
         
-        try autoreleasepool {
-            let container = try ModelContainer(
-                startingVersion,
-                migration: migrationPlan,
-                at: containerPath
-            )
-            
-            try initialData(container.context)
-        }
+        let container = try ModelContainer(
+            startingVersion,
+            migration: migrationPlan,
+            at: containerPath
+        )
+        
+        try initialData(container.context)
         
         let modelVersions = validations.keys.sorted()
         
         for schema in sortedSchemas.dropFirst() {
-            try autoreleasepool {
-                let currentContainer = try ModelContainer(
-                    schema,
-                    migration: migrationPlan,
-                    at: containerPath
-                )
-                
-                try currentContainer.migrate()
-                try validations[schema.version]?(currentContainer.context)
-            }
+            let currentContainer = try ModelContainer(
+                schema,
+                migration: migrationPlan,
+                at: containerPath
+            )
+            
+            try currentContainer.migrate()
+            try validations[schema.version]?(currentContainer.context)
         }
     }
     
