@@ -481,10 +481,30 @@ public actor ManagedObjectContext {
         let tables = try connection.schema.objectDefinitions(type: .table)
         return tables.map { $0.name }.filter {
             [
-                MigrationTable.schema,
-                "sqlite_sequence"
-            ].contains($0) == false
+                MigrationTable.schema
+            ].contains($0) == false &&
+            !$0.starts(with: "sqlite_")
         }
+    }
+    
+    public nonisolated func getNonEmptySchemas() throws -> [String] {
+        let tables = try connection.schema.objectDefinitions(type: .table)
+        let filtered = tables.map { $0.name }.filter {
+            [
+                MigrationTable.schema
+            ].contains($0) == false &&
+            !$0.starts(with: "sqlite_")
+        }
+        
+        var nonEmpty = [String]()
+        
+        for table in filtered {
+            if try connection.scalar(Table(table).count) > 0 {
+                nonEmpty.append(table)
+            }
+        }
+        
+        return nonEmpty
     }
 }
 

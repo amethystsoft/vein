@@ -57,7 +57,7 @@ extension ManagedObjectContext {
     }
     
     @MainActor
-    public func cleanupOldSchema(_ schema: any VersionedSchema.Type) throws {
+    package func cleanupOldSchema(_ schema: any VersionedSchema.Type) throws {
         guard isInActiveMigration else {
             throw ManagedObjectContextError
                 .notInsideMigration("ManagedObjectContext/cleanupOldSchema")

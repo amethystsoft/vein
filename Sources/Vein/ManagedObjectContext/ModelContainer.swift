@@ -37,27 +37,47 @@ public final class ModelContainer: Sendable {
     
     @MainActor
     public func migrate() throws {
-        guard case let .complex(
-            originVersion,
-            _,
-            migrationBlock,
-            didFinishMigration
-        ) = try determineMigrationStage() else { return }
-        
         defer {
             context.isInActiveMigration = false
         }
-        
         context.isInActiveMigration = true
         
-        try context.transaction {
-            try migrationBlock?(self.context)
+        try context.transaction { [self] in
+            while case let .complex(
+                originVersion,
+                destinationVersion,
+                migrationBlock,
+                didFinishMigration
+            ) = try determineMigrationStage() {
+                
+                try migrationBlock?(context)
+                
+                let unmigratedSchemas = try unmigratedSchemas(from: originVersion)
+                
+                guard unmigratedSchemas.isEmpty else {
+                    throw ManagedObjectContextError.modelsUnhandledAfterMigration(
+                        originVersion,
+                        destinationVersion,
+                        unmigratedSchemas
+                    )
+                }
+                
+                try context.cleanupOldSchema(originVersion)
+                
+                try didFinishMigration?(context)
+            }
+        }
+    }
+    
+    @MainActor
+    private func unmigratedSchemas(from version: VersionedSchema.Type) throws -> [String] {
+        let tables = try context.getNonEmptySchemas()
+        
+        var unhandledSchemas = tables.filter { table in
+            version.models.contains(where: { $0.schema == table })
         }
         
-        try didFinishMigration?(context)
-        
-        // TODO: Automatically upgrade table name if unchanged
-        // TODO: Automatically delete old tables
+        return unhandledSchemas
     }
     
     @MainActor
@@ -66,13 +86,16 @@ public final class ModelContainer: Sendable {
         guard let latestRegisteredSchema = migration.schemas.sorted(by: {
             $0.version < $1.version
         }).last else {
-            fatalError("SchemaMigrationPlan must have one or more managed VersionedSchemas.")
+            throw ManagedObjectContextError.emptySchemaMigrationPlan(migration)
         }
+        
+        // If no current version is found the database is treated as empty and
+        // no migration is required
+        guard let version else { return nil }
         
         // Already up to date, no migration is necessary
         if
-            version == latestRegisteredSchema.version ||
-            version == nil
+            version == latestRegisteredSchema.version
         {
             return nil
         }
@@ -87,7 +110,7 @@ public final class ModelContainer: Sendable {
         }
         
         guard let currentSchema else {
-            fatalError("No schema matching current model version")
+            throw ManagedObjectContextError.noSchemaMatchingVersion(migration, version)
         }
         
         for stage in migration.stages.reversed() {
@@ -96,6 +119,6 @@ public final class ModelContainer: Sendable {
             }
         }
         
-        fatalError("No migration for current outdated model version: \(version.debugDescription)")
+        throw ManagedObjectContextError.noMigrationForOutdatedModelVersion(migration, version)
     }
 }

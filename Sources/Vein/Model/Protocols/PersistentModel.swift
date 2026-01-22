@@ -159,7 +159,7 @@ public protocol ModelSchemaMigration: Sendable {
     init()
 }
 
-public protocol VersionedSchema {
+public protocol VersionedSchema: Sendable {
     static var version: ModelVersion { get }
     
     static var models: [any PersistentModel.Type] { get }

@@ -15,7 +15,9 @@ extension MigrationTests {
         
         let container = try ModelContainer(models: SimpleSchemaV0_0_1.models, migration: SimpleMigrationSuccess.self, at: dbPath)
         
-        let test = SimpleSchemaV0_0_1.Test(date: Date())
+        let timeStamp: Double = 1769097448
+        
+        let test = SimpleSchemaV0_0_1.Test(date: Date(timeIntervalSince1970: timeStamp))
         let unused = SimpleSchemaV0_0_1.Unused(content: "whoppa")
         
         try container.context.insert(test)
@@ -31,17 +33,17 @@ extension MigrationTests {
         )
         
         // Create new container & trigger migration
-        let newContainer = try ModelContainer(models: SimpleSchemaV0_0_2.models, migration: SimpleMigrationSuccess.self, at: dbPath)
+        let newContainer = try ModelContainer(models: SimpleSchemaV0_0_4.models, migration: SimpleMigrationSuccess.self, at: dbPath)
         try newContainer.migrate()
         
         // Check new model was migrated correctly
-        let first = try newContainer.context.fetchAll(SimpleSchemaV0_0_2.Test._PredicateHelper()._builder()).first
+        let first = try newContainer.context.fetchAll(SimpleSchemaV0_0_4.Test._PredicateHelper()._builder()).first
         
-        #expect(first?.date == test.date.ISO8601Format(Date.sqliteFormatStyle))
+        #expect(first?.addedAt == test.date)
         
         // Check if tables got updated/deleted like expected
         let newStoredSchemas = try newContainer.context.getAllStoredSchemas()
-        #expect(newStoredSchemas == [SimpleSchemaV0_0_2.Test.schema])
+        #expect(newStoredSchemas == [SimpleSchemaV0_0_4.Test.schema])
     }
     
     @Test
@@ -322,7 +324,9 @@ fileprivate enum SimpleMigrationSuccess: SchemaMigrationPlan {
     
     static var stages: [MigrationStage] {
         [
-            migrateV1toV2
+            migrateV1toV2,
+            migrateV2toV3,
+            migrateV3toV4
         ]
     }
     
@@ -339,5 +343,38 @@ fileprivate enum SimpleMigrationSuccess: SchemaMigrationPlan {
         },
         didMigrate: nil
     )
+    
+    static let migrateV2toV3 = MigrationStage.complex(
+        fromVersion: SimpleSchemaV0_0_2.self,
+        toVersion: SimpleSchemaV0_0_3.self,
+        willMigrate: { context in
+            let models = try context.fetchAll(SimpleSchemaV0_0_2._TestPredicateHelper()._builder())
+            
+            for model in models {
+                let date = try Date.sqliteFormatStyle.parse(model.date)
+                let newModel = SimpleSchemaV0_0_3.Test(date: Int(date.timeIntervalSince1970))
+                try context.insert(newModel)
+                try context.delete(model)
+            }
+        },
+        didMigrate: nil
+    )
+    
+    static let migrateV3toV4 = MigrationStage.complex(
+        fromVersion: SimpleSchemaV0_0_3.self,
+        toVersion: SimpleSchemaV0_0_4.self,
+        willMigrate: { context in
+            let models = try context.fetchAll(SimpleSchemaV0_0_3._TestPredicateHelper()._builder())
+            
+            for model in models {
+                let date = Date(timeIntervalSince1970: Double(model.date))
+                let newModel = SimpleSchemaV0_0_4.Test(addedAt: date)
+                try context.insert(newModel)
+                try context.delete(model)
+            }
+        },
+        didMigrate: nil
+    )
+    
 }
 
