@@ -23,9 +23,9 @@ public enum ManagedObjectContextError: Error {
     case destinationMustHaveOnlyAddedFields(any PersistentModel.Type, any PersistentModel.Type)
     case automaticMigrationRequiresOnlyOptionalFieldsAdded(any PersistentModel.Type, any PersistentModel.Type)
     case modelsUnhandledAfterMigration(any VersionedSchema.Type, any VersionedSchema.Type, [String])
-    case emptySchemaMigrationPlan(SchemaMigrationPlan.Type)
     case noSchemaMatchingVersion(SchemaMigrationPlan.Type, ModelVersion)
     case noMigrationForOutdatedModelVersion(SchemaMigrationPlan.Type, ModelVersion)
+    case schemaNotRegisteredOnMigrationPlan(VersionedSchema.Type, SchemaMigrationPlan.Type)
     case other(message: String)
 }
 
@@ -82,12 +82,12 @@ extension ManagedObjectContextError: LocalizedError {
                     Migration from \(origin) to \(destination) left behind \
                     unhandled rows for schemas \(models)
                     """
-            case .emptySchemaMigrationPlan(let plan):
-                return "\(plan) must have one or more managed VersionedSchemas."
             case .noSchemaMatchingVersion(let plan, let version):
                 return "\(plan) is missing a versioned schema matching version \(version)"
             case .noMigrationForOutdatedModelVersion(let plan, let version):
                 return "\(plan) doesn't have a migration stage starting with outdated \(version)"
+            case .schemaNotRegisteredOnMigrationPlan(let versionedSchema, let plan):
+                return "\(versionedSchema) isn't managed by \(plan)"
             case .other(let message):
                 return "Unexpected: \(message)"
         }
@@ -133,12 +133,12 @@ extension ManagedObjectContextError: LocalizedError {
                 return "New schema adds non-optional Fields."
             case .modelsUnhandledAfterMigration:
                 return "Every row of the old schema must be handled for a migration to succeed"
-            case .emptySchemaMigrationPlan:
-                return "SchemaMigrationPlan cannot be used without managed VersionedSchemas"
             case .noSchemaMatchingVersion:
                 return "Database is on the state of a version not managed by VersionedSchema"
             case .noMigrationForOutdatedModelVersion:
                 return "Migration chain is incomplete. No migration stage found for outdated VersionedSchema."
+            case .schemaNotRegisteredOnMigrationPlan:
+                return "ModelContainer only accepts a VersionedSchema that's managed by the passed SchemaMigrationPlan"
             case .other:
                 return nil
         }
@@ -187,8 +187,6 @@ extension ManagedObjectContextError: LocalizedError {
                     For manual migration delete an old model once migrated to the new schema. \
                     Make sure to handle every schema with one of the supported migrations.
                     """
-            case .emptySchemaMigrationPlan:
-                return "Add your VersionedSchemas to the static var schemas protocol requirement."
             case .noSchemaMatchingVersion:
                 return
                     """
@@ -202,6 +200,8 @@ extension ManagedObjectContextError: LocalizedError {
                     """
                     Make sure there is an uninterrupted chain of migration stages.
                     """
+            case .schemaNotRegisteredOnMigrationPlan:
+                return "Add the versioned schema to the static `schemas` property of the SchemaMigrationPlan."
             case .other:
                 return nil
         }

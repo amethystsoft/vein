@@ -6,16 +6,22 @@ import Logging
 
 extension MigrationTests {
     @Test func modelsUnhandledAfterMigration() async throws {
-        let path = try prepareContainerLocation(name: "determineSchemaVersion")
+        let path = try prepareContainerLocation(name: "modelsUnhandledAfterMigration")
         let container = try ModelContainer(
-            models: [],
+            Version0_0_1.self,
             migration: MigrationPlan.self,
             at: path
         )
         let originModel = Version0_0_1.BasicModel(field: "very important content")
         try container.context.insert(originModel)
+        
+        let newContainer = try ModelContainer(
+            Version0_0_2.self,
+            migration: MigrationPlan.self,
+            at: path
+        )
         do {
-            try container.migrate()
+            try newContainer.migrate()
         } catch let error as ManagedObjectContextError {
             if
                 case let .modelsUnhandledAfterMigration(

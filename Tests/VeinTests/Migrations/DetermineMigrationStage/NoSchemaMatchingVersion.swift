@@ -8,14 +8,20 @@ extension MigrationTests {
     @Test func throwsNoMatchingSchemaVersion() async throws {
         let path = try prepareContainerLocation(name: "determineSchemaVersion")
         let container = try ModelContainer(
-            models: [],
-            migration: MigrationPlan.self,
+            Version0_0_1.self,
+            migration: SetupMigrationPlan.self,
             at: path
         )
         let originModel = Version0_0_1.BasicModel(field: "very important content")
         try container.context.insert(originModel)
+        
+        let newContainer = try ModelContainer(
+            Version0_0_2.self,
+            migration: MigrationPlan.self,
+            at: path
+        )
         do {
-            try container.migrate()
+            try newContainer.migrate()
         } catch let error as ManagedObjectContextError {
             if
                 case let .noSchemaMatchingVersion(
@@ -92,5 +98,15 @@ fileprivate enum MigrationPlan: SchemaMigrationPlan {
         willMigrate: nil,
         didMigrate: nil
     )
+}
+
+// NEVER POINT DIFFERENT SCHEMAMIGRATIONPLANS TO THE SAME DATABASE
+// only done here to easily test an error case
+fileprivate enum SetupMigrationPlan: SchemaMigrationPlan {
+    static var schemas: [any Vein.VersionedSchema.Type] {
+        [Version0_0_1.self]
+    }
+    
+    static var stages: [Vein.MigrationStage] {[]}
 }
 
