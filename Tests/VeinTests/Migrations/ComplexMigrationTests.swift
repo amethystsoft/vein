@@ -168,7 +168,7 @@ fileprivate enum ComplexMigrationSuccess: SchemaMigrationPlan {
                 try context.delete(test)
             }
             
-            try context.cleanupOldSchema(ComplexSchemaV0_0_1.self)
+            try ComplexSchemaV0_0_1.Unused.deleteMigration(on: context)
         },
         didMigrate: nil
     )

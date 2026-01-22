@@ -64,8 +64,16 @@ extension PersistentModel {
             throw ManagedObjectContextError.fieldMismatch(Self.self, newModel)
         }
         
-        try context.renameSchema(schema, to: newModel.schema)
-        try context.registerMigration(schema: newModel.schema, version: newModel.version)
+        do {
+            try context.renameSchema(schema, to: newModel.schema)
+            try context.registerMigration(schema: newModel.schema, version: newModel.version)
+        } catch let error as SQLite.Result {
+            let parsed = error.parse()
+            switch parsed {
+                case .noSuchTable: return
+                default: throw parsed
+            }
+        }
     }
     
     @MainActor
