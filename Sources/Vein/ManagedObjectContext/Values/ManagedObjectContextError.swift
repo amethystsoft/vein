@@ -8,10 +8,8 @@ public enum ManagedObjectContextError: Error {
     case writeInReadonly(message: String)
     case insufficientPermissions(message: String)
     case modelReference(message: String)
-    case idMissing(message: String)
     case keyMissing(message: String)
     case insertManagedModel(message: String)
-    case idAfterCreation(message: String)
     case io(message: String, code: Int32)
     case propertyDecode(message: String)
     case unexpectedlyEmptyResult(message: String)
@@ -26,6 +24,7 @@ public enum ManagedObjectContextError: Error {
     case noSchemaMatchingVersion(SchemaMigrationPlan.Type, ModelVersion)
     case noMigrationForOutdatedModelVersion(SchemaMigrationPlan.Type, ModelVersion)
     case schemaNotRegisteredOnMigrationPlan(VersionedSchema.Type, SchemaMigrationPlan.Type)
+    case capturedStateApplicationFailed(any Persistable.Type, String)
     case other(message: String)
 }
 
@@ -42,12 +41,8 @@ extension ManagedObjectContextError: LocalizedError {
                 return "Unexpectedly missing model reference: \(message)"
             case .keyMissing(let message):
                 return "Unexpectedly missing key: \(message)"
-            case .idMissing(let message):
-                return "Unexpectedly missing id on managed Model: \(message)"
             case .insertManagedModel(let message):
                 return "Tried to insert already managed Model into ManagedObjectContext: \(message)"
-            case .idAfterCreation(let message):
-                return "Failed to retrieve generated id after insertion: \(message)"
             case .propertyDecode(let message):
                 return "Database Scheme doesn't match expected: \(message)"
             case .unexpectedlyEmptyResult(let message):
@@ -88,6 +83,8 @@ extension ManagedObjectContextError: LocalizedError {
                 return "\(plan) doesn't have a migration stage starting with outdated \(version)"
             case .schemaNotRegisteredOnMigrationPlan(let versionedSchema, let plan):
                 return "\(versionedSchema) isn't managed by \(plan)"
+            case .capturedStateApplicationFailed(let type, let key):
+                return "Application of captured state failed while converting back to \(type) on field with key: \(key)"
             case .other(let message):
                 return "Unexpected: \(message)"
         }
@@ -105,10 +102,6 @@ extension ManagedObjectContextError: LocalizedError {
                 return "A Field is missing a reference to its parent Model"
             case .keyMissing:
                 return "A Field is missing its key"
-            case .idMissing:
-                return "An already managed Model Instance is missing its id"
-            case .idAfterCreation:
-                return "Failed to get id after attempt to insert Model"
             case .propertyDecode:
                 return "Failed to decode Property, Type mismatch"
             case .unexpectedlyEmptyResult:
@@ -139,6 +132,8 @@ extension ManagedObjectContextError: LocalizedError {
                 return "Migration chain is incomplete. No migration stage found for outdated VersionedSchema."
             case .schemaNotRegisteredOnMigrationPlan:
                 return "ModelContainer only accepts a VersionedSchema that's managed by the passed SchemaMigrationPlan"
+            case .capturedStateApplicationFailed:
+                return "Conversion from Any back to WrappedType failed."
             case .other:
                 return nil
         }
@@ -152,7 +147,7 @@ extension ManagedObjectContextError: LocalizedError {
                 return "Ensure the database file has write permissions."
             case .insufficientPermissions:
                 return "Grant the app file system access in System Settings."
-            case .modelReference, .idMissing, .keyMissing, .idAfterCreation:
+            case .modelReference, .keyMissing, .capturedStateApplicationFailed:
                 return "Create an issue with the code that raised the error."
             case .io:
                 return "Check disk space and file permissions."

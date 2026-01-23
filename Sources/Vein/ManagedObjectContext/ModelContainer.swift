@@ -35,9 +35,9 @@ public final class ModelContainer: Sendable {
     @MainActor
     public func migrate() throws {
         defer {
-            context.isInActiveMigration = false
+            context.isInActiveMigration.value = false
         }
-        context.isInActiveMigration = true
+        context.isInActiveMigration.value = true
         
         try context.transaction { [self] in
             while case let .complex(
@@ -69,12 +69,10 @@ public final class ModelContainer: Sendable {
     @MainActor
     private func unmigratedSchemas(from version: VersionedSchema.Type) throws -> [String] {
         let tables = try context.getNonEmptySchemas()
-        
-        var unhandledSchemas = tables.filter { table in
+
+        return tables.filter { table in
             version.models.contains(where: { $0.schema == table })
         }
-        
-        return unhandledSchemas
     }
     
     @MainActor

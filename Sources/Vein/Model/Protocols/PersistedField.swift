@@ -7,6 +7,7 @@ public protocol PersistedField: Sendable {
     var wrappedValue: WrappedType { get set }
     var isLazy: Bool { get }
     var model: (any PersistentModel)? { get }
+    func setStoreToCapturedState(_ state: Any)
     
     static var sqliteTypeName: SQLiteTypeName { get }
     func setValue(to: WrappedType)
@@ -17,7 +18,7 @@ extension PersistedField {
         WrappedType.sqliteTypeName
     }
     
-    var instanceKey: String {
+    public var instanceKey: String {
         guard let key else {
             fatalError(MOCError.keyMissing(message: "raised by Field property of Type '\(WrappedType.self)'").localizedDescription)
         }
@@ -38,14 +39,11 @@ extension PersistedField {
         return model._getSchema()
     }
     
-    var instanceID: Int64 {
+    var instanceID: ULID {
         guard let model else {
             fatalError(MOCError.modelReference(message: "raised by Field property of Type '\(WrappedType.self)'").localizedDescription)
         }
-        guard let id = model.id else {
-            fatalError(MOCError.idMissing(message: "raised by model of Type '\(model.self)'").localizedDescription)
-        }
-        return id
+        return model.id
     }
     
     var expressible: Expressible {

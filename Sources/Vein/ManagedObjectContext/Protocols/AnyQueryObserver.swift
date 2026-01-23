@@ -12,5 +12,5 @@ public protocol AnyPredicateBuilder {
 }
 
 struct WeakQueryObserver {
-    weak var query: AnyQueryObserver?
+    weak var query: (any AnyQueryObserver)?
 }

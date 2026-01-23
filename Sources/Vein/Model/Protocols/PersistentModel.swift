@@ -1,5 +1,6 @@
 import Foundation
 import SQLite
+@_exported import ULID
 
 public protocol PersistentModel: AnyObject, Sendable {
     associatedtype _PredicateHelper: PredicateConstructor where _PredicateHelper.Model == Self
@@ -7,7 +8,7 @@ public protocol PersistentModel: AnyObject, Sendable {
     var notifyOfChanges: () -> Void { get }
     
     static var schema: String { get }
-    var id: Int64? { get set }
+    var id: ULID { get set }
     var context: ManagedObjectContext? { get set }
     
     var _fields: [any PersistedField] { get }
@@ -17,7 +18,10 @@ public protocol PersistentModel: AnyObject, Sendable {
     
     static var version: ModelVersion { get }
     
-    init(id: Int64, fields: [String: SQLiteValue])
+    func extractPrimitiveState() -> PrimitiveState
+    func applyPrimitiveState(_ state: PrimitiveState)
+    
+    init(id: ULID, fields: [String: SQLiteValue])
 }
 
 extension PersistentModel {
@@ -25,8 +29,24 @@ extension PersistentModel {
     public var typeIdentifier: ObjectIdentifier { ObjectIdentifier(Self.self) }
     func _getSchema() -> String { Self.schema }
     
+    public func extractPrimitiveState() -> PrimitiveState {
+        var data = [String: Any]()
+        
+        for field in _fields {
+            data[field.instanceKey] = field.wrappedValue
+        }
+        
+        return PrimitiveState(values: data)
+    }
+    
+    public func applyPrimitiveState(_ state: PrimitiveState) {
+        for field in _fields {
+            field.setStoreToCapturedState(state.values[field.instanceKey]!)
+        }
+    }
+    
     internal func migrate(in context: Vein.ManagedObjectContext) throws(ManagedObjectContextError) {
-        var builder = context.createSchema(Self.schema)
+        var builder = context._createSchema(Self.schema)
             .id()
         
         // dropping first to not create `id` twice
@@ -50,7 +70,7 @@ extension PersistentModel {
         to newModel: any PersistentModel.Type,
         on context: ManagedObjectContext
     ) throws {
-        guard context.isInActiveMigration else {
+        guard context.isInActiveMigration.value else {
             throw ManagedObjectContextError
                 .notInsideMigration("PersistentModel/unchangedMigration")
         }
@@ -72,7 +92,7 @@ extension PersistentModel {
     public static func deleteMigration(
         on context: ManagedObjectContext
     ) throws {
-        guard context.isInActiveMigration else {
+        guard context.isInActiveMigration.value else {
             throw ManagedObjectContextError
                 .notInsideMigration("PersistentModel/deleteMigration")
         }
@@ -85,7 +105,7 @@ extension PersistentModel {
         to newModel: any PersistentModel.Type,
         on context: ManagedObjectContext
     ) throws {
-        guard context.isInActiveMigration else {
+        guard context.isInActiveMigration.value else {
             throw ManagedObjectContextError
                 .notInsideMigration("PersistentModel/fieldsAddedMigration")
         }

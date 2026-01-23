@@ -97,7 +97,7 @@ extension MigrationTests {
         
         // Entering migration manually
         // This is an internal function and not publicly exposed
-        container.context.isInActiveMigration = true
+        container.context.isInActiveMigration.value = true
         
         do {
             try SimpleSchemaV0_0_2.Test
@@ -132,7 +132,7 @@ extension MigrationTests {
         
         // Entering migration manually
         // This is an internal function and not publicly exposed
-        container.context.isInActiveMigration = true
+        container.context.isInActiveMigration.value = true
         
         // Testing PersistentModel/unchangedMigration
         do {
@@ -168,7 +168,7 @@ extension MigrationTests {
         
         // Entering migration manually
         // This is an internal function and not publicly exposed
-        container.context.isInActiveMigration = true
+        container.context.isInActiveMigration.value = true
         
         do {
             try SimpleSchemaV0_0_1.Test
@@ -203,7 +203,7 @@ extension MigrationTests {
         
         // Entering migration manually
         // This is an internal function and not publicly exposed
-        container.context.isInActiveMigration = true
+        container.context.isInActiveMigration.value = true
         
         do {
             try SimpleSchemaV0_0_1.Test

@@ -1,5 +1,6 @@
 import SQLite
 import Foundation
+import ULID
 
 public nonisolated protocol Persistable: Sendable {
     associatedtype PersistentRepresentation: ColumnType
@@ -20,6 +21,16 @@ public protocol ColumnType {
 extension ColumnType {
     var sqliteTypeName: SQLiteTypeName {
         Self.sqliteTypeName
+    }
+}
+
+extension ULID: Persistable {
+    public typealias PersistentRepresentation = String
+    
+    public var asPersistentRepresentation: String { ulidString }
+    
+    public init?(fromPersistent representation: String) {
+        self.init(ulidString: representation)
     }
 }
 
