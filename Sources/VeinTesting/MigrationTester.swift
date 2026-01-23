@@ -61,8 +61,6 @@ public struct MigrationTester {
         try initialData(container.context)
         try validations[startingVersion.version]?(container.context)
         
-        let modelVersions = validations.keys.sorted()
-        
         for schema in sortedSchemas.dropFirst() {
             let currentContainer = try ModelContainer(
                 schema,
