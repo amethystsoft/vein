@@ -59,6 +59,7 @@ public struct MigrationTester {
         )
         
         try initialData(container.context)
+        try validations[startingVersion.version]?(container.context)
         
         let modelVersions = validations.keys.sorted()
         
