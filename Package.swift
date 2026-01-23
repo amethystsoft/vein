@@ -23,6 +23,10 @@ let package = Package(
             targets: ["VeinCore"]
         ),
         .library(
+            name: "VeinTesting",
+            targets: ["VeinTesting"]
+        ),
+        .library(
             name: "CommonVeinMacroLogic",
             targets: ["CommonVeinMacroLogic"]
         )
@@ -55,6 +59,12 @@ let package = Package(
             ]
         ),
         .target(
+            name: "VeinTesting",
+            dependencies: [
+                "Vein"
+            ]
+        ),
+        .target(
             name: "CommonVeinMacroLogic",
             dependencies: [
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
@@ -79,5 +89,14 @@ let package = Package(
                 .product(name: "Logging", package: "swift-log")
             ]
         ),
+        .testTarget(
+            name: "VeinTestingTests",
+            dependencies: [
+                "VeinTesting",
+                "Vein",
+                "VeinCore",
+                .product(name: "Logging", package: "swift-log")
+            ]
+        )
     ]
 )

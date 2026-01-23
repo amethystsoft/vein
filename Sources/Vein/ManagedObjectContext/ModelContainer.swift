@@ -3,21 +3,26 @@ import SQLite
 
 public final class ModelContainer: Sendable {
     private let migration: SchemaMigrationPlan.Type
-    private let path: String
+    private let path: String?
     public let context: ManagedObjectContext
     public let versionedSchema: VersionedSchema.Type
     
+    /// Passing nil for path creates an in memory database
     public init(
         _ versionedSchema: VersionedSchema.Type,
         migration: SchemaMigrationPlan.Type,
-        at path: String
+        at path: String?
     ) throws(ManagedObjectContextError) {
         guard migration.schemas.contains(where: { $0.self == versionedSchema }) else {
             throw ManagedObjectContextError.schemaNotRegisteredOnMigrationPlan(versionedSchema, migration)
         }
         
         // TODO: make ManagedObjectContext only accept models from the versionedSchema or its predecessors(in migration)
-        self.context = try ManagedObjectContext(path: path)
+        if let path {
+            self.context = try ManagedObjectContext(path: path)
+        } else {
+            self.context = try ManagedObjectContext()
+        }
         self.migration = migration
         self.path = path
         self.versionedSchema = versionedSchema
@@ -70,7 +75,7 @@ public final class ModelContainer: Sendable {
     private func unmigratedSchemas(from version: VersionedSchema.Type) throws -> [String] {
         let tables = try context.getNonEmptySchemas()
         
-        var unhandledSchemas = tables.filter { table in
+        let unhandledSchemas = tables.filter { table in
             version.models.contains(where: { $0.schema == table })
         }
         

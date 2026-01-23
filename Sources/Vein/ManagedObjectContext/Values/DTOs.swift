@@ -7,6 +7,14 @@ public struct PersistedFieldDTO: Sendable {
     let schema: String
     let sqliteType: SQLiteTypeName
     let enclosingObjectID: ObjectIdentifier
+    
+    public init(key: String, id: Int64, schema: String, sqliteType: SQLiteTypeName, enclosingObjectID: ObjectIdentifier) {
+        self.key = key
+        self.id = id
+        self.schema = schema
+        self.sqliteType = sqliteType
+        self.enclosingObjectID = enclosingObjectID
+    }
 }
 
 public struct FieldInformation: Sendable {
