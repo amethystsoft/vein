@@ -81,9 +81,9 @@ extension ManagedObjectContext {
         else { return [] }
         
         return observers.values
-            .compactMap({ $0.query })
             .compactMap {
-                $0.doesMatch(model) ? $0.usedPredicate.hashValue: nil
+                guard let query = $0.query else { return nil }
+                return query.doesMatch(model) ? query.usedPredicate.hashValue: nil
             }
     }
     
@@ -93,7 +93,7 @@ extension ManagedObjectContext {
         _ model: any PersistentModel,
         previouslyMatching predicateHashes: [Int]
     ) {
-        writeCache.mutate { touches,_,_,_ in
+        writeCache.mutate { _, touches,_,_ in
             touches[
                 model.typeIdentifier,
                 default: [:]
@@ -237,7 +237,9 @@ extension ManagedObjectContext {
             deletes.removeAll()
         }
         
-        // TODO: NOT use models of current version during migration
+        print(insertsCopy)
+        print(touchesCopy)
+        print(deletesCopy)
         
         try saveLock.withLock {
             stagingCache.mutate { inserts, touches, deletes,_ in

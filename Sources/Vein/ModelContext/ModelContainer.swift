@@ -25,22 +25,17 @@ public final class ModelContainer: @unchecked Sendable {
             throw ManagedObjectContextError.schemaNotRegisteredOnMigrationPlan(versionedSchema, migration)
         }
         
-        // TODO: make ManagedObjectContext only accept models from the versionedSchema or its predecessors(in migration)
-        if let path {
-            self.context = try ManagedObjectContext(
-				path: path,
-				modelContainer: self
-			)
-        } else {
-            self.context = try ManagedObjectContext(modelContainer: self)
-        }
         self.migration = migration
         self.path = path
         self.versionedSchema = versionedSchema
-        self.context = try ManagedObjectContext(
-            path: path,
-            modelContainer: self
-        )
+        if let path {
+            self.context = try ManagedObjectContext(
+                path: path,
+                modelContainer: self
+            )
+        } else {
+            self.context = try ManagedObjectContext(modelContainer: self)
+        }
         
         do {
             try context.createMigrationsTable()

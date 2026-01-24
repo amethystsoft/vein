@@ -14,6 +14,10 @@ struct StepByStep {
         
         let postContent = "Amethyst Vein Release Notes"
         
+        let email = "example@amethystsoft.de"
+        
+        let postCategory = "blog"
+        
         var recordedInternalID: String?
         
         try tester.seed(
@@ -24,6 +28,7 @@ struct StepByStep {
                 
                 try context.insert(user)
                 try context.insert(profile)
+                try context.save()
             }
         )
         
@@ -37,6 +42,8 @@ struct StepByStep {
                 if let user = users.first {
                     #expect(user.username == username)
                     #expect(user.email == nil)
+                    
+                    user.email = email
                 }
                 
                 let profiles = try context
@@ -46,6 +53,8 @@ struct StepByStep {
                 if let profile = profiles.first {
                     #expect(profile.bio == bio)
                 }
+                
+                try context.save()
             }
         )
         
@@ -75,6 +84,7 @@ struct StepByStep {
                 // create Post to exist going forward
                 let post = Version3.Post(content: postContent)
                 try context.insert(post)
+                try context.save()
             }
         )
         
@@ -95,7 +105,9 @@ struct StepByStep {
                 if let post = posts.first {
                     #expect(post.content == postContent)
                     #expect(post.category == nil)
+                    post.category = postCategory
                 }
+                try context.save()
             }
         )
         

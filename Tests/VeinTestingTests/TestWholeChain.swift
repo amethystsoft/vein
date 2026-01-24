@@ -23,6 +23,7 @@ struct WholeChain {
                 
                 try context.insert(user)
                 try context.insert(profile)
+                try context.save()
             },
             validations: [
                 Version2.version: { context in
@@ -67,6 +68,7 @@ struct WholeChain {
                     // create Post to exist going forward
                     let post = Version3.Post(content: postContent)
                     try context.insert(post)
+                    try context.save()
                 },
                 Version4.version: { context in
                     let users = try context
