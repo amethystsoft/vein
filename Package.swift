@@ -21,6 +21,10 @@ let package = Package(
         .library(
             name: "VeinCore",
             targets: ["VeinCore"]
+        ),
+        .library(
+            name: "VeinTesting",
+            targets: ["VeinTesting"]
         )
     ],
     dependencies: [
@@ -50,7 +54,12 @@ let package = Package(
             dependencies: [
                 "Vein",
                 "VeinCoreMacros",
-                .product(name: "ULID", package: "ULID.swift")
+            ]
+        ),
+        .target(
+            name: "VeinTesting",
+            dependencies: [
+                "Vein"
             ]
         ),
         .macro(
@@ -69,5 +78,14 @@ let package = Package(
                 .product(name: "Logging", package: "swift-log")
             ]
         ),
+        .testTarget(
+            name: "VeinTestingTests",
+            dependencies: [
+                "VeinTesting",
+                "Vein",
+                "VeinCore",
+                .product(name: "Logging", package: "swift-log")
+            ]
+        )
     ]
 )

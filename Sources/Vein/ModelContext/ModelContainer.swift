@@ -3,7 +3,7 @@ import SQLite
 
 public final class ModelContainer: @unchecked Sendable {
     private let migration: SchemaMigrationPlan.Type
-    private let path: String
+    private let path: String?
     
     // Only force unwrapped to count as initialized,
     // so ManagedObjectContex.init can recieve the function
@@ -19,13 +19,21 @@ public final class ModelContainer: @unchecked Sendable {
     public init(
         _ versionedSchema: VersionedSchema.Type,
         migration: SchemaMigrationPlan.Type,
-        at path: String
+        at path: String?
     ) throws(ManagedObjectContextError) {
         guard migration.schemas.contains(where: { $0.self == versionedSchema }) else {
             throw ManagedObjectContextError.schemaNotRegisteredOnMigrationPlan(versionedSchema, migration)
         }
         
         // TODO: make ManagedObjectContext only accept models from the versionedSchema or its predecessors(in migration)
+        if let path {
+            self.context = try ManagedObjectContext(
+				path: path,
+				modelContainer: self
+			)
+        } else {
+            self.context = try ManagedObjectContext(modelContainer: self)
+        }
         self.migration = migration
         self.path = path
         self.versionedSchema = versionedSchema
