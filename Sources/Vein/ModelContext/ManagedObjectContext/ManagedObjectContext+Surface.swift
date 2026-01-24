@@ -275,7 +275,7 @@ extension ManagedObjectContext {
                         }
                         
                         for model in models.values {
-                            // TODO: add update
+                            try _writeUpdate(model)
                         }
                     }
                     
@@ -335,12 +335,12 @@ extension ManagedObjectContext {
                             model.applyPrimitiveState(state)
                         }
                     }
-                    
-                    for (identifier, models) in inserts {
-                        for (_, model) in models {
-                            model.context = self
-                            identityMap.startTracking(model)
-                        }
+                }
+                
+                for (_, models) in deletes {
+                    for (_, model) in models {
+                        model.context = self
+                        identityMap.startTracking(model)
                     }
                 }
                 
