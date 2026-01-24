@@ -17,7 +17,10 @@ public final class ModelContainer: Sendable {
         }
         
         // TODO: make ManagedObjectContext only accept models from the versionedSchema or its predecessors(in migration)
-        self.context = try ManagedObjectContext(path: path)
+        self.context = try ManagedObjectContext(
+            path: path,
+            schema: versionedSchema
+        )
         self.migration = migration
         self.path = path
         self.versionedSchema = versionedSchema
@@ -48,6 +51,7 @@ public final class ModelContainer: Sendable {
             ) = try determineMigrationStage() {
                 
                 try migrationBlock?(context)
+                try context.save()
                 
                 let unmigratedSchemas = try unmigratedSchemas(from: originVersion)
                 

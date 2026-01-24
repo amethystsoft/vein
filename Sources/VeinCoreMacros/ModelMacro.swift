@@ -3,7 +3,6 @@ import SwiftSyntaxMacros
 import SwiftSyntaxMacroExpansion
 import SwiftDiagnostics
 import Foundation
-import CommonVeinMacroLogic
 
 public struct ModelMacro: MemberMacro, ExtensionMacro, PeerMacro {
     public static func expansion(
@@ -16,7 +15,7 @@ public struct ModelMacro: MemberMacro, ExtensionMacro, PeerMacro {
             throw MacroError.onlyApplicableToClasses
         }
         
-        let common = try CommonVeinMacroLogic.Model.expansion(
+        let common = try ModelMacroBase.expansion(
             of: node,
             providingMembersOf: classDecl,
             conformingTo: protocols,
@@ -43,7 +42,7 @@ public struct ModelMacro: MemberMacro, ExtensionMacro, PeerMacro {
             throw MacroError.onlyApplicableToClasses
         }
         
-        return try CommonVeinMacroLogic.Model.expansion(
+        return try ModelMacroBase.expansion(
             of: node,
             attachedTo: classDecl,
             providingExtensionsOf: type,
@@ -61,7 +60,7 @@ public struct ModelMacro: MemberMacro, ExtensionMacro, PeerMacro {
             throw MacroError.onlyApplicableToClasses
         }
         
-        return try CommonVeinMacroLogic.Model.expansion(
+        return try ModelMacroBase.expansion(
             of: node,
             providingPeersOf: classDecl,
             in: context

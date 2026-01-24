@@ -11,6 +11,8 @@ public struct PrimaryKey: PersistedField, @unchecked Sendable {
     
     private var store: ULID
     
+    public var wasTouched = false
+    
     /// Only set during migrations to preserve old ID
     /// Must be set before inserting new Model into context
     public var wrappedValue: ULID {

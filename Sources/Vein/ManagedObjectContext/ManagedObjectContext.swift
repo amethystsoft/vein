@@ -12,16 +12,19 @@ public actor ManagedObjectContext {
         return shared
     }
     package nonisolated let connection: Connection
+    nonisolated let schema: any VersionedSchema.Type
     
     // MARK: - Migrations
     package nonisolated let isInActiveMigration = Atomic(false)
     
     // MARK: - In memory write caching and rollback
-    package nonisolated let inserts = Atomic([ObjectIdentifier: [ULID: any PersistentModel]]())
-    package nonisolated let touches = Atomic([ObjectIdentifier: [ULID: any PersistentModel]]())
-    package nonisolated let deletes = Atomic([ObjectIdentifier: [ULID: any PersistentModel]]())
+    package nonisolated let writeCache = WriteCache()
     
-    package nonisolated let primitiveState = Atomic([ObjectIdentifier: [ULID: PrimitiveState]]())
+    package nonisolated let stagingCache = WriteCache()
+    
+    // Used in `ManagedObjectContext/save` to
+    // make sure only one save is running at a time
+    nonisolated let saveLock = NSLock()
     
     // MARK: - Ensure single row - single instance
     nonisolated(unsafe) let identityMap = ThreadSafeIdentityMap()
@@ -37,7 +40,11 @@ public actor ManagedObjectContext {
     
     // MARK: - Initializers
     /// Connects to database at `path`, creates a new one if it doesn't exist
-    init(path: String) throws(ManagedObjectContextError) {
+    init(
+        path: String,
+        schema: any VersionedSchema.Type
+    ) throws(ManagedObjectContextError) {
+        self.schema = schema
         do {
             self.connection = try Connection(path)
             try self.connection.execute("PRAGMA journal_mode=WAL;")
@@ -49,7 +56,8 @@ public actor ManagedObjectContext {
     }
     
     /// In memory only
-    init() throws(ManagedObjectContextError) {
+    init(schema: any VersionedSchema.Type) throws(ManagedObjectContextError) {
+        self.schema = schema
         do {
             self.connection = try Connection(.inMemory)
         } catch let error as SQLite.Result {

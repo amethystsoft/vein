@@ -8,6 +8,7 @@ public protocol PersistedField: Sendable {
     var isLazy: Bool { get }
     var model: (any PersistentModel)? { get }
     func setStoreToCapturedState(_ state: Any)
+    var wasTouched: Bool { get set }
     
     static var sqliteTypeName: SQLiteTypeName { get }
     func setValue(to: WrappedType)

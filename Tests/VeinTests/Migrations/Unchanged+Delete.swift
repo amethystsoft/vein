@@ -22,6 +22,7 @@ extension MigrationTests {
         
         try container.context.insert(test)
         try container.context.insert(unused)
+        try container.context.save()
         
         // Check both tables exist under the expected name
         let storedSchemas = try container.context.getAllStoredSchemas()
@@ -354,8 +355,9 @@ fileprivate enum SimpleMigrationSuccess: SchemaMigrationPlan {
                 let date = try Date.sqliteFormatStyle.parse(model.date)
                 let newModel = SimpleSchemaV0_0_3.Test(date: Int(date.timeIntervalSince1970))
                 try context.insert(newModel)
-                try context.delete(model)
+                context.delete(model)
             }
+            
         },
         didMigrate: nil
     )
@@ -370,7 +372,7 @@ fileprivate enum SimpleMigrationSuccess: SchemaMigrationPlan {
                 let date = Date(timeIntervalSince1970: Double(model.date))
                 let newModel = SimpleSchemaV0_0_4.Test(addedAt: date)
                 try context.insert(newModel)
-                try context.delete(model)
+                context.delete(model)
             }
         },
         didMigrate: nil

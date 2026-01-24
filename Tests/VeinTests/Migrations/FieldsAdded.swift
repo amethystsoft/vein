@@ -18,6 +18,7 @@ extension MigrationTests {
         let test = SimpleSchemaV0_0_3.AddingFieldsModel(value: "")
         
         try container.context.insert(test)
+        try container.context.save()
         
         // Check both tables exist under the expected name
         let storedSchemas = try container.context.getAllStoredSchemas()

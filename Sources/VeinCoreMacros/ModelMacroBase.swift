@@ -1,10 +1,18 @@
+//
+//  ModelMacroBase.swift
+//  amethyst-vein
+//
+//  Created by Mia Koring on 24.01.26.
+//
+
+
 import SwiftSyntax
 import SwiftSyntaxMacros
 import SwiftSyntaxMacroExpansion
 import SwiftDiagnostics
 import Foundation
 
-public struct Model {
+public struct ModelMacroBase {
     public static func expansion(
         of node: SwiftSyntax.AttributeSyntax,
         providingMembersOf classDecl: SwiftSyntax.ClassDeclSyntax,

@@ -2,14 +2,12 @@ import SQLite
 import ULID
 
 extension ManagedObjectContext {
-    private nonisolated func _writeInsert<M: PersistentModel>(_ model: M) throws(ManagedObjectContextError) {
+    nonisolated func _writeInsert<M: PersistentModel>(_ model: M) throws(ManagedObjectContextError) {
         do {
             let table = Table(model._getSchema())
-            try connection.safeTransaction {
-                try connection.run(table.insert(model._fields.map {
-                    return $0.wrappedValue.asPersistentRepresentation.sqliteValue.setter(withKey: $0.instanceKey, andTypeName: $0.wrappedValue.asPersistentRepresentation.sqliteTypeName)
-                }))
-            }
+            try connection.run(table.insert(model._fields.map {
+                return $0.wrappedValue.asPersistentRepresentation.sqliteValue.setter(withKey: $0.instanceKey, andTypeName: $0.wrappedValue.asPersistentRepresentation.sqliteTypeName)
+            }))
         } catch let error as ManagedObjectContextError { throw error }
         catch let error as SQLite.Result {
             let parsed = error.parse()
@@ -28,12 +26,28 @@ extension ManagedObjectContext {
         }
     }
     
-    private nonisolated func _writeUpdate(field: PersistedFieldDTO, newValue: SQLiteValue) throws(ManagedObjectContextError) {
+    nonisolated func _writeUpdate<M: PersistentModel>(_ model: M) throws(ManagedObjectContextError) {
         do {
-            let filtered = Table(field.schema).filter(Expression<String>("id") == field.id.ulidString)
+            let filtered = Table(model._getSchema()).filter(Expression<String>("id") == model.id.ulidString)
+            
             try connection.run(
                 filtered
-                    .update(newValue.setter(withKey: field.key, andTypeName: field.sqliteType))
+                    //.update(newValue.setter(withKey: field.key, andTypeName: field.sqliteType))
+                    .update(
+                        model._fields
+                            .filter { $0.wasTouched }
+                            .map {
+                                $0.wrappedValue
+                                    .asPersistentRepresentation
+                                    .sqliteValue
+                                    .setter(
+                                        withKey: $0.instanceKey,
+                                        andTypeName: $0.wrappedValue
+                                            .asPersistentRepresentation
+                                            .sqliteTypeName
+                                    )
+                            }
+                    )
             )
         } catch let error as ManagedObjectContextError { throw error }
         catch let error as SQLite.Result {
@@ -43,14 +57,11 @@ extension ManagedObjectContext {
         }
     }
     
-    public nonisolated func _createSchema(_ name: String) -> TableBuilder {
+    nonisolated func _createSchema(_ name: String) -> TableBuilder {
         return Vein.TableBuilder(self, named: name)
     }
     
-    private nonisolated func _writeDelete(_ model: any PersistentModel) throws(MOCError) {
-        guard
-            let _ = model.context
-        else { return }
+    nonisolated func _writeDelete(_ model: any PersistentModel) throws(MOCError) {
         let filter = Table(model._getSchema()).filter(Expression<String>("id") == model.id.ulidString)
         do {
             try connection.run(filter.delete())

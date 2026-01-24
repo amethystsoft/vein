@@ -88,7 +88,6 @@ extension ManagedObjectContext {
         }
         
         var nonEmpty = [String]()
-        
         for table in filtered {
             if try connection.scalar(Table(table).count) > 0 {
                 nonEmpty.append(table)

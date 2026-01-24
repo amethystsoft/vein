@@ -1,6 +1,15 @@
 import Foundation
 
+package typealias WriteCacheDictionary = [ObjectIdentifier: [ULID: any PersistentModel]]
+
 extension ManagedObjectContext {
+    /// A Boolean value that indicates whether the context has uncommitted changes.
+    public var hasChanges: Bool {
+        return writeCache.mutate { inserts, touches, deletes,_ in
+            return !inserts.isEmpty || !touches.isEmpty || !deletes.isEmpty
+        }
+    }
+    
     /// Returns all models matching the predicate.
     /// Returns [] if table doesn't exist
     public nonisolated func fetchAll<T: PersistentModel>(_ predicate: PredicateBuilder<T>) throws(MOCError) -> [T] {
@@ -27,14 +36,25 @@ extension ManagedObjectContext {
             throw MOCError.insertManagedModel(message: "raised by model of type '\(M.self)' with id \(model.id.ulidString)")
         }
         model._setupFields()
-        model.context = self
         
-        inserts.mutate { inserts in
+        // An insert invalidates existing deletes and touches
+        writeCache.mutate { inserts, touches, deletes,_ in
             inserts[
                 model.typeIdentifier,
                 default: [:]
             ][model.id] = model
+            
+            touches[
+                model.typeIdentifier,
+                default: [:]
+            ][model.id] = nil
+            
+            deletes[
+                model.typeIdentifier,
+                default: [:]
+            ][model.id] = nil
         }
+        model.context = self
         
         identityMap.startTracking(model, type: M.self, id: model.id)
         
@@ -45,7 +65,7 @@ extension ManagedObjectContext {
     /// Only intended to be called by Fields
     /// - Returns: hashes of Predicates matching the model before the change
     public nonisolated func _prepareForChange(of model: any PersistentModel) -> [Int] {
-        primitiveState.mutate { states in
+        writeCache.mutate { _,_,_, states in
             if states[model.typeIdentifier, default: [:]][model.id] == nil {
                 states[
                     model.typeIdentifier,
@@ -72,7 +92,7 @@ extension ManagedObjectContext {
         _ model: any PersistentModel,
         previouslyMatching predicateHashes: [Int]
     ) {
-        touches.mutate { touches in
+        writeCache.mutate { touches,_,_,_ in
             touches[
                 model.typeIdentifier,
                 default: [:]
@@ -95,15 +115,28 @@ extension ManagedObjectContext {
     }
     
     /// Specifies an object that should be removed from its persistent store when changes are committed.
-    public nonisolated func delete(_ model: any PersistentModel) {
+    public nonisolated func delete<M: PersistentModel>(_ model: M) {
         guard model.context != nil else { return }
         
-        deletes.mutate { deletes in
+        // Deletes automatically invalidate a touch or insert
+        writeCache.mutate { inserts, touches, deletes,_ in
             deletes[
                 model.typeIdentifier,
                 default: [:]
             ][model.id] = model
+            
+            inserts[
+                model.typeIdentifier,
+                default: [:]
+            ][model.id] = nil
+            
+            touches[
+                model.typeIdentifier,
+                default: [:]
+            ][model.id] = nil
         }
+        model.context = nil
+        identityMap.remove(M.self, id: model.id)
         
         guard
             let observers = registeredQueries.value[model.typeIdentifier],
@@ -115,6 +148,7 @@ extension ManagedObjectContext {
             .compactMap {
                 $0.doesMatch(model) ? $0: nil
             }
+        
         Task { @MainActor in
             for query in matchedBefore {
                 query.remove(model)
@@ -125,12 +159,26 @@ extension ManagedObjectContext {
     public nonisolated func batchDelete<M: PersistentModel>(_ models: [M]) {
         let managedModels = models.compactMap { $0.context != nil ? $0: nil }
         
-        deletes.mutate { deletes in
+        // Deletes automatically invalidate a touch or insert
+        writeCache.mutate { inserts, touches, deletes,_ in
             for model in managedModels {
                 deletes[
                     model.typeIdentifier,
                     default: [:]
                 ][model.id] = model
+                
+                inserts[
+                    model.typeIdentifier,
+                    default: [:]
+                ][model.id] = nil
+                
+                touches[
+                    model.typeIdentifier,
+                    default: [:]
+                ][model.id] = nil
+                
+                model.context = nil
+                identityMap.remove(M.self, id: model.id)
             }
         }
         
@@ -158,6 +206,183 @@ extension ManagedObjectContext {
                     query.remove(model)
                 }
             }
+        }
+    }
+    
+    public nonisolated func save() throws {
+        // Copies and clears the main storages
+        // to enable background threads to keep making changes
+        var insertsCopy = WriteCacheDictionary()
+        var touchesCopy = WriteCacheDictionary()
+        var deletesCopy = WriteCacheDictionary()
+        
+        writeCache.mutate { inserts, touches, deletes,_ in
+            insertsCopy = inserts
+            inserts.removeAll()
+            
+            touchesCopy = touches
+            touches.removeAll()
+            
+            deletesCopy = deletes
+            deletes.removeAll()
+        }
+        
+        // TODO: NOT use models of current version during migration
+        
+        try saveLock.withLock {
+            stagingCache.mutate { inserts, touches, deletes,_ in
+                inserts = insertsCopy
+                touches = touchesCopy
+                deletes = deletesCopy
+            }
+            
+            do {
+                try connection.safeTransaction {
+                    // Delete first to avoid theoretically possible uniqueness problems
+                    for modelType in schema.models {
+                        guard let deletedModels = deletesCopy[modelType.typeIdentifier] else {
+                            continue
+                        }
+                        
+                        for model in deletedModels.values {
+                            try _writeDelete(model)
+                        }
+                    }
+                    
+                    for modelType in schema.models {
+                        guard let insertedModels = insertsCopy[modelType.typeIdentifier] else {
+                            continue
+                        }
+                        
+                        for model in insertedModels.values {
+                            try _writeInsert(model)
+                        }
+                    }
+                    
+                    for modelType in schema.models {
+                        guard let touchedModels = touchesCopy[modelType.typeIdentifier] else {
+                            continue
+                        }
+                        
+                        for model in touchedModels.values {
+                            // TODO: add update
+                        }
+                    }
+                    
+                }
+            } catch {
+                // Re-add changes in case of rollback
+                writeCache.mutate { inserts, touches, deletes,_ in
+                    insertsCopy.merge(into: &inserts)
+                    touchesCopy.merge(into: &touches)
+                    deletesCopy.merge(into: &deletes)
+                }
+                
+                // Reset staging cache
+                stagingCache.mutate { inserts, touches, deletes,_ in
+                    inserts.removeAll()
+                    touches.removeAll()
+                    deletes.removeAll()
+                }
+                
+                throw error
+            }
+            
+            // Reset staging cache
+            stagingCache.mutate { inserts, touches, deletes, primitiveStages in
+                inserts.removeAll()
+                touches.removeAll()
+                deletes.removeAll()
+                primitiveStages.removeAll()
+            }
+        }
+    }
+    
+    /// Discards pending inserts and deletes, restores changed models to \
+    /// their most recent committed state, and empties the undo stack.
+    public nonisolated func rollback() {
+        saveLock.withLock {
+            stagingCache.mutate { inserts, touches, deletes,_ in
+                inserts.removeAll()
+                touches.removeAll()
+                deletes.removeAll()
+            }
+            
+            writeCache.mutate { inserts, touches, deletes, primitiveStates in
+                for modelType in schema.models {
+                    for (_, model) in inserts[modelType.typeIdentifier, default: [:]] {
+                        model.context = nil
+                        openAndRemoveFromIdentityMap(model)
+                    }
+                    
+                    for (_, model) in touches[modelType.typeIdentifier, default: [:]] {
+                        if
+                            let state = primitiveStates[
+                                modelType.typeIdentifier,
+                                default: [:]
+                            ][model.id] {
+                            model.applyPrimitiveState(state)
+                        }
+                    }
+                    
+                    for (_, model) in deletes[modelType.typeIdentifier, default: [:]] {
+                        model.context = self
+                        openAndTrack(model)
+                    }
+                }
+                
+                primitiveStates.removeAll()
+                inserts.removeAll()
+                touches.removeAll()
+                deletes.removeAll()
+            }
+        }
+    }
+    
+    // These two are currently required, because the compiler was unable to resolve
+    // identityMap.startTracking(model, type: modelType.self, id: model.id)
+    // in the place they are in rollback()
+    @inline(__always)
+    private nonisolated func openAndRemoveFromIdentityMap<T: PersistentModel>(_ model: T) {
+        identityMap.remove(T.self, id: model.id)
+    }
+    
+    @inline(__always)
+    private nonisolated func openAndTrack<T: PersistentModel>(_ model: T) {
+        identityMap.startTracking(model, type: T.self, id: model.id)
+    }
+}
+
+extension WriteCacheDictionary {
+    @inline(__always)
+    nonisolated func merge(
+        into source: inout WriteCacheDictionary
+    ) {
+        for (typeIdentifier, models) in self {
+            source[typeIdentifier, default: [:]]
+                .merge(models) { (current, new) in new }
+        }
+    }
+}
+
+package final class WriteCache: Sendable {
+    private nonisolated(unsafe) var inserts = WriteCacheDictionary()
+    private nonisolated(unsafe) var touches = WriteCacheDictionary()
+    private nonisolated(unsafe) var deletes = WriteCacheDictionary()
+    private nonisolated(unsafe) var primitiveState = [ObjectIdentifier: [ULID: PrimitiveState]]()
+    
+    private nonisolated let lock = NSLock()
+    
+    package nonisolated func mutate<R>(
+        _ block: (
+            _ inserts: inout WriteCacheDictionary,
+            _ touches: inout WriteCacheDictionary,
+            _ deletes: inout WriteCacheDictionary,
+            _ primitiveState: inout [ObjectIdentifier: [ULID: PrimitiveState]]
+        ) -> R
+    ) -> R {
+        lock.withLock {
+            block(&inserts, &touches, &deletes, &primitiveState)
         }
     }
 }

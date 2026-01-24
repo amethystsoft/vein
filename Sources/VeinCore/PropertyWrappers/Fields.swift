@@ -14,6 +14,8 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
     /// ONLY LET MACRO SET
     public weak var model: (any PersistentModel)?
     
+    public var wasTouched: Bool = false
+    
     public var isLazy: Bool {
         true
     }
@@ -46,6 +48,7 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
             let predicateMatches = context._prepareForChange(of: model)
             setAndNotify(newValue)
             context._markTouched(model, previouslyMatching: predicateMatches)
+            wasTouched = true
         }
     }
     
@@ -80,6 +83,7 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
             fatalError(ManagedObjectContextError.capturedStateApplicationFailed(WrappedType.self, instanceKey).localizedDescription)
         }
         self.store = value
+        self.wasTouched = false
     }
 }
 
@@ -97,6 +101,8 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
         false
     }
     
+    public var wasTouched: Bool = false
+    
     public var wrappedValue: T {
         get {
             return lock.withLock {
@@ -112,6 +118,7 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
             let predicateMatches = context._prepareForChange(of: model)
             setAndNotify(newValue)
             context._markTouched(model, previouslyMatching: predicateMatches)
+            self.wasTouched = true
         }
     }
     
@@ -137,5 +144,6 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
             fatalError(ManagedObjectContextError.capturedStateApplicationFailed(WrappedType.self, instanceKey).localizedDescription)
         }
         self.store = value
+        self.wasTouched = false
     }
 }

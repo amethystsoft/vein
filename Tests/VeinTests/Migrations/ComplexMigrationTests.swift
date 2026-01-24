@@ -3,6 +3,7 @@ import Testing
 import Logging
 @testable import Vein
 @testable import VeinCore
+@testable import CommonVeinMacroLogic
 
 let testID = UUID()
 
@@ -30,6 +31,7 @@ struct MigrationTests {
         
         try container.context.insert(model)
         try container.context.insert(unused)
+        try container.context.save()
         
         // Check both tables exist under the expected name
         let storedSchemas = try container.context.getAllStoredSchemas()
