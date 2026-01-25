@@ -11,13 +11,25 @@ extension ManagedObjectContext {
             fieldsToLoad.append(Expression<String>("id"))
             let select = table.select(distinct: fieldsToLoad)
             var models = [T]()
+            
+            var currentlyDeleted = [ULID: any PersistentModel]()
+            
+            writeCache.mutate { _,_, deleted,_ in
+                currentlyDeleted = deleted[T.typeIdentifier] ?? [:]
+            }
+            
             let results = try connection.prepare(select)
+            var resultIDs = Set<ULID>()
+            
             identityMap.batched { getTracked, startTracking in
                 for row in results {
                     let id = ULID(ulidString: row[Expression<String>("id")])!
                     
+                    if let _ = currentlyDeleted[id] { continue }
+                    
                     if let alreadyTrackedModel = getTracked(T.self, id) {
                         models.append(alreadyTrackedModel)
+                        resultIDs.insert(alreadyTrackedModel.id)
                         continue
                     }
                     var fields = [String: SQLiteValue]()
@@ -29,9 +41,27 @@ extension ManagedObjectContext {
                     let model = T(id: id, fields: fields)
                     model.context = self
                     models.append(model)
+                    resultIDs.insert(model.id)
                     startTracking(model)
                 }
             }
+            
+            var currentlyInserted = [ULID: any PersistentModel]()
+            
+            writeCache.mutate { inserted,_,_,_ in
+                currentlyInserted = inserted[T.typeIdentifier] ?? [:]
+            }
+            
+            for (_, insert) in currentlyInserted {
+                if
+                    !resultIDs.contains(insert.id),
+                    let model = insert as? T,
+                    predicate.doesMatch(model)
+                {
+                    models.append(model)
+                }
+            }
+            
             return models
         } catch let error as ManagedObjectContextError { throw error }
         catch let error as SQLite.Result {
