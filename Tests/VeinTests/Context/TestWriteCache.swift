@@ -157,8 +157,8 @@ struct WriteCache {
         }
     }
     
-    @Test("Fetch includes unwritten changes")
-    func fetchIncludesUnwrittenChanges() throws {
+    @Test("Fetch includes unwritten inserts")
+    func fetchIncludesUnwrittenInserts() throws {
         let container = try setupContainer()
         let m1 = V0_0_1.Test(flag: true, someValue: "1", randomValue: 1)
         let m2 = V0_0_1.Test(flag: true, someValue: "2", randomValue: 2)
@@ -173,6 +173,40 @@ struct WriteCache {
         #expect(results.count == 2)
         #expect(results.contains { $0.id == m1.id })
         #expect(results.contains { $0.id == m2.id })
+    }
+    
+    @Test("Fetch includes unwritten touches")
+    func fetchIncludesUnwrittenTouches() throws {
+        let container = try setupContainer()
+        let m1 = V0_0_1.Test(flag: true, someValue: "1", randomValue: 1)
+        let m2 = V0_0_1.Test(flag: true, someValue: "2", randomValue: 2)
+        
+        try container.context.insert(m1)
+        try container.context.insert(m2)
+        try container.context.save()
+        
+        m1.someValue = "2"
+        
+        let results = try container.context.fetchAll(
+            V0_0_1.Test._PredicateHelper()
+            .someValue(.isEqualTo, "2")
+            ._builder()
+        )
+        
+        #expect(results.count == 2)
+        #expect(results.contains { $0.id == m1.id })
+        #expect(results.contains { $0.id == m2.id })
+        
+        m2.someValue = "1"
+        
+        let secondResults = try container.context.fetchAll(
+            V0_0_1.Test._PredicateHelper()
+                .someValue(.isEqualTo, "2")
+                ._builder()
+        )
+        
+        #expect(secondResults.count == 1)
+        #expect(secondResults.contains { $0.id == m1.id })
     }
     
     @Test("Fetch excludes unwritten deletes")

@@ -56,7 +56,7 @@ nonisolated final class ThreadSafeIdentityMap {
     @inline(__always)
     private func track<T: PersistentModel>(_ object: T) {
         cache.mutate { cache in
-            cache[T.typeIdentifier, default: [:]][object.id] = WeakModel(wrappedValue: object)
+            cache[object.typeIdentifier, default: [:]][object.id] = WeakModel(wrappedValue: object)
         }
     }
     

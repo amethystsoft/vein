@@ -14,7 +14,7 @@ public final class ModelContainer: @unchecked Sendable {
     
     private var identifierCache = Atomic([ObjectIdentifier: any PersistentModel.Type]())
     
-    private var currentMigration: (any VersionedSchema.Type, any VersionedSchema.Type)?
+    private var currentMigration = Atomic((any VersionedSchema.Type, any VersionedSchema.Type)?.none)
     
     public init(
         _ versionedSchema: VersionedSchema.Type,
@@ -77,7 +77,7 @@ public final class ModelContainer: @unchecked Sendable {
     public func migrate() throws {
         defer {
             context.isInActiveMigration.value = false
-            currentMigration = nil
+            currentMigration.value = nil
             identifierCache.mutate { identifierCache in
                 identifierCache.removeAll()
             }
@@ -91,7 +91,7 @@ public final class ModelContainer: @unchecked Sendable {
                 migrationBlock,
                 didFinishMigration
             ) = try determineMigrationStage() {
-                self.currentMigration = (originVersion, destinationVersion)
+                self.currentMigration.value = (originVersion, destinationVersion)
                 
                 identifierCache.mutate { identifierCache in
                     identifierCache.removeAll()
@@ -186,7 +186,7 @@ public final class ModelContainer: @unchecked Sendable {
         
         var potentialModelTypes: [any PersistentModel.Type]
         
-        if let (origin, destination) = currentMigration {
+        if let (origin, destination) = currentMigration.value {
             potentialModelTypes = origin.models + destination.models
         } else {
             potentialModelTypes = versionedSchema.models

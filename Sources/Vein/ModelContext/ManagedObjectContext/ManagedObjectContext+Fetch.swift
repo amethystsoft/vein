@@ -49,15 +49,27 @@ extension ManagedObjectContext {
             }
             
             var currentlyInserted = [ULID: any PersistentModel]()
+            var currentlyTouched = [ULID: any PersistentModel]()
             
-            writeCache.mutate { inserted,_,_,_ in
+            writeCache.mutate { inserted, touched,_,_ in
                 currentlyInserted = inserted[T.typeIdentifier] ?? [:]
+                currentlyTouched = touched[T.typeIdentifier] ?? [:]
             }
             
             for (_, insert) in currentlyInserted {
                 if
                     !resultIDs.contains(insert.id),
                     let model = insert as? T,
+                    predicate.doesMatch(model)
+                {
+                    models.append(model)
+                }
+            }
+            
+            for (_, touch) in currentlyTouched {
+                if
+                    !resultIDs.contains(touch.id),
+                    let model = touch as? T,
                     predicate.doesMatch(model)
                 {
                     models.append(model)

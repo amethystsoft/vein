@@ -38,17 +38,18 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
             }
         }
         set {
+            readFromStore = true
+            
+            guard
+                let model = model,
+                let context = model.context
+            else { return setAndNotify(newValue) }
+            
+            let predicateMatches = context._prepareForChange(of: model)
+            setAndNotify(newValue)
+            context._markTouched(model, previouslyMatching: predicateMatches)
+            
             lock.withLock {
-                readFromStore = true
-                
-                guard
-                    let model = model,
-                    let context = model.context
-                else { return setAndNotify(newValue) }
-                
-                let predicateMatches = context._prepareForChange(of: model)
-                setAndNotify(newValue)
-                context._markTouched(model, previouslyMatching: predicateMatches)
                 wasTouched = true
             }
         }
@@ -118,7 +119,9 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
             let predicateMatches = context._prepareForChange(of: model)
             setAndNotify(newValue)
             context._markTouched(model, previouslyMatching: predicateMatches)
-            self.wasTouched = true
+            lock .withLock {
+                self.wasTouched = true
+            }
         }
     }
     
@@ -127,7 +130,8 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
         self.key = nil
     }
     
-    public func setAndNotify(_ newValue: WrappedType) {
+    // only called from inside setter during lock
+    private func setAndNotify(_ newValue: WrappedType) {
         lock.withLock {
             store = newValue
             model?.notifyOfChanges()
