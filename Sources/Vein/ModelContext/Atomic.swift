@@ -20,4 +20,8 @@ public final class Atomic<Value>: @unchecked Sendable {
     public func mutate<R>(_ body: (inout Value) -> R) -> R {
         lock.withLock { body(&_value) }
     }
+    
+    public func mutate<R>(_ body: (inout Value) throws -> R) rethrows -> R {
+        try lock.withLock{ try body(&_value) }
+    }
 }

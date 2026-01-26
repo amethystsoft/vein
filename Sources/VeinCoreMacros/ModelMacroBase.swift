@@ -1,10 +1,18 @@
+//
+//  ModelMacroBase.swift
+//  amethyst-vein
+//
+//  Created by Mia Koring on 24.01.26.
+//
+
+
 import SwiftSyntax
 import SwiftSyntaxMacros
 import SwiftSyntaxMacroExpansion
 import SwiftDiagnostics
 import Foundation
 
-public struct Model {
+public struct ModelMacroBase {
     public static func expansion(
         of node: SwiftSyntax.AttributeSyntax,
         providingMembersOf classDecl: SwiftSyntax.ClassDeclSyntax,
@@ -106,9 +114,9 @@ public struct Model {
     typealias _PredicateHelper = _\(className)PredicateHelper
 
     @PrimaryKey
-    var id: Int64?
+    var id: ULID
     
-    required init(id: Int64, fields: [String: Vein.SQLiteValue]) {
+    required init(id: ULID, fields: [String: Vein.SQLiteValue]) {
         self.id = id
         \(eagerVarInit)
         _setupFields()
@@ -187,7 +195,7 @@ public struct Model {
             else { continue }
             fieldNamesAndTypes[name] = datatype.dropFirst().trimmingCharacters(in: .whitespacesAndNewlines)
         }
-        fieldNamesAndTypes["id"] = "Int64"
+        fieldNamesAndTypes["id"] = "ULID"
         
         let methods = fieldNamesAndTypes.map { (name, type) in
             """

@@ -15,6 +15,7 @@ extension MigrationTests {
         
         let initial = Version0_0_1.BasicModel(field: "how did we get here")
         try container.context.insert(initial)
+        try container.context.save()
         
         let schemas = try container.context.getAllStoredSchemas()
         

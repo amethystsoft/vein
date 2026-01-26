@@ -22,6 +22,7 @@ extension MigrationTests {
         
         try container.context.insert(test)
         try container.context.insert(unused)
+        try container.context.save()
         
         // Check both tables exist under the expected name
         let storedSchemas = try container.context.getAllStoredSchemas()
@@ -97,7 +98,7 @@ extension MigrationTests {
         
         // Entering migration manually
         // This is an internal function and not publicly exposed
-        container.context.isInActiveMigration = true
+        container.context.isInActiveMigration.value = true
         
         do {
             try SimpleSchemaV0_0_2.Test
@@ -132,7 +133,7 @@ extension MigrationTests {
         
         // Entering migration manually
         // This is an internal function and not publicly exposed
-        container.context.isInActiveMigration = true
+        container.context.isInActiveMigration.value = true
         
         // Testing PersistentModel/unchangedMigration
         do {
@@ -168,7 +169,7 @@ extension MigrationTests {
         
         // Entering migration manually
         // This is an internal function and not publicly exposed
-        container.context.isInActiveMigration = true
+        container.context.isInActiveMigration.value = true
         
         do {
             try SimpleSchemaV0_0_1.Test
@@ -203,7 +204,7 @@ extension MigrationTests {
         
         // Entering migration manually
         // This is an internal function and not publicly exposed
-        container.context.isInActiveMigration = true
+        container.context.isInActiveMigration.value = true
         
         do {
             try SimpleSchemaV0_0_1.Test
@@ -356,6 +357,7 @@ fileprivate enum SimpleMigrationSuccess: SchemaMigrationPlan {
                 try context.insert(newModel)
                 try context.delete(model)
             }
+            
         },
         didMigrate: nil
     )

@@ -1,5 +1,5 @@
 {
-  "originHash" : "af7d012e48f413b2f6ca0b8cbf944d1de2f55ee1caf8aee55d2da4e1787d53c7",
+  "originHash" : "d41c3de0f60ff8be9f665712d2b1d0f7addcbe49450488737e676c7fa9ae01c0",
   "pins" : [
     {
       "identity" : "sqlite.swift",
@@ -44,6 +44,15 @@
       "state" : {
         "revision" : "4799286537280063c85a32f09884cfbca301b1a1",
         "version" : "602.0.0"
+      }
+    },
+    {
+      "identity" : "ulid.swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/yaslab/ULID.swift",
+      "state" : {
+        "revision" : "e21933de8ac3e8ba9e83aa71956cd27206eec6b9",
+        "version" : "1.3.1"
       }
     }
   ],

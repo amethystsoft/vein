@@ -18,6 +18,7 @@ extension MigrationTests {
         let test = SimpleSchemaV0_0_3.AddingFieldsModel(value: "")
         
         try container.context.insert(test)
+        try container.context.save()
         
         // Check both tables exist under the expected name
         let storedSchemas = try container.context.getAllStoredSchemas()
@@ -51,7 +52,7 @@ extension MigrationTests {
         
         // Entering migration manually
         // This is an internal function and not publicly exposed
-        container.context.isInActiveMigration = true
+        container.context.isInActiveMigration.value = true
         
         do {
             try SimpleSchemaV0_0_2.Test
@@ -87,7 +88,7 @@ extension MigrationTests {
         
         // Entering migration manually
         // This is an internal function and not publicly exposed
-        container.context.isInActiveMigration = true
+        container.context.isInActiveMigration.value = true
         
         do {
             try SimpleSchemaV0_0_2.Test
@@ -122,7 +123,7 @@ extension MigrationTests {
         
         // Entering migration manually
         // This is an internal function and not publicly exposed
-        container.context.isInActiveMigration = true
+        container.context.isInActiveMigration.value = true
         
         do {
             try SimpleSchemaV0_0_3.AddingFieldsModel
@@ -157,7 +158,7 @@ extension MigrationTests {
         
         // Entering migration manually
         // This is an internal function and not publicly exposed
-        container.context.isInActiveMigration = true
+        container.context.isInActiveMigration.value = true
         
         do {
             try SimpleSchemaV0_0_3.AddingFieldsModel

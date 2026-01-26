@@ -58,12 +58,23 @@ extension ManagedObjectContext {
     
     @MainActor
     package func cleanupOldSchema(_ schema: any VersionedSchema.Type) throws {
-        guard isInActiveMigration else {
+        guard isInActiveMigration.value else {
             throw ManagedObjectContextError
                 .notInsideMigration("ManagedObjectContext/cleanupOldSchema")
         }
         for model in schema.models {
             try deleteTable(model.schema)
+        }
+    }
+    
+    @MainActor
+    package func removeModelsFromContext(for schema: any VersionedSchema.Type) {
+        for modelType in schema.models {
+            let models = identityMap.getAll(of: modelType)
+            models.forEach {
+                $0.context = nil
+            }
+            identityMap.removeAll(of: modelType)
         }
     }
 }

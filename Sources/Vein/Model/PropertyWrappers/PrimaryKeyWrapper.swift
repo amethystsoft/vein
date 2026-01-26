@@ -1,16 +1,21 @@
 import Foundation
+import ULID
 
 @propertyWrapper
 public struct PrimaryKey: PersistedField, @unchecked Sendable {
-    public typealias WrappedType = Int64?
+    public typealias WrappedType = ULID
     
     public let key: String? = "id"
     
     private let lock = NSLock()
     
-    private var store: Int64?
+    private var store: ULID
     
-    public var wrappedValue: Int64? {
+    public var wasTouched = false
+    
+    /// Only set during migrations to preserve old ID
+    /// Must be set before inserting new Model into context
+    public var wrappedValue: ULID {
         get {
             lock.withLock({
                 return store
@@ -18,7 +23,9 @@ public struct PrimaryKey: PersistedField, @unchecked Sendable {
         }
         set {
             lock.withLock({
-                store = newValue
+                if model?.context == nil {
+                    store = newValue
+                }
             })
         }
     }
@@ -39,11 +46,12 @@ public struct PrimaryKey: PersistedField, @unchecked Sendable {
         }
     }
     
-    public init(wrappedValue: Int64?) {
-        self.wrappedValue = wrappedValue
+    public init(wrappedValue: ULID = ULID()) {
+        self.store = wrappedValue
     }
     
-    public func setValue(to newValue: WrappedType) {}
+    /// No-op: Primary key is immutable after insertion and doesn't participate in rollback.
+    public func setStoreToCapturedState(_ state: Any) {}
 }
 
 

@@ -3,12 +3,12 @@ import SQLite
 
 public struct PersistedFieldDTO: Sendable {
     let key: String
-    let id: Int64
+    let id: ULID
     let schema: String
     let sqliteType: SQLiteTypeName
     let enclosingObjectID: ObjectIdentifier
     
-    public init(key: String, id: Int64, schema: String, sqliteType: SQLiteTypeName, enclosingObjectID: ObjectIdentifier) {
+    public init(key: String, id: ULID, schema: String, sqliteType: SQLiteTypeName, enclosingObjectID: ObjectIdentifier) {
         self.key = key
         self.id = id
         self.schema = schema

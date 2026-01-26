@@ -15,7 +15,7 @@ public struct TableBuilder {
     public func id() -> Self {
         var copy = self
         copy.schema = { t in
-            t.column(Expression<Int64>("id"), primaryKey: true)
+            t.column(Expression<String>("id"), primaryKey: true)
         }
         return copy
     }

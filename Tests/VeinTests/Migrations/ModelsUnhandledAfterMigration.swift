@@ -14,6 +14,7 @@ extension MigrationTests {
         )
         let originModel = Version0_0_1.BasicModel(field: "very important content")
         try container.context.insert(originModel)
+        try container.context.save()
         
         let newContainer = try ModelContainer(
             Version0_0_2.self,
