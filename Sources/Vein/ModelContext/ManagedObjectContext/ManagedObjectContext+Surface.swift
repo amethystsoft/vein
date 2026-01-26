@@ -4,7 +4,7 @@ package typealias WriteCacheDictionary = [ObjectIdentifier: [ULID: any Persisten
 
 extension ManagedObjectContext {
     /// A Boolean value that indicates whether the context has uncommitted changes.
-    public var hasChanges: Bool {
+    public nonisolated var hasChanges: Bool {
         return writeCache.mutate { inserts, touches, deletes,_ in
             return !inserts.isEmpty || !touches.isEmpty || !deletes.isEmpty
         }
@@ -53,10 +53,18 @@ extension ManagedObjectContext {
                 default: [:]
             ][model.id] = nil
             
+            if touches[model.typeIdentifier]?.isEmpty ?? false {
+                touches[model.typeIdentifier] = nil
+            }
+            
             deletes[
                 model.typeIdentifier,
                 default: [:]
             ][model.id] = nil
+            
+            if deletes[model.typeIdentifier]?.isEmpty ?? false {
+                deletes[model.typeIdentifier] = nil
+            }
         }
         model.context = self
         
@@ -134,10 +142,18 @@ extension ManagedObjectContext {
                 default: [:]
             ][model.id] = nil
             
+            if inserts[model.typeIdentifier]?.isEmpty ?? false {
+                inserts[model.typeIdentifier] = nil
+            }
+            
             touches[
                 model.typeIdentifier,
                 default: [:]
             ][model.id] = nil
+            
+            if touches[model.typeIdentifier]?.isEmpty ?? false {
+                touches[model.typeIdentifier] = nil
+            }
         }
         model.context = nil
         identityMap.remove(M.self, id: model.id)
