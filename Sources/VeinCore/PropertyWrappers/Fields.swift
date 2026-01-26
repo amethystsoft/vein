@@ -34,11 +34,21 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
                     store = result
                     readFromStore = true
                     return result
+                } catch let error as ManagedObjectContextError {
+                    if case .noSuchTable = error {
+                        return nil
+                    }
+                    if case .unexpectedlyEmptyResult = error {
+                        return store
+                    }
+                    fatalError(error.localizedDescription)
                 } catch { fatalError(error.localizedDescription) }
             }
         }
         set {
-            readFromStore = true
+            lock.withLock {
+                readFromStore = true
+            }
             
             guard
                 let model = model,
