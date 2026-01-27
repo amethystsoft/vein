@@ -29,8 +29,8 @@ let package = Package(
     ],
     dependencies: [
         .package(
-            url: "https://github.com/amethystsoft/SQLite.swift.git",
-            branch: "master",
+            url: "https://github.com/stephencelis/SQLite.swift.git",
+            .upToNextMinor(from: "0.15.5"),
             traits: sqliteTraits
         ),
         .package(url: "https://github.com/apple/swift-crypto.git", "1.0.0" ..< "5.0.0"),
