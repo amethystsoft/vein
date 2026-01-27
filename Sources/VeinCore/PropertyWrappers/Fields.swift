@@ -14,7 +14,19 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
     /// ONLY LET MACRO SET
     public weak var model: (any PersistentModel)?
     
-    public var wasTouched: Bool = false
+    private var _wasTouched: Bool = false
+    public private(set) var wasTouched: Bool {
+        get {
+            lock.withLock {
+                _wasTouched
+            }
+        }
+        set {
+            lock.withLock {
+                _wasTouched = newValue
+            }
+        }
+    }
     
     public var isLazy: Bool {
         true
@@ -34,12 +46,18 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
                     store = result
                     readFromStore = true
                     return result
+                } catch let error as ManagedObjectContextError {
+                    if case .noSuchTable = error {
+                        return nil
+                    }
+                    if case .unexpectedlyEmptyResult = error {
+                        return store
+                    }
+                    fatalError(error.localizedDescription)
                 } catch { fatalError(error.localizedDescription) }
             }
         }
         set {
-            readFromStore = true
-            
             guard
                 let model = model,
                 let context = model.context
@@ -49,9 +67,7 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
             setAndNotify(newValue)
             context._markTouched(model, previouslyMatching: predicateMatches)
             
-            lock.withLock {
-                wasTouched = true
-            }
+            wasTouched = true
         }
     }
     
@@ -72,8 +88,9 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
     private func setAndNotify(_ newValue: WrappedType) {
         lock.withLock {
             store = newValue
-            model?.notifyOfChanges()
+            readFromStore = true
         }
+        model?.notifyOfChanges()
     }
     
     public func setStoreToCapturedState(_ state: Any) {
@@ -83,7 +100,7 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
             }
             self.store = value
             self.readFromStore = false
-            self.wasTouched = false
+            self._wasTouched = false
         }
     }
 }
@@ -102,7 +119,19 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
         false
     }
     
-    public var wasTouched: Bool = false
+    private var _wasTouched: Bool = false
+    public private(set) var wasTouched: Bool {
+        get {
+            lock.withLock {
+                _wasTouched
+            }
+        }
+        set {
+            lock.withLock {
+                _wasTouched = newValue
+            }
+        }
+    }
     
     public var wrappedValue: T {
         get {
@@ -119,9 +148,7 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
             let predicateMatches = context._prepareForChange(of: model)
             setAndNotify(newValue)
             context._markTouched(model, previouslyMatching: predicateMatches)
-            lock.withLock {
-                self.wasTouched = true
-            }
+            self.wasTouched = true
         }
     }
     
@@ -134,8 +161,8 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
     private func setAndNotify(_ newValue: WrappedType) {
         lock.withLock {
             store = newValue
-            model?.notifyOfChanges()
         }
+        model?.notifyOfChanges()
     }
     
     public func setStoreToCapturedState(_ state: Any) {
@@ -144,7 +171,7 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
                 fatalError(ManagedObjectContextError.capturedStateApplicationFailed(WrappedType.self, instanceKey).localizedDescription)
             }
             self.store = value
-            self.wasTouched = false
+            self._wasTouched = false
         }
     }
 }
