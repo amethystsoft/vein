@@ -16,5 +16,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install SQLite3 (libsqlite3-dev)
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y libsqlite3-dev sqlite3 pkg-config
+          rm -rf /var/lib/apt/lists/*
+
       - name: Test
         run: swift test
