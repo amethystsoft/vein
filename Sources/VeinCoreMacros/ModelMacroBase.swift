@@ -1,11 +1,3 @@
-//
-//  ModelMacroBase.swift
-//  amethyst-vein
-//
-//  Created by Mia Koring on 24.01.26.
-//
-
-
 import SwiftSyntax
 import SwiftSyntaxMacros
 import SwiftSyntaxMacroExpansion
@@ -135,7 +127,7 @@ public struct ModelMacroBase {
         ]
     }
 
-    static let _fieldInformation: [FieldInformation] = [
+    static let _fieldInformation: [Vein.FieldInformation] = [
         \(fieldInformationString)
     ]
 """
@@ -152,9 +144,9 @@ public struct ModelMacroBase {
     ) throws -> [ExtensionDeclSyntax] {
         let extensionDecl = try ExtensionDeclSyntax(
             """
-            extension \(raw: type): PersistentModel, @unchecked Sendable { 
+            extension \(raw: type): Vein.PersistentModel, @unchecked Sendable { 
                 static let schema = "\(raw: type)"
-                static var version: ModelVersion { \("\("\(type)".prefix(while: { $0 != "."})).version") }
+                static var version: Vein.ModelVersion { \("\("\(type)".prefix(while: { $0 != "."})).version") }
             }
             """
         )
@@ -216,15 +208,15 @@ public struct ModelMacroBase {
         let predicateBuilder = """
         struct _\(className)PredicateHelper: Vein.PredicateConstructor {
             typealias Model = \(className)
-            private var builder: PredicateBuilder<\(className)>
+            private var builder: Vein.PredicateBuilder<\(className)>
             
             init() {
-                self.builder = PredicateBuilder<\(className)>()
+                self.builder = Vein.PredicateBuilder<\(className)>()
             }
             
             \(methods)
         
-            func _builder() -> PredicateBuilder<\(className)> {
+            func _builder() -> Vein.PredicateBuilder<\(className)> {
                 return builder
             }
         }

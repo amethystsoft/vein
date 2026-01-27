@@ -47,6 +47,7 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
                     readFromStore = true
                     return result
                 } catch let error as ManagedObjectContextError {
+                    readFromStore = false
                     if case .noSuchTable = error {
                         return nil
                     }
