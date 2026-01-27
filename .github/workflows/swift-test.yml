@@ -16,16 +16,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install System SQLite
-        run: |
-          apt-get update
-          apt-get install -y libsqlite3-dev
-
-      - name: Fix Git permissions
-        run: git config --global --add safe.directory '*'
-
       - name: Resolve & Test
         run: |
+          rm -f Package.resolved
+          swift package resolve
           swift package clean
           swift package resolve
           swift test
