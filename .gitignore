@@ -69,3 +69,4 @@ DerivedData/
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
 .netrc
 .swiftpm
+Package.resolved

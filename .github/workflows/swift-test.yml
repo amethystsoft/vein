@@ -10,11 +10,11 @@ jobs:
   test:
     runs-on: blacksmith-8vcpu-ubuntu-2404-arm
     container:
-      image: swift:6.2-noble
+      image: swift:6.2.3-noble
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run tests
+      - name: Test
         run: swift test

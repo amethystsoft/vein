@@ -30,7 +30,7 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/amethystsoft/SQLite.swift.git",
-            branch: "master",
+            revision: "fcc6077f1f59aa2ae2a68c5628fac336d578ed52",
             traits: sqliteTraits
         ),
         .package(url: "https://github.com/apple/swift-crypto.git", "1.0.0" ..< "5.0.0"),
