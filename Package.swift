@@ -4,6 +4,12 @@
 import PackageDescription
 import CompilerPluginSupport
 
+#if !os(Android) && !os(Windows) && !os(Linux)
+let sqliteTraits: Set<Package.Dependency.Trait> = ["SystemSQLite"]
+#else
+let sqliteTraits: Set<Package.Dependency.Trait> = ["SwiftToolchainCSQLite"]
+#endif
+
 let package = Package(
     name: "amethyst-vein",
     platforms: [.macOS(.v13), .iOS(.v16), .tvOS(.v16), .macCatalyst(.v16), .visionOS(.v1)],
@@ -24,7 +30,8 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/amethystsoft/SQLite.swift.git",
-            exact: "0.15.3-amethyst"
+            revision: "fcc6077f1f59aa2ae2a68c5628fac336d578ed52",
+            traits: sqliteTraits
         ),
         .package(url: "https://github.com/apple/swift-crypto.git", "1.0.0" ..< "5.0.0"),
         .package(url: "https://github.com/swiftlang/swift-syntax.git", "600.0.0" ..< "610.0.0"),
