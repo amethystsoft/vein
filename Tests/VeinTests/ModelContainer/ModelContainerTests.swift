@@ -6,18 +6,33 @@ import Testing
 @MainActor
 struct ModelContainerTests {
     private func setupContainer() throws -> ModelContainer {
-        let container = try ModelContainer(V0_0_1.self, migration: Migration.self, at: nil)
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.ModelContainerTests"
+        )
         return container
     }
     
     @Test("DB newer version than container throws")
     func dbNewerThanContainer() throws {
-        let container = try ModelContainer(V0_0_2.self, migration: Migration.self, at: nil)
+        let container = try ModelContainer(
+            V0_0_2.self,
+            migration: Migration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.ModelContainerTests"
+        )
         let model = V0_0_2.Test(flag: false, someValue: "xyz", securityCode: "zyx")
         try container.context.insert(model)
         try container.context.save()
         
-        let newContainer = try ModelContainer(V0_0_1.self, migration: Migration.self, connection: container.getConnection())
+        let newContainer = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            connection: container.getConnection(),
+            appID: "de.amethystsoft.vein.ModelContainerTests"
+        )
         
         do {
             try newContainer.migrate()

@@ -22,7 +22,8 @@ public struct MigrationTester {
         let container = try ModelContainer(
             version,
             migration: migrationPlan,
-            at: containerPath
+            at: containerPath,
+            appID: "de.amethystsoft.vein.MigrationTests"
         )
         try block(container.context)
     }
@@ -34,7 +35,8 @@ public struct MigrationTester {
         let container = try ModelContainer(
             version,
             migration: migrationPlan,
-            at: containerPath
+            at: containerPath,
+            appID: "de.amethystsoft.vein.MigrationTests"
         )
         try container.migrate()
         try block(container.context)
@@ -55,7 +57,8 @@ public struct MigrationTester {
         let container = try ModelContainer(
             startingVersion,
             migration: migrationPlan,
-            at: containerPath
+            at: containerPath,
+            appID: "de.amethystsoft.vein.MigrationTests"
         )
         
         try initialData(container.context)
@@ -65,7 +68,8 @@ public struct MigrationTester {
             let currentContainer = try ModelContainer(
                 schema,
                 migration: migrationPlan,
-                at: containerPath
+                at: containerPath,
+                appID: "de.amethystsoft.vein.MigrationTests"
             )
             
             try currentContainer.migrate()

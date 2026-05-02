@@ -10,7 +10,8 @@ extension MigrationTests {
         let container = try ModelContainer(
             Version0_0_1.self,
             migration: MigrationPlan.self,
-            at: path
+            at: path,
+            appID: "de.amethystsoft.vein.MigrationTests"
         )
         
         let initial = Version0_0_1.BasicModel(field: "how did we get here")
@@ -27,7 +28,8 @@ extension MigrationTests {
         let newContainer = try ModelContainer(
             Version0_0_2.self,
             migration: MigrationPlan.self,
-            at: path
+            at: path,
+            appID: "de.amethystsoft.vein.MigrationTests"
         )
         
         try newContainer.migrate()

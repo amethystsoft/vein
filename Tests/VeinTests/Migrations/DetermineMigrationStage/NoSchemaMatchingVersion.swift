@@ -10,7 +10,8 @@ extension MigrationTests {
         let container = try ModelContainer(
             Version0_0_1.self,
             migration: SetupMigrationPlan.self,
-            at: path
+            at: path,
+            appID: "de.amethystsoft.vein.MigrationTests"
         )
         let originModel = Version0_0_1.BasicModel(field: "very important content")
         try container.context.insert(originModel)
@@ -19,7 +20,8 @@ extension MigrationTests {
         let newContainer = try ModelContainer(
             Version0_0_2.self,
             migration: MigrationPlan.self,
-            at: path
+            at: path,
+            appID: "de.amethystsoft.vein.MigrationTests"
         )
         do {
             try newContainer.migrate()

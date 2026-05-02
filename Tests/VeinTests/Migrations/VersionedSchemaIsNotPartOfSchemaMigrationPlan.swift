@@ -12,7 +12,8 @@ extension MigrationTests {
             let _ = try ModelContainer(
                 Version0_0_2.self,
                 migration: MigrationPlan.self,
-                at: path
+                at: path,
+                appID: "de.amethystsoft.vein.MigrationTests"
             )
         } catch {
             if

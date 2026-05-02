@@ -7,7 +7,12 @@ import Testing
 struct WriteCache {
     
     private func setupContainer() throws -> ModelContainer {
-        let container = try ModelContainer(V0_0_1.self, migration: Migration.self, at: nil)
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.WriteCache"
+        )
         return container
     }
     

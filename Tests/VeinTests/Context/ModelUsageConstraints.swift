@@ -30,12 +30,22 @@ struct ModelUsageConstraints {
     @Test("Fetch unpermitted model during migration")
     func fetchUnpermittedModelDuringMigration() throws {
         let path = try prepareContainerLocation(name: "unpermittedDuringMigration")
-        let container = try ModelContainer(V0_0_2.self, migration: Migration.self, at: path)
+        let container = try ModelContainer(
+            V0_0_2.self,
+            migration: Migration.self,
+            at: path,
+            appID: "de.amethystsoft.vein.ModelUsageConstraints"
+        )
         let model = V0_0_2.Test(flag: true, someValue: "blubb", securityCode: "very secure code")
         try container.context.insert(model)
         try container.context.save()
         
-        let newContainer = try ModelContainer(V0_0_3.self, migration: Migration.self, at: path)
+        let newContainer = try ModelContainer(
+            V0_0_3.self,
+            migration: Migration.self,
+            at: path,
+            appID: "de.amethystsoft.vein.ModelUsageConstraints"
+        )
         
         do {
             try newContainer.migrate()
@@ -56,7 +66,12 @@ struct ModelUsageConstraints {
     
     @Test("Fetch unpermitted model")
     func fetchUnpermittedModel() throws {
-        let container = try ModelContainer(V0_0_2.self, migration: Migration.self, at: nil)
+        let container = try ModelContainer(
+            V0_0_2.self,
+            migration: Migration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.ModelUsageConstraints"
+        )
         
         do {
             let _ = try container.context.fetchAll(V0_0_1.Test.self)
@@ -74,7 +89,12 @@ struct ModelUsageConstraints {
     
     @Test("Persist touch unpermitted model")
     func persistTouchUnpermittedModel() throws {
-        let container = try ModelContainer(V0_0_2.self, migration: Migration.self, at: nil)
+        let container = try ModelContainer(
+            V0_0_2.self,
+            migration: Migration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.ModelUsageConstraints"
+        )
         let model = V0_0_1.Test(flag: true, someValue: "xyz", randomValue: 122)
         model.context = container.context
         model._setupFields()
@@ -99,7 +119,12 @@ struct ModelUsageConstraints {
     
     @Test("Delete unpermitted model")
     func deleteUnpermittedModel() throws {
-        let container = try ModelContainer(V0_0_2.self, migration: Migration.self, at: nil)
+        let container = try ModelContainer(
+            V0_0_2.self,
+            migration: Migration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.ModelUsageConstraints"
+        )
         let model = V0_0_1.Test(flag: true, someValue: "xyz", randomValue: 122)
         model.context = container.context
         model._setupFields()

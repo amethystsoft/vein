@@ -16,11 +16,16 @@ public final class ModelContainer: @unchecked Sendable {
     
     private var currentMigration = Atomic((any VersionedSchema.Type, any VersionedSchema.Type)?.none)
     
+    public let appID: String
+    
     public init(
         _ versionedSchema: VersionedSchema.Type,
         migration: SchemaMigrationPlan.Type,
-        at path: String?
+        at path: String?,
+        appID: String
     ) throws(ManagedObjectContextError) {
+        self.appID = appID
+        
         guard migration.schemas.contains(where: { $0.self == versionedSchema }) else {
             throw ManagedObjectContextError.schemaNotRegisteredOnMigrationPlan(versionedSchema, migration)
         }
@@ -51,8 +56,11 @@ public final class ModelContainer: @unchecked Sendable {
     init(
         _ versionedSchema: VersionedSchema.Type,
         migration: SchemaMigrationPlan.Type,
-        connection: Connection
+        connection: Connection,
+        appID: String
     ) throws(ManagedObjectContextError) {
+        self.appID = appID
+        
         guard migration.schemas.contains(where: { $0.self == versionedSchema }) else {
             throw ManagedObjectContextError.schemaNotRegisteredOnMigrationPlan(versionedSchema, migration)
         }

@@ -1,6 +1,10 @@
 import SQLiteDB
 import Foundation
 import ULID
+import Crypto
+#if canImport(AppKit) || canImport(UIKit)
+import KeychainAccess
+#endif
 
 public actor ManagedObjectContext {
     public static nonisolated(unsafe) var shared: ManagedObjectContext?
@@ -46,6 +50,18 @@ public actor ManagedObjectContext {
         self.modelContainer = modelContainer
         do {
             self.connection = try Connection(path)
+            
+            #if canImport(AppKit) || canImport(UIKit)
+            guard let key = Self.getKeyForDatabase(
+                at: path,
+                appID: modelContainer.appID
+            ) else {
+                fatalError("Vein: Failed to retrieve/save key to encrypt Database.")
+            }
+            try self.connection.key(key)
+                
+            #endif
+            
             try self.connection.execute("PRAGMA journal_mode=WAL;")
         } catch let error as SQLiteDB.Result {
             throw error.parse()
@@ -74,6 +90,29 @@ public actor ManagedObjectContext {
     ) {
         self.modelContainer = modelContainer
         self.connection = connection
+    }
+    
+    public static func getKeyForDatabase(at path: String, appID: String) -> String? {
+        let url = URL(fileURLWithPath: path)
+        let fileName = url.lastPathComponent
+        
+        #if canImport(AppKit) || canImport(UIKit)
+        let keychain = Keychain(service: "com.amethyst.vein.sqlcipher.\(appID)")
+        
+        if let key = keychain[fileName] {
+            return key
+        } else {
+            let keyData = SymmetricKey(size: .bits256).withUnsafeBytes { Data($0) }
+            let hexKey = keyData.map { String(format: "%02hhx", $0) }.joined()
+            
+            guard let _ = try? keychain.set(hexKey, key: fileName) else {
+                return nil
+            }
+            return hexKey
+        }
+        #else
+        return nil
+        #endif
     }
 }
 

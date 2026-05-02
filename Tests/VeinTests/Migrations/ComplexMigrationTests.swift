@@ -18,7 +18,12 @@ struct MigrationTests {
             "Complex migration test started with db location: \(dbPath)"
         )
         
-        let container = try ModelContainer(ComplexSchemaV0_0_1.self, migration: ComplexMigrationSuccess.self, at: dbPath)
+        let container = try ModelContainer(
+            ComplexSchemaV0_0_1.self,
+            migration: ComplexMigrationSuccess.self,
+            at: dbPath,
+            appID: "de.amethystsoft.vein.MigrationTests"
+        )
         
         // Create initial models
         let model = ComplexSchemaV0_0_1.Test(
@@ -43,7 +48,12 @@ struct MigrationTests {
         )
         
         // Create new container & trigger migration
-        let newContainer = try ModelContainer(ComplexSchemaV0_0_2.self, migration: ComplexMigrationSuccess.self, at: dbPath)
+        let newContainer = try ModelContainer(
+            ComplexSchemaV0_0_2.self,
+            migration: ComplexMigrationSuccess.self,
+            at: dbPath,
+            appID: "de.amethystsoft.vein.MigrationTests"
+        )
         try newContainer.migrate()
         
         // Check new model was migrated correctly
