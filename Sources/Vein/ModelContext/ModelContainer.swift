@@ -1,5 +1,5 @@
 import Foundation
-import SQLite
+import SQLiteDB
 
 public final class ModelContainer: @unchecked Sendable {
     private let migration: SchemaMigrationPlan.Type
@@ -41,7 +41,7 @@ public final class ModelContainer: @unchecked Sendable {
             try context.createMigrationsTable()
         } catch let error as ManagedObjectContextError {
             throw error
-        } catch let error as SQLite.Result {
+        } catch let error as SQLiteDB.Result {
             throw error.parse()
         } catch {
             throw .other(message: error.localizedDescription)
@@ -67,7 +67,7 @@ public final class ModelContainer: @unchecked Sendable {
         do {
             try context.createMigrationsTable()
         } catch let error as ManagedObjectContextError { throw error }
-        catch let error as SQLite.Result {
+        catch let error as SQLiteDB.Result {
             throw error.parse()
         } catch {
             throw .other(message: error.localizedDescription)

@@ -1,4 +1,6 @@
-import SQLite
+import SQLiteDB
+import Foundation
+
 public enum UnderlayingFieldType {
     case uuid(required: Bool = false)
     case string(required: Bool = false)
@@ -11,37 +13,37 @@ public enum UnderlayingFieldType {
 }
 
 extension UnderlayingFieldType {
-    func addColumn(to table: inout SQLite.TableBuilder, withName name: String) {
+    func addColumn(to table: inout SQLiteDB.TableBuilder, withName name: String) {
         switch self {
             case .uuid(let required), .string(let required), .date(let required), .url(let required):
                 if required {
-                    table.column(Expression<String>(name))
+                    table.column(SQLExpression<String>(name))
                 } else {
-                    table.column(Expression<String?>(name))
+                    table.column(SQLExpression<String?>(name))
                 }
             case .double(let required):
                 if required {
-                    table.column(Expression<Double>(name))
+                    table.column(SQLExpression<Double>(name))
                 } else {
-                    table.column(Expression<Double?>(name))
+                    table.column(SQLExpression<Double?>(name))
                 }
             case .bool(let required):
                 if required {
-                    table.column(Expression<Bool>(name))
+                    table.column(SQLExpression<Bool>(name))
                 } else {
-                    table.column(Expression<Bool?>(name))
+                    table.column(SQLExpression<Bool?>(name))
                 }
             case .int(let required):
                 if required {
-                    table.column(Expression<Int64>(name))
+                    table.column(SQLExpression<Int64>(name))
                 } else {
-                    table.column(Expression<Int64?>(name))
+                    table.column(SQLExpression<Int64?>(name))
                 }
             case .data(let required):
                 if required {
-                    table.column(Expression<SQLite.Blob>(name))
+                    table.column(SQLExpression<Data>(name))
                 } else {
-                    table.column(Expression<SQLite.Blob?>(name))
+                    table.column(SQLExpression<Data?>(name))
                 }
         }
     }

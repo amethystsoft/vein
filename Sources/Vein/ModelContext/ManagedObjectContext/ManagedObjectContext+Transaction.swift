@@ -1,10 +1,6 @@
-import SQLite
+import SQLiteDB
 import Foundation
-#if !os(Android) && !os(Windows) && !os(Linux)
-import SQLite3
-#else
-import SwiftToolchainCSQLite
-#endif
+import SQLCipher
 
 extension ManagedObjectContext {
     public nonisolated func transaction(_ block: @escaping () throws -> Void) throws {

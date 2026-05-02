@@ -1,5 +1,5 @@
 import Foundation
-import SQLite
+import SQLiteDB
 
 public struct PersistedFieldDTO: Sendable {
     let key: String
@@ -51,10 +51,10 @@ extension FieldInformation {
         return switch typeName.isNull {
             case true:
                 switch SQLiteTypeName.notNull(typeName) {
-                    case .integer: Expression<Int64?>(key)
-                    case .real: Expression<Double?>(key)
-                    case .text: Expression<String?>(key)
-                    case .blob: Expression<Data?>(key)
+                    case .integer: SQLExpression<Int64?>(key)
+                    case .real: SQLExpression<Double?>(key)
+                    case .text: SQLExpression<String?>(key)
+                    case .blob: SQLExpression<Data?>(key)
                     default:
                         fatalError(
                             "Unexpectedly found null. Check SQLiteTypeName.notNull() for logic errors"
@@ -62,10 +62,10 @@ extension FieldInformation {
                 }
             case false:
                 switch typeName {
-                    case .integer: Expression<Int64>(key)
-                    case .real: Expression<Double>(key)
-                    case .text: Expression<String>(key)
-                    case .blob: Expression<Data>(key)
+                    case .integer: SQLExpression<Int64>(key)
+                    case .real: SQLExpression<Double>(key)
+                    case .text: SQLExpression<String>(key)
+                    case .blob: SQLExpression<Data>(key)
                     default:
                         fatalError(
                             "Unexpectedly found null. Check SQLiteTypeName.notNull() for logic errors"
@@ -78,19 +78,19 @@ extension FieldInformation {
         switch SQLiteTypeName.notNull(typeName) {
             case .integer:
                 try context.run(
-                    Table(schema).addColumn(Expression<Int64?>(key))
+                    Table(schema).addColumn(SQLExpression<Int64?>(key))
                 )
             case .real:
                 try context.run(
-                    Table(schema).addColumn(Expression<Double?>(key))
+                    Table(schema).addColumn(SQLExpression<Double?>(key))
                 )
             case .text:
                 try context.run(
-                    Table(schema).addColumn(Expression<String?>(key))
+                    Table(schema).addColumn(SQLExpression<String?>(key))
                 )
             case .blob:
                 try context.run(
-                    Table(schema).addColumn(Expression<Data?>(key))
+                    Table(schema).addColumn(SQLExpression<Data?>(key))
                 )
             case .null:
                 fatalError(

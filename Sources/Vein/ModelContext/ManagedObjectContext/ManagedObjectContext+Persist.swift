@@ -1,4 +1,4 @@
-import SQLite
+import SQLiteDB
 import ULID
 
 extension ManagedObjectContext {
@@ -9,7 +9,7 @@ extension ManagedObjectContext {
                 return $0.wrappedValue.asPersistentRepresentation.sqliteValue.setter(withKey: $0.instanceKey, andTypeName: $0.wrappedValue.asPersistentRepresentation.sqliteTypeName)
             }))
         } catch let error as ManagedObjectContextError { throw error }
-        catch let error as SQLite.Result {
+        catch let error as SQLiteDB.Result {
             let parsed = error.parse()
             switch parsed {
                 case .noSuchTable:
@@ -28,7 +28,7 @@ extension ManagedObjectContext {
     
     nonisolated func _writeUpdate<M: PersistentModel>(_ model: M) throws(ManagedObjectContextError) {
         do {
-            let filtered = Table(model._getSchema()).filter(Expression<String>("id") == model.id.ulidString)
+            let filtered = Table(model._getSchema()).filter(SQLExpression<String>("id") == model.id.ulidString)
             
             let query = filtered
             //.update(newValue.setter(withKey: field.key, andTypeName: field.sqliteType))
@@ -52,7 +52,7 @@ extension ManagedObjectContext {
                 query
             )
         } catch let error as ManagedObjectContextError { throw error }
-        catch let error as SQLite.Result {
+        catch let error as SQLiteDB.Result {
             throw error.parse()
         } catch {
             throw .other(message: error.localizedDescription)
@@ -64,7 +64,7 @@ extension ManagedObjectContext {
     }
     
     nonisolated func _writeDelete(_ model: any PersistentModel) throws(MOCError) {
-        let filter = Table(model._getSchema()).filter(Expression<String>("id") == model.id.ulidString)
+        let filter = Table(model._getSchema()).filter(SQLExpression<String>("id") == model.id.ulidString)
         do {
             try connection.run(filter.delete())
             model.context = nil
@@ -88,7 +88,7 @@ extension ManagedObjectContext {
                     query.remove(model)
                 }
             }
-        } catch let error as SQLite.Result {
+        } catch let error as SQLiteDB.Result {
             throw error.parse()
         } catch {
             throw .other(message: error.localizedDescription)
@@ -98,7 +98,7 @@ extension ManagedObjectContext {
     package nonisolated func run(_ query: String) throws(ManagedObjectContextError) {
         do {
             try connection.run(query)
-        } catch let error as SQLite.Result {
+        } catch let error as SQLiteDB.Result {
             throw error.parse()
         } catch {
             throw .other(message: error.localizedDescription)

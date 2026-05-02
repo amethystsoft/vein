@@ -1,4 +1,4 @@
-import SQLite
+import SQLiteDB
 import Foundation
 import ULID
 
@@ -47,7 +47,7 @@ public actor ManagedObjectContext {
         do {
             self.connection = try Connection(path)
             try self.connection.execute("PRAGMA journal_mode=WAL;")
-        } catch let error as SQLite.Result {
+        } catch let error as SQLiteDB.Result {
             throw error.parse()
         } catch {
             throw .other(message: error.localizedDescription)
@@ -61,7 +61,7 @@ public actor ManagedObjectContext {
         self.modelContainer = modelContainer
         do {
             self.connection = try Connection(.inMemory)
-        } catch let error as SQLite.Result {
+        } catch let error as SQLiteDB.Result {
             throw error.parse()
         } catch {
             throw .other(message: error.localizedDescription)

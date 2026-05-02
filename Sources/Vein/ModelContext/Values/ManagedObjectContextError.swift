@@ -1,5 +1,5 @@
 import Foundation
-import SQLite
+import SQLiteDB
 
 public typealias MOCError = ManagedObjectContextError
 

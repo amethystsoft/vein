@@ -1,4 +1,4 @@
-import SQLite
+import SQLiteDB
 import Foundation
 import ULID
 

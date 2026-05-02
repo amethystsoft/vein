@@ -132,7 +132,6 @@ fileprivate enum ComplexSchemaV0_0_2: VersionedSchema {
         @Field
         var someValue: String
         
-        // Renamed and transformed from randomValue
         @Field
         var securityCode: String
         
@@ -158,14 +157,18 @@ fileprivate enum ComplexMigrationSuccess: SchemaMigrationPlan {
         toVersion: ComplexSchemaV0_0_2.self,
         willMigrate: { context in
             // Fetch V1 models
-            let tests = try context.fetchAll(ComplexSchemaV0_0_1.Test._PredicateHelper()._builder())
+            let tests = try context.fetchAll(ComplexSchemaV0_0_1.Test.self)
             try ComplexSchemaV0_0_1.Unused.deleteMigration(on: context)
             
             for test in tests {
                 if test.randomValue < 0 {
                     test.randomValue = 0
                 }
-                let new = ComplexSchemaV0_0_2.Test(flag: test.flag, someValue: test.someValue, securityCode: "SEC-\(test.randomValue)")
+                let new = ComplexSchemaV0_0_2.Test(
+                    flag: test.flag,
+                    someValue: test.someValue,
+                    securityCode: "SEC-\(test.randomValue)"
+                )
                 try context.insert(new)
                 try context.delete(test)
             }

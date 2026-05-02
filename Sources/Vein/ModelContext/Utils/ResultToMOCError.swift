@@ -1,6 +1,6 @@
-import SQLite
+import SQLiteDB
 
-package extension SQLite.Result {
+package extension SQLiteDB.Result {
     func parse() -> ManagedObjectContextError {
         return switch self {
             case .error(let message, let code, _):

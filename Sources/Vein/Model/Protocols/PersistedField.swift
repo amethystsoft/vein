@@ -1,4 +1,4 @@
-import SQLite
+import SQLiteDB
 import Foundation
 
 public protocol PersistedField: Sendable {
@@ -50,62 +50,62 @@ extension PersistedField {
         return switch Self.sqliteTypeName.isNull {
             case true:
                 switch SQLiteTypeName.notNull(Self.sqliteTypeName){
-                    case .integer: Expression<Int64?>(instanceKey)
-                    case .real: Expression<Double?>(instanceKey)
-                    case .text: Expression<String?>(instanceKey)
-                    case .blob: Expression<Data?>(instanceKey)
+                    case .integer: SQLExpression<Int64?>(instanceKey)
+                    case .real: SQLExpression<Double?>(instanceKey)
+                    case .text: SQLExpression<String?>(instanceKey)
+                    case .blob: SQLExpression<Data?>(instanceKey)
                     default: fatalError()
                 }
             case false:
                 switch Self.sqliteTypeName {
-                    case .integer: Expression<Int64>(instanceKey)
-                    case .real: Expression<Double>(instanceKey)
-                    case .text: Expression<String>(instanceKey)
-                    case .blob: Expression<Data>(instanceKey)
+                    case .integer: SQLExpression<Int64>(instanceKey)
+                    case .real: SQLExpression<Double>(instanceKey)
+                    case .text: SQLExpression<String>(instanceKey)
+                    case .blob: SQLExpression<Data>(instanceKey)
                     default: fatalError()
                 }
         }
     }
     
-    public func decode(_ row: SQLite.Row) -> WrappedType.PersistentRepresentation {
+    public func decode(_ row: SQLiteDB.Row) -> WrappedType.PersistentRepresentation {
         do {
             let typeName = WrappedType.sqliteTypeName
             
             switch typeName {
                 case .integer:
-                    let value = row[Expression<Int64>(instanceKey)]
+                    let value = row[SQLExpression<Int64>(instanceKey)]
                     return try WrappedType.PersistentRepresentation.decode(sqliteValue: .integer(value))
                 case .real:
-                    let value = row[Expression<Double>(instanceKey)]
+                    let value = row[SQLExpression<Double>(instanceKey)]
                     return try WrappedType.PersistentRepresentation.decode(sqliteValue: .real(value))
                 case .text:
-                    let value = row[Expression<String>(instanceKey)]
+                    let value = row[SQLExpression<String>(instanceKey)]
                     return try WrappedType.PersistentRepresentation.decode(sqliteValue: .text(value))
                 case .blob:
-                    let value = row[Expression<Data>(instanceKey)]
+                    let value = row[SQLExpression<Data>(instanceKey)]
                     return try WrappedType.PersistentRepresentation.decode(sqliteValue: .blob(value))
                 case .null:
                     switch SQLiteTypeName.notNull(typeName) {
                         case .integer:
-                            let value = row[Expression<Int64?>(instanceKey)]
+                            let value = row[SQLExpression<Int64?>(instanceKey)]
                             if let value {
                                 return try WrappedType.PersistentRepresentation.decode(sqliteValue: .integer(value))
                             }
                             return try WrappedType.PersistentRepresentation.decode(sqliteValue: .null)
                         case .real:
-                            let value = row[Expression<Double?>(instanceKey)]
+                            let value = row[SQLExpression<Double?>(instanceKey)]
                             if let value {
                                 return try WrappedType.PersistentRepresentation.decode(sqliteValue: .real(value))
                             }
                             return try WrappedType.PersistentRepresentation.decode(sqliteValue: .null)
                         case .text:
-                            let value = row[Expression<String?>(instanceKey)]
+                            let value = row[SQLExpression<String?>(instanceKey)]
                             if let value {
                                 return try WrappedType.PersistentRepresentation.decode(sqliteValue: .text(value))
                             }
                             return try WrappedType.PersistentRepresentation.decode(sqliteValue: .null)
                         case .blob:
-                            let value = row[Expression<Data?>(instanceKey)]
+                            let value = row[SQLExpression<Data?>(instanceKey)]
                             if let value {
                                 return try WrappedType.PersistentRepresentation.decode(sqliteValue: .blob(value))
                             }
