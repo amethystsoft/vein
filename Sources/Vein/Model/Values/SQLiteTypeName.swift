@@ -1,5 +1,5 @@
 import Foundation
-import SQLite
+import SQLiteDB
 
 public enum SQLiteTypeName: Sendable, Hashable {
     case integer, real, text, blob
@@ -35,115 +35,115 @@ public enum SQLiteTypeName: Sendable, Hashable {
         }
     }
     
-    func fieldIsEqualToExpression(key: String, value: (any SQLite.Value)?) -> SQLite.Expression<Bool?> {
+    func fieldIsEqualToExpression(key: String, value: (any SQLiteDB.Value)?) -> SQLiteDB.SQLExpression<Bool?> {
         switch self {
             case .integer:
-                Expression<Bool?>(Expression<Int64>(key) == value as! Int64)
+                SQLExpression<Bool?>(SQLExpression<Int64>(key) == value as! Int64)
             case .real:
-                Expression<Bool?>(Expression<Double>(key) == value as! Double)
+                SQLExpression<Bool?>(SQLExpression<Double>(key) == value as! Double)
             case .text:
-                Expression<Bool?>(Expression<String>(key) == value as! String)
+                SQLExpression<Bool?>(SQLExpression<String>(key) == value as! String)
             case .blob:
-                Expression<Bool?>(Expression<Data>(key) == value as! Data)
+                SQLExpression<Bool?>(SQLExpression<Data>(key) == value as! Data)
             case .null(let typeName):
                 switch Self.notNull(typeName) {
                     case .integer:
-                        Expression<Bool?>(Expression<Int64?>(key) == value as! Int64?)
+                        SQLExpression<Bool?>(SQLExpression<Int64?>(key) == value as! Int64?)
                     case .real:
-                        Expression<Bool?>(Expression<Double?>(key) == value as! Double?)
+                        SQLExpression<Bool?>(SQLExpression<Double?>(key) == value as! Double?)
                     case .text:
-                        Expression<Bool?>(Expression<String?>(key) == value as! String?)
+                        SQLExpression<Bool?>(SQLExpression<String?>(key) == value as! String?)
                     case .blob:
-                        Expression<Bool?>(Expression<Data?>(key) == value as! Data?)
+                        SQLExpression<Bool?>(SQLExpression<Data?>(key) == value as! Data?)
                     default:
-                        Expression<Bool?>(value: true)
+                        SQLExpression<Bool?>(value: true)
                 }
         }
     }
     
-    func fieldIsNotEqualToExpression(key: String, value: (any SQLite.Value)?) -> SQLite.Expression<Bool?> {
+    func fieldIsNotEqualToExpression(key: String, value: (any SQLiteDB.Value)?) -> SQLiteDB.SQLExpression<Bool?> {
         switch self {
             case .integer:
-                Expression<Bool?>(Expression<Int64>(key) != value as! Int64)
+                SQLExpression<Bool?>(SQLExpression<Int64>(key) != value as! Int64)
             case .real:
-                Expression<Bool?>(Expression<Double>(key) != value as! Double)
+                SQLExpression<Bool?>(SQLExpression<Double>(key) != value as! Double)
             case .text:
-                Expression<Bool?>(Expression<String>(key) != value as! String)
+                SQLExpression<Bool?>(SQLExpression<String>(key) != value as! String)
             case .blob:
-                Expression<Bool?>(Expression<Data>(key) != value as! Data)
+                SQLExpression<Bool?>(SQLExpression<Data>(key) != value as! Data)
             case .null(let typeName):
                 switch Self.notNull(typeName) {
                     case .integer:
-                        Expression<Bool?>(Expression<Int64?>(key) != value as! Int64?)
+                        SQLExpression<Bool?>(SQLExpression<Int64?>(key) != value as! Int64?)
                     case .real:
-                        Expression<Bool?>(Expression<Double?>(key) != value as! Double?)
+                        SQLExpression<Bool?>(SQLExpression<Double?>(key) != value as! Double?)
                     case .text:
-                        Expression<Bool?>(Expression<String?>(key) != value as! String?)
+                        SQLExpression<Bool?>(SQLExpression<String?>(key) != value as! String?)
                     case .blob:
-                        Expression<Bool?>(Expression<Data?>(key) != value as! Data?)
+                        SQLExpression<Bool?>(SQLExpression<Data?>(key) != value as! Data?)
                     default:
-                        Expression<Bool?>(value: nil)
+                        SQLExpression<Bool?>(value: nil)
                 }
         }
     }
     
-    func fieldIsBiggerToExpression(key: String, value: (any SQLite.Value)?) -> SQLite.Expression<Bool?> {
+    func fieldIsBiggerToExpression(key: String, value: (any SQLiteDB.Value)?) -> SQLiteDB.SQLExpression<Bool?> {
         switch self {
             case .integer:
-                Expression<Bool?>(Expression<Int64>(key) > value as! Int64)
+                SQLExpression<Bool?>(SQLExpression<Int64>(key) > value as! Int64)
             case .real:
-                Expression<Bool?>(Expression<Double>(key) > value as! Double)
+                SQLExpression<Bool?>(SQLExpression<Double>(key) > value as! Double)
             case .text:
-                Expression<Bool?>(Expression<String>(key) > value as! String)
+                SQLExpression<Bool?>(SQLExpression<String>(key) > value as! String)
             case .blob:
-                Expression<Bool?>(value: nil)
+                SQLExpression<Bool?>(value: nil)
             case .null:
-                Expression<Bool?>(value: nil)
+                SQLExpression<Bool?>(value: nil)
         }
     }
     
-    func fieldIsSmallerToExpression(key: String, value: (any SQLite.Value)?) -> SQLite.Expression<Bool?> {
+    func fieldIsSmallerToExpression(key: String, value: (any SQLiteDB.Value)?) -> SQLiteDB.SQLExpression<Bool?> {
         switch self {
             case .integer:
-                Expression<Bool?>(Expression<Int64>(key) < value as! Int64)
+                SQLExpression<Bool?>(SQLExpression<Int64>(key) < value as! Int64)
             case .real:
-                Expression<Bool?>(Expression<Double>(key) < value as! Double)
+                SQLExpression<Bool?>(SQLExpression<Double>(key) < value as! Double)
             case .text:
-                Expression<Bool?>(Expression<String>(key) < value as! String)
+                SQLExpression<Bool?>(SQLExpression<String>(key) < value as! String)
             case .blob:
-                Expression<Bool?>(value: nil)
+                SQLExpression<Bool?>(value: nil)
             case .null:
-                Expression<Bool?>(value: nil)
+                SQLExpression<Bool?>(value: nil)
         }
     }
     
-    func fieldIsSmallerOrEqualToExpression(key: String, value: (any SQLite.Value)?) -> SQLite.Expression<Bool?> {
+    func fieldIsSmallerOrEqualToExpression(key: String, value: (any SQLiteDB.Value)?) -> SQLiteDB.SQLExpression<Bool?> {
         switch self {
             case .integer:
-                Expression<Bool?>(Expression<Int64>(key) <= value as! Int64)
+                SQLExpression<Bool?>(SQLExpression<Int64>(key) <= value as! Int64)
             case .real:
-                Expression<Bool?>(Expression<Double>(key) <= value as! Double)
+                SQLExpression<Bool?>(SQLExpression<Double>(key) <= value as! Double)
             case .text:
-                Expression<Bool?>(Expression<String>(key) <= value as! String)
+                SQLExpression<Bool?>(SQLExpression<String>(key) <= value as! String)
             case .blob:
-                Expression<Bool?>(value: nil)
+                SQLExpression<Bool?>(value: nil)
             case .null:
-                Expression<Bool?>(value: nil)
+                SQLExpression<Bool?>(value: nil)
         }
     }
     
-    func fieldIsBiggerOrEqualToExpression(key: String, value: (any SQLite.Value)?) -> SQLite.Expression<Bool?> {
+    func fieldIsBiggerOrEqualToExpression(key: String, value: (any SQLiteDB.Value)?) -> SQLiteDB.SQLExpression<Bool?> {
         switch self {
             case .integer:
-                Expression<Bool?>(Expression<Int64>(key) >= value as! Int64)
+                SQLExpression<Bool?>(SQLExpression<Int64>(key) >= value as! Int64)
             case .real:
-                Expression<Bool?>(Expression<Double>(key) >= value as! Double)
+                SQLExpression<Bool?>(SQLExpression<Double>(key) >= value as! Double)
             case .text:
-                Expression<Bool?>(Expression<String>(key) >= value as! String)
+                SQLExpression<Bool?>(SQLExpression<String>(key) >= value as! String)
             case .blob:
-                Expression<Bool?>(value: nil)
+                SQLExpression<Bool?>(value: nil)
             case .null:
-                Expression<Bool?>(value: nil)
+                SQLExpression<Bool?>(value: nil)
         }
     }
 }
@@ -186,26 +186,26 @@ public enum SQLiteValue: Sendable, Hashable {
         }
     }
     
-    init(typeName: SQLiteTypeName, key: String, row: SQLite.Row) {
+    init(typeName: SQLiteTypeName, key: String, row: SQLiteDB.Row) {
         if typeName.isNull {
             switch SQLiteTypeName.notNull(typeName) {
                 case .integer:
-                    if let value = row[Expression<Int64?>(key)] {
+                    if let value = row[SQLExpression<Int64?>(key)] {
                         self = .integer(value)
                     }
                     self = .null
                 case .real:
-                    if let value = row[Expression<Double?>(key)] {
+                    if let value = row[SQLExpression<Double?>(key)] {
                         self = .real(value)
                     }
                     self = .null
                 case .text:
-                    if let value = row[Expression<String?>(key)] {
+                    if let value = row[SQLExpression<String?>(key)] {
                         self = .text(value)
                     }
                     self = .null
                 case .blob:
-                    if let value = row[Expression<Data?>(key)] {
+                    if let value = row[SQLExpression<Data?>(key)] {
                         self = .blob(value)
                     }
                     self = .null
@@ -216,19 +216,19 @@ public enum SQLiteValue: Sendable, Hashable {
         }
         switch typeName {
             case .integer:
-                self = .integer(row[Expression<Int64>(key)])
+                self = .integer(row[SQLExpression<Int64>(key)])
             case .real:
-                self = .real(row[Expression<Double>(key)])
+                self = .real(row[SQLExpression<Double>(key)])
             case .text:
-                self = .text(row[Expression<String>(key)])
+                self = .text(row[SQLExpression<String>(key)])
             case .blob:
-                self = .blob(row[Expression<Data>(key)])
+                self = .blob(row[SQLExpression<Data>(key)])
             case .null:
                 fatalError("unexpectedly found SQLiteTypeName.null in SQLiteValue.init")
         }
     }
     
-    func underlyingValue(withTypeName typeName: SQLiteTypeName) -> (any SQLite.Value)? {
+    func underlyingValue(withTypeName typeName: SQLiteTypeName) -> (any SQLiteDB.Value)? {
         if typeName.isNull {
             switch self {
                 case .integer(let int64):
@@ -268,7 +268,7 @@ public enum SQLiteValue: Sendable, Hashable {
         }
     }
     
-    func fieldIsEqualTo(_ value: (any SQLite.Value)?, withTypeName typeName: SQLiteTypeName) -> Bool {
+    func fieldIsEqualTo(_ value: (any SQLiteDB.Value)?, withTypeName typeName: SQLiteTypeName) -> Bool {
         if typeName.isNull {
             switch self {
                 case .integer(let int64):
@@ -297,7 +297,7 @@ public enum SQLiteValue: Sendable, Hashable {
         }
     }
     
-    func fieldIsNotEqualTo(_ value: (any SQLite.Value)?, withTypeName typeName: SQLiteTypeName) -> Bool {
+    func fieldIsNotEqualTo(_ value: (any SQLiteDB.Value)?, withTypeName typeName: SQLiteTypeName) -> Bool {
         if typeName.isNull {
             switch self {
                 case .integer(let int64):
@@ -326,7 +326,7 @@ public enum SQLiteValue: Sendable, Hashable {
         }
     }
     
-    func fieldIsBiggerThan(_ value: (any SQLite.Value)?, withTypeName typeName: SQLiteTypeName) -> Bool {
+    func fieldIsBiggerThan(_ value: (any SQLiteDB.Value)?, withTypeName typeName: SQLiteTypeName) -> Bool {
         guard let value else { return false }
         switch self {
             case .integer(let int64):
@@ -342,7 +342,7 @@ public enum SQLiteValue: Sendable, Hashable {
         }
     }
     
-    func fieldIsSmallerThan(_ value: (any SQLite.Value)?, withTypeName typeName: SQLiteTypeName) -> Bool {
+    func fieldIsSmallerThan(_ value: (any SQLiteDB.Value)?, withTypeName typeName: SQLiteTypeName) -> Bool {
         guard let value else { return false }
         switch self {
             case .integer(let int64):
@@ -358,7 +358,7 @@ public enum SQLiteValue: Sendable, Hashable {
         }
     }
     
-    func fieldIsSmallerOrEqual(_ value: (any SQLite.Value)?, withTypeName typeName: SQLiteTypeName) -> Bool {
+    func fieldIsSmallerOrEqual(_ value: (any SQLiteDB.Value)?, withTypeName typeName: SQLiteTypeName) -> Bool {
         guard let value else { return self == .null }
         switch self {
             case .integer(let int64):
@@ -374,7 +374,7 @@ public enum SQLiteValue: Sendable, Hashable {
         }
     }
     
-    func fieldIsBiggerOrEqual(_ value: (any SQLite.Value)?, withTypeName typeName: SQLiteTypeName) -> Bool {
+    func fieldIsBiggerOrEqual(_ value: (any SQLiteDB.Value)?, withTypeName typeName: SQLiteTypeName) -> Bool {
         guard let value else { return self == .null }
         switch self {
             case .integer(let int64):
@@ -392,26 +392,26 @@ public enum SQLiteValue: Sendable, Hashable {
 }
 
 extension SQLiteValue {
-    func setter(withKey key: String, andTypeName typeName: SQLiteTypeName) -> SQLite.Setter {
+    func setter(withKey key: String, andTypeName typeName: SQLiteTypeName) -> SQLiteDB.Setter {
         return switch self {
             case .integer(let int):
-                Expression<Int64>(key) <- Expression<Int64>(value: int)
+                SQLExpression<Int64>(key) <- SQLExpression<Int64>(value: int)
             case .real(let double):
-                Expression<Double>(key) <- Expression<Double>(value: double)
+                SQLExpression<Double>(key) <- SQLExpression<Double>(value: double)
             case .text(let string):
-                Expression<String>(key) <- Expression<String>(value: string)
+                SQLExpression<String>(key) <- SQLExpression<String>(value: string)
             case .blob(let data):
-                Expression<Data>(key) <- Expression<Data>(value: data)
+                SQLExpression<Data>(key) <- SQLExpression<Data>(value: data)
             case .null:
                 switch SQLiteTypeName.notNull(typeName) {
                     case .integer:
-                        Expression<Int64?>(key) <- Expression<Int64?>(value: nil)
+                        SQLExpression<Int64?>(key) <- SQLExpression<Int64?>(value: nil)
                     case .real:
-                        Expression<Double?>(key) <- Expression<Double?>(value: nil)
+                        SQLExpression<Double?>(key) <- SQLExpression<Double?>(value: nil)
                     case .text:
-                        Expression<String?>(key) <- Expression<String?>(value: nil)
+                        SQLExpression<String?>(key) <- SQLExpression<String?>(value: nil)
                     case .blob:
-                        Expression<Data?>(key) <- Expression<Data?>(value: nil)
+                        SQLExpression<Data?>(key) <- SQLExpression<Data?>(value: nil)
                     default:
                         fatalError("unexpectedly recieved SQLiteTypeName of null")
                 }

@@ -1,9 +1,9 @@
-import SQLite
+import SQLiteDB
 
 public struct TableBuilder {
     private let context: ManagedObjectContext
     private let schemaName: String
-    private var schema: (SQLite.TableBuilder) -> Void
+    private var schema: (SQLiteDB.TableBuilder) -> Void
     
     init(_ context: ManagedObjectContext, named schemaName: String) {
         self.context = context
@@ -15,7 +15,7 @@ public struct TableBuilder {
     public func id() -> Self {
         var copy = self
         copy.schema = { t in
-            t.column(Expression<String>("id"), primaryKey: true)
+            t.column(SQLExpression<String>("id"), primaryKey: true)
         }
         return copy
     }

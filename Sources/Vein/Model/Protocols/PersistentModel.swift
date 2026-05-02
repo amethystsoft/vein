@@ -1,5 +1,5 @@
 import Foundation
-import SQLite
+import SQLiteDB
 @_exported import ULID
 
 public protocol PersistentModel: AnyObject, Sendable {
@@ -59,7 +59,7 @@ extension PersistentModel {
             try context.registerMigration(schema: _getSchema(), version: Self.version)
         } catch let error as ManagedObjectContextError {
             throw error
-        } catch let error as SQLite.Result {
+        } catch let error as SQLiteDB.Result {
             throw error.parse()
         } catch { throw .other(message: error.localizedDescription) }
         
@@ -87,7 +87,7 @@ extension PersistentModel {
         do {
             try context.renameSchema(schema, to: newModel.schema)
             try context.registerMigration(schema: newModel.schema, version: newModel.version)
-        } catch let error as SQLite.Result {
+        } catch let error as SQLiteDB.Result {
             let parsed = error.parse()
             switch parsed {
                 case .noSuchTable: return
@@ -154,7 +154,7 @@ extension PersistentModel {
                 try information.addRetroactively(to: newModel.schema, on: context)
             }
             try context.registerMigration(schema: newModel.schema, version: newModel.version)
-        } catch let error as SQLite.Result {
+        } catch let error as SQLiteDB.Result {
             let parsed = error.parse()
             switch parsed {
                     // Returning, because schema will be created on first Model insert

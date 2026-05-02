@@ -1,4 +1,4 @@
-@preconcurrency import SQLite
+@preconcurrency import SQLiteDB
 
 public protocol PredicateConstructor: Sendable {
     associatedtype Model: PersistentModel
@@ -13,7 +13,7 @@ public struct PredicateBuilder<T: PersistentModel>: Sendable, Hashable, AnyPredi
     }
     
     public private(set) var hash: Int
-    private var conditions = Expression<Bool?>(value: true)
+    private var conditions = SQLExpression<Bool?>(value: true)
     private var checkMatching: @Sendable (T) -> Bool = { _ in true }
     
     public init() {
@@ -256,11 +256,11 @@ public struct PredicateBuilder<T: PersistentModel>: Sendable, Hashable, AnyPredi
         return old
     }
     
-    func finalize() -> Expression<Bool?> {
+    func finalize() -> SQLExpression<Bool?> {
         return conditions
     }
     
-    private func newHash(_ expression: Expression<Bool?>, _ value: SQLiteValue) -> Int {
+    private func newHash(_ expression: SQLExpression<Bool?>, _ value: SQLiteValue) -> Int {
         var hasher = Hasher()
         hasher.combine(hashValue)
         hasher.combine(expression.template.hashValue)
