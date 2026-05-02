@@ -50,11 +50,16 @@ public actor ManagedObjectContext {
         self.modelContainer = modelContainer
         do {
             self.connection = try Connection(path)
+            
             #if canImport(AppKit) || canImport(UIKit)
-            try self.connection.key(Self.getKeyForDatabase(
+            guard let key = Self.getKeyForDatabase(
                 at: path,
                 appID: modelContainer.appID
-            ))
+            ) else {
+                fatalError("Vein: Failed to retrieve/save key to encrypt Database.")
+            }
+            try self.connection.key(key)
+                
             #endif
             
             try self.connection.execute("PRAGMA journal_mode=WAL;")
@@ -87,7 +92,7 @@ public actor ManagedObjectContext {
         self.connection = connection
     }
     
-    public static func getKeyForDatabase(at path: String, appID: String) -> String {
+    public static func getKeyForDatabase(at path: String, appID: String) -> String? {
         let url = URL(fileURLWithPath: path)
         let fileName = url.lastPathComponent
         
@@ -100,11 +105,13 @@ public actor ManagedObjectContext {
             let keyData = SymmetricKey(size: .bits256).withUnsafeBytes { Data($0) }
             let hexKey = keyData.map { String(format: "%02hhx", $0) }.joined()
             
-            keychain[fileName] = hexKey
+            guard let _ = try? keychain.set(hexKey, key: fileName) else {
+                return nil
+            }
             return hexKey
         }
         #else
-        return ""
+        return nil
         #endif
     }
 }
