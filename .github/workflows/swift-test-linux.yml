@@ -1,8 +1,9 @@
-name: Swift Test (Ubuntu 24.04)
+name: Swift Test (Ubuntu 24.04 & Android)
 
 on:
   push:
     branches: [main]
+  workflow_dispatch:
   pull_request:
     branches: [main]
 
@@ -14,7 +15,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Test
+      - name: Test on Linux
         run: SHOULD_DISABLE_ENCRYPTION=1 swift test -Xcc -I/usr/include -Xlinker -L/usr/lib
+      - name: "Test Swift Package on Android"
+        uses: skiptools/swift-android-action@v2
+        with:
+          # Ubuntu runners low on space causes the emulator to fail to install
+          free-disk-space: true
