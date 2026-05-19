@@ -9,9 +9,11 @@ jobs:
   linux-android:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      	with:
+      	  persist-credentials: false
       - name: "Test Swift Package on Android"
-        uses: skiptools/swift-android-action@v2
+        uses: skiptools/swift-android-action@8db781febb546110d48dee035131db8f4e259e91
         with:
           # Ubuntu runners low on space causes the emulator to fail to install
           free-disk-space: true
