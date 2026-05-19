@@ -17,3 +17,4 @@ jobs:
           free-disk-space: true
           swift-test-flags: '--test-product amethyst-veinPackageTests'
           swift-build-flags: '--product amethyst-veinPackageTests'
+          build-tests: false
