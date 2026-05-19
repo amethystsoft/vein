@@ -7,14 +7,19 @@ import CompilerPluginSupport
 var veinDependencies: [Target.Dependency] = [
     .product(name: "Crypto", package: "swift-crypto"),
     .product(name: "SQLiteDB", package: "swift-sqlcipher"),
-    .product(name: "ULID", package: "ULID.swift")
+    .product(name: "ULID", package: "ULID.swift"),
+    .product(
+        name: "KeychainAccess",
+        package: "keychainaccess",
+        condition: .when(platforms: [.iOS, .macOS, .tvOS, .visionOS, .watchOS]),
+    ),
+    .product(
+        name: "KeyringAccess",
+        package: "KeyringAccess",
+        condition: .when(platforms: [.linux])
+    )
 ]
 
-#if canImport(AppKit) || canImport(UIKit)
-    veinDependencies.append(.product(name: "KeychainAccess", package: "keychainaccess"))
-#elseif os(Linux)
-    veinDependencies.append(.product(name: "KeyringAccess", package: "KeyringAccess"))
-#endif
 
 let package = Package(
     name: "amethyst-vein",

@@ -7,14 +7,15 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  macos:
     runs-on: blacksmith-8vcpu-ubuntu-2404-arm
     container:
       image: swift:6.2.3-noble
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
+        with:
+          persist-credentials: false
       - name: Test
-        run: SHOULD_DISABLE_ENCRYPTION=1 swift test -Xcc -I/usr/include -Xlinker -L/usr/lib
+        # Disable encryption for testing purposes if needed
+        run: SHOULD_DISABLE_ENCRYPTION=1 swift test

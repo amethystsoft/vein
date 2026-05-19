@@ -1,0 +1,20 @@
+name: Swift Test (Android)
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+jobs:
+  linux-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
+        with:
+          persist-credentials: false
+      - name: "Test Swift Package on Android"
+        uses: skiptools/swift-android-action@8db781febb546110d48dee035131db8f4e259e91 # 2.9.4
+        with:
+          # Ubuntu runners low on space causes the emulator to fail to install
+          free-disk-space: true
+          

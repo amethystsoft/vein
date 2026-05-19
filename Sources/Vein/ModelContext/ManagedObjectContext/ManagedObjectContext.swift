@@ -114,7 +114,7 @@ public actor ManagedObjectContext {
             }
             return hexKey
         }
-        #else
+        #elseif os(Linux)
         let keyring = Keyring(service: "com.amethyst.vein.sqlcipher.\(appID)")
         
         if let key = keyring[fileName] {
@@ -128,6 +128,8 @@ public actor ManagedObjectContext {
             }
             return hexKey
         }
+        #else
+        return nil
         #endif
     }
 }
