@@ -167,11 +167,11 @@ extension PersistentModel {
 }
 
 extension PersistentModel {
-    public var asPersistentRepresentation: PersistentRepresentation {
+    public var asPersistentRepresentation: String {
         self.id.ulidString
     }
     
-    public init?(fromPersistent representation: PersistentRepresentation) {
+    public init?(fromPersistent representation: String) {
         nil
     }
 }
