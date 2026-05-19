@@ -166,6 +166,16 @@ extension PersistentModel {
     }
 }
 
+extension PersistentModel {
+    public var asPersistentRepresentation: PersistentRepresentation {
+        self.id.ulidString
+    }
+    
+    public init?(fromPersistent representation: PersistentRepresentation) {
+        nil
+    }
+}
+
 struct AnyPersistentModelType: Hashable {
     let type: any PersistentModel.Type
     
