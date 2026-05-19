@@ -16,3 +16,4 @@ jobs:
           # Ubuntu runners low on space causes the emulator to fail to install
           free-disk-space: true
           swift-test-flags: '--test-product amethyst-veinPackageTests'
+          build-package: false
