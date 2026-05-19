@@ -15,4 +15,3 @@ jobs:
       	  persist-credentials: false
       - name: Test macOS
         run: swift test
-        
