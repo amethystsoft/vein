@@ -12,4 +12,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Test macOS
-        run: swift test
+        run: swift test --test-product amethyst-veinPackageTests
