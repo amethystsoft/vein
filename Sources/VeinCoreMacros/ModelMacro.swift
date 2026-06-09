@@ -4,7 +4,8 @@ import SwiftSyntaxMacroExpansion
 import SwiftDiagnostics
 import Foundation
 
-public struct ModelMacro: MemberMacro, ExtensionMacro, PeerMacro {
+public struct ModelMacro: MemberMacro, ExtensionMacro, PeerMacro, MemberAttributeMacro {
+    
     static let frameworkName = "VeinCore"
     public static func expansion(
         of node: SwiftSyntax.AttributeSyntax,
@@ -67,5 +68,31 @@ public struct ModelMacro: MemberMacro, ExtensionMacro, PeerMacro {
             in: context
         )
     }
+    
+    public static func expansion(
+        of node: SwiftSyntax.AttributeSyntax,
+        attachedTo declaration: some SwiftSyntax.DeclGroupSyntax,
+        providingAttributesFor member: some SwiftSyntax.DeclSyntaxProtocol,
+        in context: some SwiftSyntaxMacros.MacroExpansionContext
+    ) throws -> [SwiftSyntax.AttributeSyntax] {
+        guard let classDecl = declaration.as(ClassDeclSyntax.self) else {
+            throw MacroError.onlyApplicableToClasses
+        }
+        guard let varDecl = member.as(VariableDeclSyntax.self) else {
+            // skip non-variables
+            return []
+        }
+        return try ModelMacroBase(frameworkName: Self.frameworkName).expansion(
+            of: node,
+            attachedTo: classDecl,
+            providingAttributesFor: varDecl,
+            in: context
+        )
+    }
 }
 
+public struct RelationshipMarkerMacro: PeerMacro {
+    public static func expansion(of node: SwiftSyntax.AttributeSyntax, providingPeersOf declaration: some SwiftSyntax.DeclSyntaxProtocol, in context: some SwiftSyntaxMacros.MacroExpansionContext) throws -> [SwiftSyntax.DeclSyntax] {
+        []
+    }
+}

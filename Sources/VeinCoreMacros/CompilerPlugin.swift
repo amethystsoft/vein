@@ -4,6 +4,6 @@ import SwiftSyntaxMacros
 @main
 struct VeinMacrosPlugin: CompilerPlugin {
     let providingMacros: [any Macro.Type] = [
-        ModelMacro.self
+        ModelMacro.self, RelationshipMarkerMacro.self
     ]
 }

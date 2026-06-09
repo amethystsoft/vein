@@ -1,8 +1,8 @@
 public protocol PersistedRelationship {
-    associatedtype WrappedType: PersistentModel
+    associatedtype Value
     associatedtype PersistableRepresentation: Persistable
     var key: String? { get }
-    var wrappedValue: WrappedType? { get set }
+    var wrappedValue: Value { get set }
     var model: (any PersistentModel)? { get }
     func setStoreToCapturedState(_ state: Any)
     var wasTouched: Bool { get }

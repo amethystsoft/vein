@@ -26,11 +26,10 @@ public struct ModelMacroBase {
         
         let relationshipFields = relationshipVariables.fields()
         let lazyFields = lazyFieldVariables.fields()
-        let fields = fieldVariables.fields()
-        let eagerFields = fields.merging(relationshipFields) { lhs, _ in lhs }
+        let eagerFields = fieldVariables.fields()
         
         // MARK: - Setup Fields & _fields accessor
-        var allFieldNames = Array(fields.keys)
+        var allFieldNames = Array(eagerFields.keys)
         allFieldNames.append(contentsOf: lazyFields.keys)
         
         var fieldBodys = [String]()
@@ -61,7 +60,7 @@ public struct ModelMacroBase {
         let fieldInformationString = fieldInformation.joined(separator: ",\n    ")
         
         // MARK: - inits and assembly
-        let eagerVarInit = fields.initEagerRows()
+        let eagerVarInit = eagerFields.initEagerRows()
         
         let body =
 """
@@ -106,11 +105,12 @@ static let _fieldInformation: [Vein.FieldInformation] = [
         conformingTo protocols: [SwiftSyntax.TypeSyntax],
         in context: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
+        let modelVersionString = "\("\(type)".prefix(while: { $0 != "."})).version"
         let extensionDecl = try ExtensionDeclSyntax(
             """
             extension \(raw: type): Vein.PersistentModel, @unchecked Sendable { 
                 static let schema = "\(raw: type)"
-                static var version: Vein.ModelVersion { \("\("\(type)".prefix(while: { $0 != "."})).version") }
+                static var version: Vein.ModelVersion { \(raw: modelVersionString) }
             }
             """
         )
@@ -157,13 +157,13 @@ static let _fieldInformation: [Vein.FieldInformation] = [
             """
             func \(name)(_ op: Vein.ComparisonOperator, _ value: \(type)) -> Self {
                     var copy = self
-                    copy.builder = builder.addCheck(op, \"\(name)\", value)
+                    copy.builder = builder.addCheck(op, "\(name)", value)
                     return copy
                 }
-            
+
             static func \(name)(_ op: Vein.ComparisonOperator, _ value: \(type)) -> Self {
                 var copy = Self()
-                copy.builder = copy.builder.addCheck(op, \"\(name)\", value)
+                copy.builder = copy.builder.addCheck(op, "\(name)", value)
                 return copy
             }
             """
@@ -187,6 +187,29 @@ static let _fieldInformation: [Vein.FieldInformation] = [
         """
         
         return [DeclSyntax(stringLiteral: predicateBuilder)]
+    }
+    
+    public func expansion(
+        of node: AttributeSyntax,
+        attachedTo classDecl: ClassDeclSyntax,
+        providingAttributesFor varDecl: VariableDeclSyntax,
+        in context: some MacroExpansionContext
+    ) throws -> [AttributeSyntax] {
+        // Find the marker @Relationship attribute on the property
+        guard let relationshipAttr = findRelationshipAttribute(in: varDecl) else {
+            return []
+        }
+        
+        // Extract the user-defined arguments (inverse, deleteRule, etc.)
+        let arguments = relationshipAttr.arguments
+        
+        // Determine if target type is a collection
+        let isMany = isCollection(type: varDecl.bindings.first?.typeAnnotation?.type)
+        let wrapperName = isMany ? "_ManyRelationship" : "_OneRelationship"
+        
+        // Generate the matching property wrapper with passed-through arguments
+        let attribute: AttributeSyntax = "@\(raw: wrapperName)(\(raw: arguments?.description ?? ""))"
+        return [attribute]
     }
 }
 public struct DebugDiag: DiagnosticMessage {
@@ -286,5 +309,48 @@ extension VariableDeclSyntax {
             }
         }
         return false
+    }
+    
+    func attributeOrMacro(matching name: String) -> AttributeSyntax? {
+        let parts = name.split(separator: ".")
+        
+        var expectation: [TokenKind] = []
+        
+        for (i, identifier) in parts.enumerated() {
+            expectation.append(.identifier(String(identifier)))
+            
+            if i < parts.count - 1 {
+                expectation.append(.period)
+            }
+        }
+        
+        for attribute in attributes {
+            switch attribute {
+                case .attribute(let attr):
+                    if attr.attributeName.tokens(viewMode: .all).map(\.tokenKind) == expectation {
+                        return attr
+                    }
+                default:
+                    break
+            }
+        }
+        return nil
+    }
+}
+
+extension ModelMacroBase {
+    func findRelationshipAttribute(in varDecl: VariableDeclSyntax) -> AttributeSyntax? {
+        varDecl.attributeOrMacro(matching: "Relationship")
+    }
+    
+    func isCollection(type: TypeSyntax?) -> Bool {
+        guard let type = type else { return false }
+        
+        let typeStr = type.trimmedDescription
+        
+        // Match syntactic sugar like [Type] or explicit collection types
+        return typeStr.hasPrefix("[") ||
+        typeStr.hasPrefix("Set<") ||
+        typeStr.hasPrefix("Array<")
     }
 }

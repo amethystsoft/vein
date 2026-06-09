@@ -410,3 +410,14 @@ extension Optional: Persistable, ColumnType where Wrapped: Persistable {
         }
     }
 }
+
+extension Array: Persistable where Element == ULID {
+    public init?(fromPersistent representation: String) {
+        self = representation.split(separator: ",").map { ULID(ulidString: String($0))! }
+    }
+    
+    public typealias PersistentRepresentation = String
+    public var asPersistentRepresentation: String {
+        self.map(\.ulidString).joined(separator: ",")
+    }
+}
