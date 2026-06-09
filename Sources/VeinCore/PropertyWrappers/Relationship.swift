@@ -14,7 +14,11 @@ public final class _OneRelationship<T: PersistentModel>: PersistedRelationship, 
             idStore = store?.id
         }
     }
-    private var idStore: ULID?
+    private var idStore: ULID? {
+        didSet {
+            _wasTouched = true
+        }
+    }
     public var inverseKey: String?
     public var deleteRule: DeleteRule
     
@@ -135,9 +139,14 @@ public final class _OneRelationship<T: PersistentModel>: PersistedRelationship, 
     private func updateOtherSide(isRemoving: Bool) {
         guard
             let model,
+            let context = model.context,
             let inverseKey,
             let target = wrappedValue
         else { return }
+        
+        target._setupFields()
+        
+        let predicateMatches = context._prepareForChange(of: target)
         
         let matchingField = target._fields.first { $0.key == inverseKey }
         
@@ -154,6 +163,8 @@ public final class _OneRelationship<T: PersistentModel>: PersistedRelationship, 
         } else if var oneField = matchingField as? OneRelationship {
             oneField.persistableValue = isRemoving ? nil : model.id
         }
+        
+        context._markTouched(target, previouslyMatching: predicateMatches)
     }
     
     public func setStoreToCapturedState(_ state: Any) {
@@ -214,7 +225,11 @@ public final class _ManyRelationship<T: PersistentModel>: PersistedRelationship,
             idStore = store.map(\.id)
         }
     }
-    var idStore: [ULID]
+    var idStore: [ULID] {
+        didSet {
+            _wasTouched = true
+        }
+    }
     public var inverseKey: String?
     public var deleteRule: DeleteRule
     
@@ -314,6 +329,9 @@ public final class _ManyRelationship<T: PersistentModel>: PersistedRelationship,
         guard let model, let context = model.context, let inverseKey else { return }
         
         for target in removed {
+            target._setupFields()
+            let predicateMatches = context._prepareForChange(of: target)
+            
             let matchingField = target._fields.first { $0.key == inverseKey }
             defer { matchingField?.model?.notifyOfChanges() }
             
@@ -324,9 +342,14 @@ public final class _ManyRelationship<T: PersistentModel>: PersistedRelationship,
                     oneField.persistableValue = nil
                 }
             }
+            
+            context._markTouched(target, previouslyMatching: predicateMatches)
         }
         
         for target in added {
+            target._setupFields()
+            let predicateMatches = context._prepareForChange(of: target)
+            
             let matchingField = target._fields.first { $0.key == inverseKey }
             defer { matchingField?.model?.notifyOfChanges() }
             
@@ -350,6 +373,8 @@ public final class _ManyRelationship<T: PersistentModel>: PersistedRelationship,
             } else if var oneField = matchingField as? OneRelationship {
                 oneField.persistableValue = model.id
             }
+            
+            context._markTouched(target, previouslyMatching: predicateMatches)
         }
     }
     

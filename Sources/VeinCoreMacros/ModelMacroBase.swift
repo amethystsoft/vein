@@ -38,18 +38,12 @@ public struct ModelMacroBase {
         fieldAccessorBodies.append("self._id")
         
         for name in allFieldNames {
-            //fieldBodys.append("self._\(name).model = self")
+            // This is not needed in every case, but its handy for internal ones
+            // not using the wrappedValue.
+            fieldBodys.append("self._\(name).model = self")
             fieldBodys.append("self._\(name).key = \"\(name)\"")
             fieldAccessorBodies.append("self._\(name)")
         }
-        
-        /*// MARK: - Setup Relationships & _relationship accessor
-        var relationshipAccessorBodies = [String]()
-        for name in relationshipFields.keys {
-            fieldBodys.append("self._\(name).model = self")
-            fieldBodys.append("self._\(name).key = \"\(name)\"")
-            relationshipAccessorBodies.append("self._\(name)")
-        }*/
         
         // MARK: - Field information
         var fieldInformation = lazyFields.map { key, value in
