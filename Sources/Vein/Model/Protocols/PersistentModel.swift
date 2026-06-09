@@ -12,6 +12,7 @@ public protocol PersistentModel: AnyObject, Sendable {
     var context: ManagedObjectContext? { get set }
     
     var _fields: [any PersistedField] { get }
+    var _relationships: [any PersistedRelationship] { get }
     static var _fieldInformation: [FieldInformation] { get }
     
     func _setupFields() -> Void

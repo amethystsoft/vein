@@ -61,9 +61,7 @@ extension ManagedObjectContext {
                     !resultIDs.contains(insert.id),
                     let model = insert as? T,
                     predicate.doesMatch(model)
-                {
-                    models.append(model)
-                }
+                { models.append(model) }
             }
             
             for (_, touch) in currentlyTouched {
@@ -71,9 +69,7 @@ extension ManagedObjectContext {
                     !resultIDs.contains(touch.id),
                     let model = touch as? T,
                     predicate.doesMatch(model)
-                {
-                    models.append(model)
-                }
+                { models.append(model) }
             }
             
             return models

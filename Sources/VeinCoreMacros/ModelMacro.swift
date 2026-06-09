@@ -5,6 +5,7 @@ import SwiftDiagnostics
 import Foundation
 
 public struct ModelMacro: MemberMacro, ExtensionMacro, PeerMacro {
+    static let frameworkName = "VeinCore"
     public static func expansion(
         of node: SwiftSyntax.AttributeSyntax,
         providingMembersOf declaration: some SwiftSyntax.DeclGroupSyntax,
@@ -15,7 +16,7 @@ public struct ModelMacro: MemberMacro, ExtensionMacro, PeerMacro {
             throw MacroError.onlyApplicableToClasses
         }
         
-        let common = try ModelMacroBase.expansion(
+        let common = try ModelMacroBase(frameworkName: Self.frameworkName).expansion(
             of: node,
             providingMembersOf: classDecl,
             conformingTo: protocols,
@@ -23,9 +24,9 @@ public struct ModelMacro: MemberMacro, ExtensionMacro, PeerMacro {
         )
         
         let specific = """
-            var notifyOfChanges: () -> Void {
-                return {}
-            }
+        var notifyOfChanges: () -> Void {
+            return {}
+        }
         """
         
         return common + [DeclSyntax(stringLiteral: specific)]
@@ -42,7 +43,7 @@ public struct ModelMacro: MemberMacro, ExtensionMacro, PeerMacro {
             throw MacroError.onlyApplicableToClasses
         }
         
-        return try ModelMacroBase.expansion(
+        return try ModelMacroBase(frameworkName: Self.frameworkName).expansion(
             of: node,
             attachedTo: classDecl,
             providingExtensionsOf: type,
@@ -60,7 +61,7 @@ public struct ModelMacro: MemberMacro, ExtensionMacro, PeerMacro {
             throw MacroError.onlyApplicableToClasses
         }
         
-        return try ModelMacroBase.expansion(
+        return try ModelMacroBase(frameworkName: Self.frameworkName).expansion(
             of: node,
             providingPeersOf: classDecl,
             in: context

@@ -1,7 +1,7 @@
 import ULID
 
 extension ManagedObjectContext {
-    public func getModel<T: PersistentModel>(id: ULID, type: T.Type) throws(MOCError) -> T? {
+    public nonisolated func getModel<T: PersistentModel>(id: ULID, type: T.Type) throws(MOCError) -> T? {
         if let model = identityMap.getTracked(type, id: id) {
             return model
         }

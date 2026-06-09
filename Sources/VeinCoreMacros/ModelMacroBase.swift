@@ -5,7 +5,8 @@ import SwiftDiagnostics
 import Foundation
 
 public struct ModelMacroBase {
-    public static func expansion(
+    let frameworkName: String
+    public func expansion(
         of node: SwiftSyntax.AttributeSyntax,
         providingMembersOf classDecl: SwiftSyntax.ClassDeclSyntax,
         conformingTo protocols: [SwiftSyntax.TypeSyntax],
@@ -13,60 +14,23 @@ public struct ModelMacroBase {
     ) throws -> [SwiftSyntax.DeclSyntax] {
         let className = classDecl.name.text.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        let lazyFieldVariables: [VariableDeclSyntax] = classDecl.memberBlock.members
-            .compactMap { member in
-                guard let varDecl = member.decl.as(VariableDeclSyntax.self) else {
-                    return nil
-                }
-                
-                let hasFieldAttribute = varDecl.attributes.contains { attr in
-                    if let attrSyntax = attr.as(AttributeSyntax.self),
-                       let name = attrSyntax.attributeName.as(IdentifierTypeSyntax.self) {
-                        return name.name.text == "LazyField"
-                    }
-                    return false
-                }
-                
-                return hasFieldAttribute ? varDecl : nil
-            }
-        let fieldVariables: [VariableDeclSyntax] = classDecl.memberBlock.members
-            .compactMap { member in
-                guard let varDecl = member.decl.as(VariableDeclSyntax.self) else {
-                    return nil
-                }
-                
-                let hasFieldAttribute = varDecl.attributes.contains { attr in
-                    if let attrSyntax = attr.as(AttributeSyntax.self),
-                       let name = attrSyntax.attributeName.as(IdentifierTypeSyntax.self) {
-                        return name.name.text == "Field"
-                    }
-                    return false
-                }
-                
-                return hasFieldAttribute ? varDecl : nil
-            }
+        let lazyFieldVariables: [VariableDeclSyntax] = classDecl
+            .memberBlock
+            .membersWithFieldType(.lazyField, frameworkName: frameworkName)
+        let fieldVariables: [VariableDeclSyntax] = classDecl
+            .memberBlock
+            .membersWithFieldType(.field, frameworkName: frameworkName)
+        let relationshipVariables: [VariableDeclSyntax] = classDecl
+            .memberBlock
+            .membersWithFieldType(.relationship, frameworkName: frameworkName)
         
-        var eagerFields = [String: String]()
-        for varDecl in fieldVariables {
-            guard let binding = varDecl.bindings.first else { continue }
-            guard
-                let name = binding.pattern.as(IdentifierPatternSyntax.self)?.identifier.text,
-                let datatype = binding.typeAnnotation?.description
-            else { continue }
-            eagerFields[name] = datatype
-        }
+        let relationshipFields = relationshipVariables.fields()
+        let lazyFields = lazyFieldVariables.fields()
+        let fields = fieldVariables.fields()
+        let eagerFields = fields.merging(relationshipFields) { lhs, _ in lhs }
         
-        var lazyFields = [String: String]()
-        for varDecl in lazyFieldVariables {
-            guard let binding = varDecl.bindings.first else { continue }
-            guard
-                let name = binding.pattern.as(IdentifierPatternSyntax.self)?.identifier.text,
-                let datatype = binding.typeAnnotation?.description
-            else { continue }
-            lazyFields[name] = datatype
-        }
-        
-        var allFieldNames = Array(eagerFields.keys)
+        // MARK: - Setup Fields & _fields accessor
+        var allFieldNames = Array(fields.keys)
         allFieldNames.append(contentsOf: lazyFields.keys)
         
         var fieldBodys = [String]()
@@ -79,17 +43,12 @@ public struct ModelMacroBase {
             fieldBodys.append("self._\(name).key = \"\(name)\"")
             fieldAccessorBodies.append("self._\(name)")
         }
-        
         fieldBodys.append("self._id.model = self")
         
-        let fieldSetup = fieldBodys.joined(separator: "\n        ")
-        let fieldAccessorSetup = fieldAccessorBodies.joined(separator: ",\n   ")
+        let fieldSetup = fieldBodys.joined(separator: "\n    ")
+        let fieldAccessorSetup = fieldAccessorBodies.joined(separator: ",\n        ")
         
-        let eagerVarInit = eagerFields.map { key, value in
-            let value = value.drop(while: { $0 == " " || $0 == ":" })
-            return "self.\(key) = try! \(value).init(fromPersistent: \(value).PersistentRepresentation.decode(sqliteValue: fields[\"\(key)\"]!))!"
-        }.joined(separator: "\n        ")
-        
+        // MARK: - Field information
         var fieldInformation = lazyFields.map { key, value in
             let value = value.drop(while: { $0 == " " || $0 == ":" })
             return "Vein.FieldInformation(\(value).sqliteTypeName, \"\(key)\", false)"
@@ -99,43 +58,48 @@ public struct ModelMacroBase {
             return "Vein.FieldInformation(\(value).sqliteTypeName, \"\(key)\", true)"
         })
         
-        let fieldInformationString = fieldInformation.joined(separator: ",\n        ")
+        let fieldInformationString = fieldInformation.joined(separator: ",\n    ")
+        
+        // MARK: - inits and assembly
+        let eagerVarInit = fields.initEagerRows()
         
         let body =
 """
     typealias _PredicateHelper = _\(className)PredicateHelper
 
-    @PrimaryKey
-    var id: ULID
-    
-    required init(id: ULID, fields: [String: Vein.SQLiteValue]) {
-        self.id = id
-        \(eagerVarInit)
-        _setupFields()
-    }
+@PrimaryKey
+var id: ULID
 
-    /// Sets required properties for @Field values.
-    /// Gets generated automatically by @Model.
-    public func _setupFields() {
-        \(fieldSetup)
-    }
+required init(id: ULID, fields: [String: Vein.SQLiteValue]) {
+    self.id = id
+    \(eagerVarInit)
+    _setupFields()
+}
 
-    var context: Vein.ManagedObjectContext? = nil
-    var _fields: [any Vein.PersistedField] {
-        [
-            \(fieldAccessorSetup)
-        ]
-    }
+/// Sets required properties for @Field values.
+/// Gets generated automatically by @Model.
+public func _setupFields() {
+    \(fieldSetup)
+}
 
-    static let _fieldInformation: [Vein.FieldInformation] = [
-        \(fieldInformationString)
+var context: Vein.ManagedObjectContext? = nil
+var _fields: [any Vein.PersistedField] {
+    [
+        \(fieldAccessorSetup)
     ]
+}
+
+var _relationships: [any PersistedRelationship] {[]}
+
+static let _fieldInformation: [Vein.FieldInformation] = [
+    \(fieldInformationString)
+]
 """
         
         return [DeclSyntax(stringLiteral: body)]
     }
     
-    public static func expansion(
+    public func expansion(
         of node: AttributeSyntax,
         attachedTo classDecl: ClassDeclSyntax,
         providingExtensionsOf type: some SwiftSyntax.TypeSyntaxProtocol,
@@ -154,7 +118,7 @@ public struct ModelMacroBase {
         return [extensionDecl]
     }
     
-    public static func expansion(
+    public func expansion(
         of node: SwiftSyntax.AttributeSyntax,
         providingPeersOf classDecl: ClassDeclSyntax,
         in context: some SwiftSyntaxMacros.MacroExpansionContext
@@ -192,10 +156,10 @@ public struct ModelMacroBase {
         let methods = fieldNamesAndTypes.map { (name, type) in
             """
             func \(name)(_ op: Vein.ComparisonOperator, _ value: \(type)) -> Self {
-                var copy = self
-                copy.builder = builder.addCheck(op, \"\(name)\", value)
-                return copy
-            }
+                    var copy = self
+                    copy.builder = builder.addCheck(op, \"\(name)\", value)
+                    return copy
+                }
             
             static func \(name)(_ op: Vein.ComparisonOperator, _ value: \(type)) -> Self {
                 var copy = Self()
@@ -231,3 +195,96 @@ public struct DebugDiag: DiagnosticMessage {
     public var severity: DiagnosticSeverity { .warning }
 }
 
+public enum FieldType {
+    case field
+    case lazyField
+    case relationship
+}
+
+extension FieldType {
+    func matches(_ variable: VariableDeclSyntax, frameworkName: String) -> Bool {
+        return switch self {
+            case .field:
+                variable.hasAttributeOrMacro(named: "Field")
+                || variable.hasAttributeOrMacro(named: "\(frameworkName).Field")
+            case .lazyField:
+                variable.hasAttributeOrMacro(named: "LazyField")
+                || variable.hasAttributeOrMacro(named: "\(frameworkName).LazyField")
+            case .relationship:
+                variable.hasAttributeOrMacro(named: "Relationship")
+                || variable.hasAttributeOrMacro(named: "\(frameworkName).Relationship")
+        }
+    }
+}
+
+extension MemberBlockSyntax {
+    func membersWithFieldType(_ type: FieldType, frameworkName: String) -> [VariableDeclSyntax] {
+        members.compactMap { (member: MemberBlockItemSyntax) -> VariableDeclSyntax? in
+            guard let varDecl = member.decl.as(VariableDeclSyntax.self) else {
+                return nil
+            }
+            
+            let hasFieldAttribute = type.matches(varDecl, frameworkName: frameworkName)
+            
+            return hasFieldAttribute ? varDecl : nil
+        }
+    }
+}
+
+extension Array where Element == VariableDeclSyntax {
+    func fields() -> [String: String] {
+        var fields = [String: String]()
+        for varDecl in self {
+            guard let binding = varDecl.bindings.first else { continue }
+            guard
+                let name = binding.pattern.as(IdentifierPatternSyntax.self)?.identifier.text,
+                let datatype = binding.typeAnnotation?.description
+            else { continue }
+            fields[name] = datatype
+        }
+        return fields
+    }
+}
+
+extension Dictionary where Key == String, Value == String {
+    func initEagerRows() -> String {
+        self.map { key, value in
+            let value = value.drop(while: { $0 == " " || $0 == ":" })
+            return """
+                self.\(key) = try! \(value).init(
+                        fromPersistent: \(value).PersistentRepresentation.decode(
+                            sqliteValue: fields[\"\(key)\"]!
+                        )
+                    )!
+                """
+        }.joined(separator: "\n    ")
+    }
+}
+
+extension VariableDeclSyntax {
+    func hasAttributeOrMacro(named name: String) -> Bool {
+        let parts = name.split(separator: ".")
+        
+        var expectation: [TokenKind] = []
+        
+        for (i, identifier) in parts.enumerated() {
+            expectation.append(.identifier(String(identifier)))
+            
+            if i < parts.count - 1 {
+                expectation.append(.period)
+            }
+        }
+        
+        for attribute in attributes {
+            switch attribute {
+                case .attribute(let attr):
+                    if attr.attributeName.tokens(viewMode: .all).map(\.tokenKind) == expectation {
+                        return true
+                    }
+                default:
+                    break
+            }
+        }
+        return false
+    }
+}
