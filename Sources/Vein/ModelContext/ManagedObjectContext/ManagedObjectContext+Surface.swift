@@ -381,6 +381,14 @@ extension ManagedObjectContext {
                 
                 for (_, models) in deletes {
                     for (_, model) in models {
+                        // Restore primitive state if the model was modified before deletion
+                        if
+                            let state = primitiveStates[
+                                model.typeIdentifier, default: [:]
+                            ][model.id]
+                        {
+                            model.applyPrimitiveState(state)
+                        }
                         model.context = self
                         model._isPreparedForDeletion = false
                         identityMap.startTracking(model)

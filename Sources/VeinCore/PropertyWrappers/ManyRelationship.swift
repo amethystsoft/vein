@@ -4,7 +4,7 @@ import Logging
 
 @propertyWrapper
 public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unchecked Sendable {
-    static var logger: Logger { .init(label: "Vein.OneRelationship") }
+    static var logger: Logger { .init(label: "Vein.ManyRelationship") }
     
     public typealias Value = [T]
     public typealias PersistableRepresentation = [ULID]
@@ -161,7 +161,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
     
     public func setStoreToCapturedState(_ state: Any) {
         lock.withLock {
-            guard let value = state as? Value else {
+            guard let value = state as? [ULID] else {
                 fatalError(
                     ManagedObjectContextError
                         .capturedStateApplicationFailed(
@@ -171,14 +171,22 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                         .localizedDescription
                 )
             }
-            self.idStore = value.map(\.id)
+            self.idStore = value
             self._wasTouched = false
         }
     }
     
     public var persistableValue: PersistableRepresentation {
-        get { idStore }
-        set { idStore = newValue }
+        get {
+            lock.withLock {
+                idStore
+            }
+        }
+        set {
+            lock.withLock {
+                idStore = newValue
+            }
+        }
     }
     
     /// Internal use only.
@@ -201,10 +209,12 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                     
                     let inverse = target._fields.first { $0.key == inverseKey }
                     
-                    if var manyField = inverse as? ManyRelationship {
+                    if var manyField = inverse as? (any ManyRelationship) {
                         manyField.persistableValue.removeAll(where: { $0 == model.id })
-                    } else if var oneField = inverse as? OneRelationship {
+                        manyField.wasTouched = true
+                    } else if var oneField = inverse as? (any OneRelationship) {
                         oneField.persistableValue = nil
+                        oneField.wasTouched = true
                     }
                     
                     context._markTouched(target, previouslyMatching: predicateMatches)
@@ -213,7 +223,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                     do {
                         try context.delete(target)
                     } catch {
-                        Self.logger.error("An error occured while cascading deletion: \(error)")
+                        Self.logger.error("An error occurred while cascading deletion: \(error)")
                     }
             }
         }

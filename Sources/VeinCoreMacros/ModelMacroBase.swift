@@ -398,6 +398,7 @@ extension VariableDeclSyntax {
 extension ModelMacroBase {
     func findRelationshipAttribute(in varDecl: VariableDeclSyntax) -> AttributeSyntax? {
         varDecl.attributeOrMacro(matching: "Relationship")
+        ?? varDecl.attributeOrMacro(matching: "\(frameworkName).Relationship")
     }
     
     func isCollection(type: TypeSyntax?) -> Bool {

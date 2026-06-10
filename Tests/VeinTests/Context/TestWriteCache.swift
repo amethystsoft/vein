@@ -134,6 +134,25 @@ struct WriteCache {
         #expect(container.context.hasChanges == false)
     }
     
+    @Test("Rollback of delete restores touches")
+    func testRollbackDeleteRestoresTouches() throws {
+        let container = try setupContainer()
+        
+        // Test Delete Rollback
+        let deleteModel = V0_0_1.Test(flag: true, someValue: "New", randomValue: 5)
+        try container.context.insert(deleteModel)
+        try container.context.save()
+        
+        deleteModel.randomValue = 8 // should be rolled back too.
+        try container.context.delete(deleteModel)
+        #expect(deleteModel.context == nil)
+        
+        container.context.rollback()
+        #expect(deleteModel.context != nil)
+        #expect(deleteModel.randomValue == 5)
+        #expect(container.context.hasChanges == false)
+    }
+    
     @Test("Test Save clears cache")
     func testSaveClearsCache() throws {
         let container = try setupContainer()

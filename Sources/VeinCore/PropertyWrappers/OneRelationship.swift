@@ -160,7 +160,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
     
     public func setStoreToCapturedState(_ state: Any) {
         lock.withLock {
-            guard let value = state as? T else {
+            guard let value = state as? ULID? else {
                 fatalError(
                     ManagedObjectContextError
                         .capturedStateApplicationFailed(
@@ -170,14 +170,22 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
                         .localizedDescription
                 )
             }
-            self.idStore = value.id
+            self.idStore = value
             self._wasTouched = false
         }
     }
     
-    public var persistableValue: WrappedType {
-        get { idStore }
-        set { idStore = newValue }
+    public var persistableValue: ULID? {
+        get {
+            lock.withLock {
+                idStore
+            }
+        }
+        set {
+            lock.withLock {
+                idStore = newValue
+            }
+        }
     }
     
     /// Internal use only.
@@ -202,8 +210,10 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
                 
                 if var manyField = inverse as? (any ManyRelationship) {
                     manyField.persistableValue.removeAll(where: { $0 == model.id })
+                    manyField.wasTouched = true
                 } else if var oneField = inverse as? (any OneRelationship) {
                     oneField.persistableValue = nil
+                    oneField.wasTouched = true
                 }
                 
                 context._markTouched(target, previouslyMatching: predicateMatches)

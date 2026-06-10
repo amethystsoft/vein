@@ -1,5 +1,6 @@
 import SQLiteDB
 import Foundation
+import Logging
 import ULID
 
 public nonisolated protocol Persistable: Sendable {
@@ -10,6 +11,7 @@ public nonisolated protocol Persistable: Sendable {
 
 extension Persistable {
     public static var sqliteTypeName: SQLiteTypeName { PersistentRepresentation.sqliteTypeName }
+    public static var logger: Logger { Logger(label: "Persistable") }
 }
 
 public protocol ColumnType {
@@ -413,7 +415,19 @@ extension Optional: Persistable, ColumnType where Wrapped: Persistable {
 
 extension Array: Persistable where Element == ULID {
     public init?(fromPersistent representation: String) {
-        self = representation.split(separator: ",").map { ULID(ulidString: String($0))! }
+        let parts = representation.split(separator: ",")
+        let ulids = parts.compactMap { ULID(ulidString: String($0)) }
+        
+        guard ulids.count == parts.count else {
+            Self.logger.error(
+                """
+                One or more ULIDs failed to initialize in from Persistable \
+                [ULID] initializer, potential data corruption
+                """
+            )
+            return nil
+        }
+        self = ulids
     }
     
     public typealias PersistentRepresentation = String

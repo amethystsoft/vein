@@ -141,7 +141,7 @@ extension FieldBase {
                 builder.field(instanceKey, type: .string(required: required))
             case .blob:
                 builder.field(instanceKey, type: .data(required: required))
-            case .null(_):
+            case .null:
                 fatalError("Unexpectedly hit null SQLiteTypeName while building migration on Field \(key ?? instanceKey)")
         }
     }

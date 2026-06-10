@@ -1,8 +1,11 @@
 @preconcurrency import SQLiteDB
+import ULID
 
 public protocol PredicateConstructor: Sendable {
     associatedtype Model: PersistentModel
     func _builder() -> PredicateBuilder<Model>
+    func id(_ op: Vein.ComparisonOperator, _ value: ULID) -> Self
+    static func id(_ op: Vein.ComparisonOperator, _ value: ULID) -> Self
     
     init()
 }

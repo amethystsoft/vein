@@ -46,6 +46,21 @@ extension RelationshipTest {
             CommentRelationshipCascade.Comment.self
         )
         #expect(postDeletePostSaveComments.isEmpty)
+        
+        try verifyWithNewContainer()
+        
+        func verifyWithNewContainer() throws {
+            let container = try ModelContainer(
+                CommentRelationshipCascade.self,
+                migration: CascadeMigration.self,
+                at: dbPath,
+                appID: "de.amethystsoft.vein.RelationshipTests",
+                encryptionEnabled: ProcessInfo.shouldEnableEncryption
+            )
+            
+            let comment = try container.context.fetchAll(CommentRelationshipCascade.Comment.self).first
+            #expect(comment == nil)
+        }
     }
     
     @Test(.timeLimit(.minutes(1)))
@@ -88,6 +103,21 @@ extension RelationshipTest {
             RelationshipCascadeCascade.Comment.self
         )
         #expect(postDeletePostSaveComments.isEmpty)
+        
+        try verifyWithNewContainer()
+        
+        func verifyWithNewContainer() throws {
+            let container = try ModelContainer(
+                RelationshipCascadeCascade.self,
+                migration: CascadeCascadeMigration.self,
+                at: dbPath,
+                appID: "de.amethystsoft.vein.RelationshipTests",
+                encryptionEnabled: ProcessInfo.shouldEnableEncryption
+            )
+            
+            let comment = try container.context.fetchAll(RelationshipCascadeCascade.Comment.self).first
+            #expect(comment == nil)
+        }
     }
     
     @Test(.timeLimit(.minutes(1)))
@@ -142,6 +172,29 @@ extension RelationshipTest {
         )
         #expect(postDeletePostSaveComments.map(\.id) == [comment.id])
         #expect(postDeletePostSaveComments.map(\.author?.id) == [nil])
+        
+        try verifyWithNewContainer()
+        
+        func verifyWithNewContainer() throws {
+            let container = try ModelContainer(
+                CommentRelationshipNullify.self,
+                migration: NullifyMigration.self,
+                at: dbPath,
+                appID: "de.amethystsoft.vein.RelationshipTests",
+                encryptionEnabled: ProcessInfo.shouldEnableEncryption
+            )
+            
+            let users = try container.context.fetchAll(
+                CommentRelationshipNullify.User.self
+            )
+            #expect(users.isEmpty)
+            
+            let comments = try container.context.fetchAll(
+                CommentRelationshipNullify.Comment.self
+            )
+            #expect(comments.map(\.id) == [comment.id])
+            #expect(comments.map(\.author?.id) == [nil])
+        }
     }
 }
 
