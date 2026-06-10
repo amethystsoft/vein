@@ -23,13 +23,20 @@ extension ManagedObjectContext {
         }
         
         if !identityMapMisses.isEmpty {
-            let dbFetchedModels: [ULID: T] = try _fetchAllMatchingIDs(ids: ids)
+            let dbFetchedModels: [ULID: T] = try _fetchAllMatchingIDs(ids: identityMapMisses)
             models.merge(dbFetchedModels, uniquingKeysWith: { lhs, _ in lhs})
         }
         
         var sortedModels: [T] = []
         for id in ids {
-            sortedModels.append(models[id]!)
+            if let model = models[id] {
+                sortedModels.append(model)
+            } else {
+                Self.logger.warning("""
+                    Mismatch between Relationship IDs and existing models. \
+                    Potential data corruption.
+                """)
+            }
         }
         
         return sortedModels
@@ -48,17 +55,25 @@ extension ManagedObjectContext {
             var models = [ULID: T]()
             
             var currentlyDeleted = [ULID: any PersistentModel]()
+            var currentlyInserted = [ULID: any PersistentModel]()
+            var currentlyTouched = [ULID: any PersistentModel]()
             
-            writeCache.mutate { _,_, deleted,_ in
+            writeCache.mutate { inserted, touched, deleted,_ in
+                currentlyInserted = inserted[T.typeIdentifier] ?? [:]
+                currentlyTouched = touched[T.typeIdentifier] ?? [:]
                 currentlyDeleted = deleted[T.typeIdentifier] ?? [:]
             }
             
             let results = try connection.prepare(select)
             var resultIDs = Set<ULID>()
             
-            identityMap.batched { getTracked, startTracking in
+            try identityMap.batched { getTracked, startTracking in
                 for row in results {
-                    let id = ULID(ulidString: row[SQLExpression<String>("id")])!
+                    guard let id = ULID(ulidString: row[SQLExpression<String>("id")]) else {
+                        throw MOCError.propertyDecode(message: """
+                            Failed to decode id from row. DB may be corrupt.
+                        """)
+                    }
                     
                     if currentlyDeleted[id] != nil { continue }
                     
@@ -81,14 +96,6 @@ extension ManagedObjectContext {
                     resultIDs.insert(model.id)
                     startTracking(model)
                 }
-            }
-            
-            var currentlyInserted = [ULID: any PersistentModel]()
-            var currentlyTouched = [ULID: any PersistentModel]()
-            
-            writeCache.mutate { inserted, touched,_,_ in
-                currentlyInserted = inserted[T.typeIdentifier] ?? [:]
-                currentlyTouched = touched[T.typeIdentifier] ?? [:]
             }
             
             for (_, insert) in currentlyInserted {

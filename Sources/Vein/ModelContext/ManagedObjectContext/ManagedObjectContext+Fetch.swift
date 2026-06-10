@@ -13,8 +13,12 @@ extension ManagedObjectContext {
             var models = [T]()
             
             var currentlyDeleted = [ULID: any PersistentModel]()
+            var currentlyInserted = [ULID: any PersistentModel]()
+            var currentlyTouched = [ULID: any PersistentModel]()
             
-            writeCache.mutate { _,_, deleted,_ in
+            writeCache.mutate { inserted, touched, deleted,_ in
+                currentlyInserted = inserted[T.typeIdentifier] ?? [:]
+                currentlyTouched = touched[T.typeIdentifier] ?? [:]
                 currentlyDeleted = deleted[T.typeIdentifier] ?? [:]
             }
             
@@ -46,14 +50,6 @@ extension ManagedObjectContext {
                     resultIDs.insert(model.id)
                     startTracking(model)
                 }
-            }
-            
-            var currentlyInserted = [ULID: any PersistentModel]()
-            var currentlyTouched = [ULID: any PersistentModel]()
-            
-            writeCache.mutate { inserted, touched,_,_ in
-                currentlyInserted = inserted[T.typeIdentifier] ?? [:]
-                currentlyTouched = touched[T.typeIdentifier] ?? [:]
             }
             
             for (_, insert) in currentlyInserted {

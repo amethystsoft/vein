@@ -2,6 +2,7 @@ import SQLiteDB
 import Foundation
 import ULID
 import Crypto
+import Logging
 #if canImport(AppKit) || canImport(UIKit)
 import KeychainAccess
 #elseif os(Linux)
@@ -9,13 +10,7 @@ import KeychainAccess
 #endif
 
 public actor ManagedObjectContext {
-    public static nonisolated(unsafe) var shared: ManagedObjectContext?
-    public static nonisolated(unsafe) var instance: ManagedObjectContext {
-        guard let shared else {
-            fatalError("ManagedObjectContext.shared not set")
-        }
-        return shared
-    }
+    public static let logger = Logger(label: "ManagedObjectContext")
     package nonisolated let connection: Connection
     nonisolated unowned let modelContainer: ModelContainer
     

@@ -52,9 +52,9 @@ nonisolated final class ThreadSafeIdentityMap {
         _ block: (
             (T.Type, ULID) -> T?,
             (T) -> Void
-        ) -> Void
-    ) {
-        block(getTracked, track)
+        ) throws -> Void
+    ) rethrows {
+        try block(getTracked, track)
     }
     
     @inline(__always)
