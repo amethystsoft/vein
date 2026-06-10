@@ -1,6 +1,6 @@
 import Vein
 
-@attached(member, names: named(init), named(id), named(_setupFields), named(context), named(_getSchema), named(_fields), named(_relationships), named(_fieldInformation), named(objectWillChange), named(_key), named(_PredicateHelper), named(_satisfiesConstraint), named(notifyOfChanges))
+@attached(member, names: named(init), named(id), named(_setupFields), named(context), named(_getSchema), named(_fields), named(_relationships), named(_fieldInformation), named(objectWillChange), named(_key), named(_PredicateHelper), named(_satisfiesConstraint), named(notifyOfChanges), named(_isPreparedForDeletion))
 @attached(extension, conformances: PersistentModel, Sendable, names: named(version), named(schema))
 @attached(peer, names: arbitrary)
 @attached(memberAttribute)

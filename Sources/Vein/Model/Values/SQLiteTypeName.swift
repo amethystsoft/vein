@@ -192,23 +192,19 @@ public enum SQLiteValue: Sendable, Hashable {
                 case .integer:
                     if let value = row[SQLExpression<Int64?>(key)] {
                         self = .integer(value)
-                    }
-                    self = .null
+                    } else { self = .null }
                 case .real:
                     if let value = row[SQLExpression<Double?>(key)] {
                         self = .real(value)
-                    }
-                    self = .null
+                    } else { self = .null }
                 case .text:
                     if let value = row[SQLExpression<String?>(key)] {
                         self = .text(value)
-                    }
-                    self = .null
+                    } else { self = .null }
                 case .blob:
                     if let value = row[SQLExpression<Data?>(key)] {
                         self = .blob(value)
-                    }
-                    self = .null
+                    } else { self = .null }
                 case .null:
                     self = .null
             }

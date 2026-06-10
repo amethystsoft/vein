@@ -125,7 +125,7 @@ struct StepByStep {
                 
                 if let user = users.first {
                     #expect(user.displayName == username.trimmingCharacters(in: .whitespacesAndNewlines).uppercased())
-                    #expect(user.email == nil)
+                    #expect(user.email == "example@amethystsoft.de")
                 }
                 
                 let profiles = try context
@@ -143,7 +143,7 @@ struct StepByStep {
                 
                 if let post = posts.first {
                     #expect(post.content == postContent)
-                    #expect(post.category == nil)
+                    #expect(post.category == "blog")
                 }
             }
         )

@@ -1,8 +1,10 @@
 import Foundation
 import ULID
+import Logging
 
 @propertyWrapper
-public struct PrimaryKey: PersistedField, @unchecked Sendable {
+public class PrimaryKey: PersistedField, @unchecked Sendable {
+    static let logger = Logger(label: "Vein PrimaryKey")
     public typealias WrappedType = ULID
     
     public let key: String? = "id"
@@ -22,11 +24,16 @@ public struct PrimaryKey: PersistedField, @unchecked Sendable {
             })
         }
         set {
-            lock.withLock({
+            lock.withLock {
                 if model?.context == nil {
                     store = newValue
+                } else {
+                    PrimaryKey.logger.warning("""
+                    Attempted to mutate ID of inserted model with ID: \(store). \
+                    This is not supported.
+                    """)
                 }
-            })
+            }
         }
     }
     
@@ -56,6 +63,28 @@ public struct PrimaryKey: PersistedField, @unchecked Sendable {
     public var persistableValue: ULID {
         get { self.wrappedValue }
         set { self.wrappedValue = newValue }
+    }
+    
+    // Connect model instance to wrapper.
+    public static subscript<OuterSelf: PersistentModel>(
+        _enclosingInstance observed: OuterSelf,
+        wrapped wrappedKeyPath: ReferenceWritableKeyPath<OuterSelf, ULID>,
+        storage storageKeyPath: ReferenceWritableKeyPath<OuterSelf, PrimaryKey>
+    ) -> ULID {
+        get {
+            let storage = observed[keyPath: storageKeyPath]
+            if storage.model == nil {
+                storage.model = observed
+            }
+            return storage.wrappedValue
+        }
+        set {
+            let storage = observed[keyPath: storageKeyPath]
+            if storage.model == nil {
+                storage.model = observed
+            }
+            storage.wrappedValue = newValue
+        }
     }
 }
 
