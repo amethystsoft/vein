@@ -5,16 +5,10 @@ import Logging
 @testable import VeinCore
 
 @MainActor
-@Suite struct RelationshipUpdateTest {
-    static let logger = Logger(label: "de.amethystsoft.vein.test.migration")
-    
+extension RelationshipTest {    
     @Test func testUpdate() async throws {
-        let dbPath = try prepareContainerLocation(name: "RelationshipMigration")
-        
-        Self.logger.info(
-            "Relationship migration test started with db location: \(dbPath)"
-        )
-        
+        let dbPath = try prepareContainerLocation(name: "RelationshipUpdate")
+        Self.logger.info("started with database path: \(dbPath)")
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
@@ -25,7 +19,6 @@ import Logging
         
         let user = V0_0_1.User(name: "Mia")
         let comment = V0_0_1.Comment(text: "Heyho")
-        
         try container.context.insert(user)
         user.comments.append(comment)
         
@@ -35,34 +28,53 @@ import Logging
         #expect(user.context != nil)
         #expect(comment.context?.identifier == user.context?.identifier)
         #expect(comment.author?.id == user.id)
+        
+        // Work with new context to make sure we read from disk.
+        let newContainer = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: dbPath,
+            appID: "de.amethystsoft.vein.RelationshipTests",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+        )
+        guard
+            let fetchedUser = try newContainer.context.fetchAll(V0_0_1.User.self).first,
+            let fetchedComment = try newContainer.context.fetchAll(V0_0_1.Comment.self).first
+        else {
+            Issue.record("Unexpectedly found empty results")
+            return
+        }
+        
+        #expect(fetchedUser.comments.contains { $0.id == comment.id })
+        #expect(fetchedComment.author?.id == user.id)
     }
     
-    func prepareContainerLocation(name: String) throws -> String {
-#if os(Linux)
-        Keyring.appIdentifier.withLock { identifier in
-            identifier = "de.amethystsoft.vein.tests"
-        }
-#endif
+    @Test func testReParenting() async throws {
+        let dbPath = try prepareContainerLocation(name: "RelationshipRe-Parent")
         
-        let containerPath = FileManager.default.temporaryDirectory
-        
-        let dbDir = containerPath.relativePath.appending("/veinTests/\(testID.uuidString)")
-        
-        let dbPath = dbDir.appending("/\(name).sqlite3")
-        
-        try FileManager.default.createDirectory(
-            atPath: dbDir,
-            withIntermediateDirectories: true
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: dbPath,
+            appID: "de.amethystsoft.vein.RelationshipTests",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         
-        if !FileManager.default.fileExists(atPath: dbPath) {
-            FileManager.default.createFile(
-                atPath: dbPath,
-                contents: nil
-            )
-        }
+        let userA = V0_0_1.User(name: "Mia")
+        let userB = V0_0_1.User(name: "John")
+        let comment = V0_0_1.Comment(text: "Transferable post")
         
-        return dbPath
+        try container.context.insert(userA)
+        try container.context.insert(userB)
+        userA.comments.append(comment)
+        try container.context.save()
+        
+        // Transfer relationship
+        comment.author = userB
+        try container.context.save()
+        
+        #expect(userA.comments.isEmpty)
+        #expect(userB.comments.map(\.id).contains(comment.id))
     }
 }
 
@@ -77,44 +89,6 @@ fileprivate enum V0_0_1: VersionedSchema {
         
         @Relationship(inverse: "author")
         var comments: [Comment]
-        
-        init(name: String) {
-            self.name = name
-        }
-        
-        func commentIDs() -> [ULID] {
-            _comments.idStore
-        }
-    }
-    
-    @Model
-    final class Comment: Identifiable {
-        @Relationship(inverse: "comments", deleteRule: .cascade)
-        var author: User?
-        
-        @Field
-        var text: String
-        
-        init(text: String) {
-            self.text = text
-        }
-    }
-}
-
-fileprivate enum V0_0_2: VersionedSchema {
-    static let version = ModelVersion(0, 0, 2)
-    static let models: [any Vein.PersistentModel.Type] = [User.self, Comment.self]
-    
-    @Model
-    final class User: Identifiable {
-        @Field
-        var name: String
-        
-        @Relationship(inverse: "author")
-        var comments: [Comment]
-        
-        @Field
-        var is2faEnabled: Bool = false
         
         init(name: String) {
             self.name = name
@@ -137,46 +111,8 @@ fileprivate enum V0_0_2: VersionedSchema {
 
 fileprivate enum Migration: SchemaMigrationPlan {
     static var schemas: [any Vein.VersionedSchema.Type] {
-        [V0_0_1.self, V0_0_2.self]
+        [V0_0_1.self]
     }
     
-    static var stages: [MigrationStage] {
-        [migrateV1toV2]
-    }
-    
-    static let migrateV1toV2 = MigrationStage.complex(
-        fromVersion: V0_0_1.self,
-        toVersion: V0_0_2.self,
-        willMigrate: { context in
-            // 1. Fetch all old models independently to avoid dynamic graph changes
-            let oldUsers = try context.fetchAll(V0_0_1.User.self)
-            let oldComments = try context.fetchAll(V0_0_1.Comment.self)
-            
-            // 2. Map old comments to new comments
-            var newCommentsMap: [ULID: V0_0_2.Comment] = [:]
-            for oldComment in oldComments {
-                let newComment = V0_0_2.Comment(text: oldComment.text)
-                newComment.id = oldComment.id
-                newCommentsMap[oldComment.id] = newComment
-            }
-            
-            // 3. Map users and link their comments
-            for oldUser in oldUsers {
-                let newUser = V0_0_2.User(name: oldUser.name)
-                newUser.comments = oldUser.comments.compactMap { oldComment in
-                    newCommentsMap[oldComment.id]
-                }
-                try context.insert(newUser)
-            }
-            
-            // 4. Safely delete all old records
-            for oldComment in oldComments {
-                try context.delete(oldComment)
-            }
-            for oldUser in oldUsers {
-                try context.delete(oldUser)
-            }
-        },
-        didMigrate: nil
-    )
+    static var stages: [MigrationStage] {[]}
 }

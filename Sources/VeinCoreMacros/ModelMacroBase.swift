@@ -45,6 +45,11 @@ public struct ModelMacroBase {
             fieldAccessorBodies.append("self._\(name)")
         }
         
+        // MARK: - _relationship accessor
+        let relationshipAccessorSetup = relationshipFields.map { name, _ in
+            "self._\(name)"
+        }.joined(separator: ",\n        ")
+        
         // MARK: - Field information
         var fieldInformation = lazyFields.map { key, value in
             let value = value.drop(while: { $0 == " " || $0 == ":" })
@@ -74,6 +79,9 @@ public struct ModelMacroBase {
 """
     typealias _PredicateHelper = _\(className)PredicateHelper
 
+/// The primary ID of the object.
+/// Gets  used to reference models in relationships.
+/// Immutable after insertion into the context.
 @PrimaryKey
 var id: ULID
 
@@ -92,9 +100,20 @@ public func _setupFields() {
 
 var context: Vein.ManagedObjectContext? = nil
 
+/// Whether a model is prepared to be deleted.
+///
+/// Reading this variable is safe, but it should never be set outside of Vein.
+var _isPreparedForDeletion = false
+
 var _fields: [any Vein.FieldBase] {
     [
         \(fieldAccessorSetup)
+    ]
+}
+
+var _relationships: [any Vein.PersistedRelationship] {
+    [
+        \(relationshipAccessorSetup)
     ]
 }
 

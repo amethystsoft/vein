@@ -133,6 +133,11 @@ extension ManagedObjectContext {
             throw ManagedObjectContextError.inactiveModelType(model)
         }
         
+        model._isPreparedForDeletion = true
+        for relationship in model._relationships {
+            relationship._handleModelDeletion()
+        }
+        
         // Deletes automatically invalidate a touch or insert
         writeCache.mutate { inserts, touches, deletes,_ in
             deletes[
@@ -187,6 +192,13 @@ extension ManagedObjectContext {
                 throw ManagedObjectContextError.inactiveModelType(first)
             }
         } else { return }
+        
+        for model in managedModels {
+            model._isPreparedForDeletion = true
+            for relationship in model._relationships {
+                relationship._handleModelDeletion()
+            }
+        }
         
         // Deletes automatically invalidate a touch or insert
         writeCache.mutate { inserts, touches, deletes,_ in
@@ -370,6 +382,7 @@ extension ManagedObjectContext {
                 for (_, models) in deletes {
                     for (_, model) in models {
                         model.context = self
+                        model._isPreparedForDeletion = false
                         identityMap.startTracking(model)
                     }
                 }

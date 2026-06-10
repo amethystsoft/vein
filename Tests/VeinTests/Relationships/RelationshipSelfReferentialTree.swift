@@ -1,0 +1,58 @@
+import Foundation
+import Testing
+import Logging
+@testable import Vein
+@testable import VeinCore
+
+extension RelationshipTest {
+    @Test(.timeLimit(.minutes(1)))
+    func testSelfReferentialTree() async throws {
+        let dbPath = try prepareContainerLocation(name: "SelfReferentialTree")
+        
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: dbPath,
+            appID: "de.amethystsoft.vein.RelationshipTests",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+        )
+        
+        let root = V0_0_1.Category(name: "Root")
+        let child = V0_0_1.Category(name: "Child")
+        
+        try container.context.insert(root)
+        root.children.append(child)
+        try container.context.save()
+        
+        #expect(child.parent?.id == root.id)
+    }
+}
+
+fileprivate enum V0_0_1: VersionedSchema {
+    static let version = ModelVersion(0, 0, 1)
+    static let models: [any Vein.PersistentModel.Type] = [Category.self]
+    
+    @Model
+    final class Category: Identifiable {
+        @Field
+        var name: String
+        
+        @Relationship(inverse: "children")
+        var parent: Category?
+        
+        @Relationship(inverse: "parent")
+        var children: [Category]
+        
+        init(name: String) {
+            self.name = name
+        }
+    }
+}
+
+fileprivate enum Migration: SchemaMigrationPlan {
+    static var schemas: [any Vein.VersionedSchema.Type] {
+        [V0_0_1.self]
+    }
+    
+    static var stages: [MigrationStage] {[]}
+}

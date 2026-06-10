@@ -8,10 +8,19 @@ public protocol PersistentModel: AnyObject, Sendable {
     var notifyOfChanges: () -> Void { get }
     
     static var schema: String { get }
+    /// The primary ID of the object.
+    /// Gets  used to reference models in relationships.
+    /// Immutable after insertion into the context.
     var id: ULID { get set }
     var context: ManagedObjectContext? { get set }
     
+    /// Whether a model is prepared to be deleted.
+    ///
+    /// Reading this variable is safe, but it should never be set outside of Vein.
+    var _isPreparedForDeletion: Bool { get set }
+    
     var _fields: [any FieldBase] { get }
+    var _relationships: [any PersistedRelationship] { get }
     static var _fieldInformation: [FieldInformation] { get }
     
     func _setupFields() -> Void

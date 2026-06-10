@@ -31,8 +31,6 @@ extension ManagedObjectContext {
             let filtered = Table(model._getSchema()).filter(SQLExpression<String>("id") == model.id.ulidString)
             
             let query = filtered
-            
-            //.update(newValue.setter(withKey: field.key, andTypeName: field.sqliteType))
                 .update(
                     model._fields
                         .filter { $0.wasTouched }
