@@ -90,7 +90,7 @@ fileprivate enum V0_0_1: VersionedSchema {
         @Field
         var name: String
         
-        @Relationship(inverse: "tags")
+        @Relationship(inverse: \Post.tags)
         var posts: [Post]
         
         init(name: String) {
@@ -100,7 +100,7 @@ fileprivate enum V0_0_1: VersionedSchema {
     
     @Model
     final class Post: Identifiable {
-        @Relationship(inverse: "posts")
+        @Relationship
         var tags: [Tag]
         
         @Field

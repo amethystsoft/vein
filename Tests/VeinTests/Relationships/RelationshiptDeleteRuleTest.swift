@@ -207,7 +207,7 @@ fileprivate enum CommentRelationshipCascade: VersionedSchema {
         @Field
         var name: String
         
-        @Relationship(inverse: "author", deleteRule: .cascade)
+        @Relationship(inverse: \Comment.author, deleteRule: .cascade)
         var comments: [Comment]
         
         init(name: String) {
@@ -221,7 +221,7 @@ fileprivate enum CommentRelationshipCascade: VersionedSchema {
     
     @Model
     final class Comment: Identifiable {
-        @Relationship(inverse: "comments")
+        @Relationship
         var author: User?
         
         @Field
@@ -250,7 +250,7 @@ fileprivate enum RelationshipCascadeCascade: VersionedSchema {
         @Field
         var name: String
         
-        @Relationship(inverse: "author", deleteRule: .cascade)
+        @Relationship(deleteRule: .cascade)
         var comments: [Comment]
         
         init(name: String) {
@@ -264,7 +264,7 @@ fileprivate enum RelationshipCascadeCascade: VersionedSchema {
     
     @Model
     final class Comment: Identifiable {
-        @Relationship(inverse: "comments", deleteRule: .cascade)
+        @Relationship(inverse: \User.comments, deleteRule: .cascade)
         var author: User?
         
         @Field
@@ -293,7 +293,7 @@ fileprivate enum CommentRelationshipNullify: VersionedSchema {
         @Field
         var name: String
         
-        @Relationship(inverse: "author")
+        @Relationship(inverse: \Comment.author)
         var comments: [Comment]
         
         init(name: String) {
@@ -307,7 +307,7 @@ fileprivate enum CommentRelationshipNullify: VersionedSchema {
     
     @Model
     final class Comment: Identifiable {
-        @Relationship(inverse: "comments")
+        @Relationship
         var author: User?
         
         @Field

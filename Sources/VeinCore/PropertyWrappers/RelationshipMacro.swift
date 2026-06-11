@@ -2,7 +2,7 @@ import Vein
 
 @attached(peer)
 public macro Relationship(
-    inverse: String? = nil,
+    inverse: AnyKeyPath? = nil,
     deleteRule: DeleteRule = .nullify
 ) = #externalMacro(
     module: "VeinCoreMacros",

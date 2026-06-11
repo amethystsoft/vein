@@ -87,7 +87,7 @@ fileprivate enum V0_0_1: VersionedSchema {
         @Field
         var name: String
         
-        @Relationship(inverse: "author")
+        @Relationship(inverse: \Comment.author)
         var comments: [Comment]
         
         init(name: String) {
@@ -97,7 +97,7 @@ fileprivate enum V0_0_1: VersionedSchema {
     
     @Model
     final class Comment: Identifiable {
-        @Relationship(inverse: "comments")
+        @Relationship
         var author: User?
         
         @Field

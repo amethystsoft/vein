@@ -17,4 +17,6 @@ jobs:
         with:
           # Ubuntu runners low on space causes the emulator to fail to install
           free-disk-space: true
+          swift-build-flags: --enable-experimental-prebuilts
+          test-env: SHOULD_DISABLE_ENCRYPTION=1
           
