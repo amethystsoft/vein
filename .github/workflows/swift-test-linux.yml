@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  macos:
+  linux:
     runs-on: blacksmith-8vcpu-ubuntu-2404-arm
     container:
       image: swift:6.3.2-noble
