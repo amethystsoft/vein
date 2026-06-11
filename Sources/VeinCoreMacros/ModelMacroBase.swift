@@ -67,6 +67,22 @@ public struct ModelMacroBase {
         
         let fieldInformationString = fieldInformation.joined(separator: ",\n    ")
         
+        // MARK: - inverse field data
+        let inverseFieldData: String = relationshipVariables.compactMap {
+            guard
+                let relationshipAttr = findRelationshipAttribute(in: $0),
+                let arguments = relationshipAttr.arguments?.as(LabeledExprListSyntax.self),
+                let inverseArg = arguments.first(where: { $0.label?.text == "inverse" }),
+                let (root, last) = inverseArg.expression.extractKeyPathComponents(),
+                let key = $0.bindings.first?.pattern.as(IdentifierPatternSyntax.self)?.identifier.text
+            else { return nil }
+            
+            return """
+            map[ObjectIdentifier(\(root).self), default: [:]]["\(last)"] = "\(key)"
+            """
+        }.joined(separator: "\n    ")
+        
+        
         // MARK: - inits and assembly
         let eagerVarInit = eagerFields.initEagerRows()
         let relationshipInit = relationshipFields.initRelationshipRows()
@@ -116,6 +132,13 @@ var _relationships: [any Vein.PersistedRelationship] {
         \(relationshipAccessorSetup)
     ]
 }
+
+static let _inverseFields = {
+    var map = [ObjectIdentifier: [String: String]]()
+    \(inverseFieldData)
+    
+    return map
+}()
 
 static let _fieldInformation: [Vein.FieldInformation] = [
     \(fieldInformationString)
@@ -233,12 +256,25 @@ static let _fieldInformation: [Vein.FieldInformation] = [
         var transformedArguments: [String] = []
         
         if let argumentList = arguments,
-           let inverseArg = argumentList.first(where: { $0.label?.text == "inverse" })/*,
-           let inversePropertyName = inverseArg.expression.extractKeyPathPropertyName()*/
+           let inverseArg = argumentList.first(where: { $0.label?.text == "inverse" }),
+           let (root, last) = inverseArg.expression.extractKeyPathComponents(),
+           let typeDecl = varDecl
+                .bindings
+                .first?
+                .typeAnnotation?
+                .type
+                .description
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .trimmingCharacters(in: ["?"])
         {
-            // uncomment once keypath is used again with runtime link inference
-            // transformedArguments.append("inverse: \"\(inversePropertyName)\"")
-            transformedArguments.append(inverseArg.description.trimmingCharacters(in: [",", " "]))
+            guard
+                typeDecl == root || typeDecl == "[\(root)]" || typeDecl == "Array<\(root)>"
+            else {
+                throw MacroError.relationshipKeypathDoesNotMatchTypeDeclaration("""
+                \(root) is not compatible with \(typeDecl)
+                """)
+            }
+            transformedArguments.append("inverse: \"\(last)\"")
         }
         
         if let argumentList = arguments,
@@ -256,6 +292,7 @@ static let _fieldInformation: [Vein.FieldInformation] = [
         return [attribute]
     }
 }
+
 public struct DebugDiag: DiagnosticMessage {
     public let message: String
     public var diagnosticID: MessageID { .init(domain: "VeinMacros", id: "debug") }
@@ -418,18 +455,22 @@ extension String {
 }
 
 extension ExprSyntax {
-    func extractKeyPathPropertyName() -> String? {
+    func extractKeyPathComponents() -> (root: String, last: String)? {
         // Check if the expression is a KeyPath
         guard let keyPath = self.as(KeyPathExprSyntax.self) else {
             return nil
         }
         
         // Get the last component (the property name)
-        guard let lastComponent = keyPath.components.last,
-              let propertyComponent = lastComponent.component.as(KeyPathPropertyComponentSyntax.self) else {
-            return nil
-        }
+        guard
+            let rootComponent = keyPath.root,
+            let lastComponent = keyPath.components.last,
+            let lastPropertyComponent = lastComponent.component.as(KeyPathPropertyComponentSyntax.self)
+        else { return nil }
         
-        return propertyComponent.declName.baseName.text
+        return (
+            root: rootComponent.trimmedDescription,
+            last: lastPropertyComponent.trimmedDescription
+        )
     }
 }

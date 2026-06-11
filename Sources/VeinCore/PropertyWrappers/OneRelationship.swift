@@ -126,9 +126,13 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
     }
     
     private func updateOtherSide(isRemoving: Bool) {
+        guard let model, let context = model.context else { return }
+        
+        if inverseKey.isNil {
+            inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
+        }
+        
         guard
-            let model,
-            let context = model.context,
             let inverseKey,
             let target = wrappedValue
         else { return }

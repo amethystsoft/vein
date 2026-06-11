@@ -103,7 +103,13 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
     }
     
     private func updateOtherSide(removed: [T], added: [T]) {
-        guard let model, let context = model.context, let inverseKey else { return }
+        guard let model, let context = model.context else { return }
+        
+        if inverseKey.isNil {
+            inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
+        }
+        
+        guard let inverseKey else { return }
         
         for target in removed {
             target._setupFields()

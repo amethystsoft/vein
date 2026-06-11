@@ -27,6 +27,8 @@ public protocol PersistentModel: AnyObject, Sendable {
     
     static var version: ModelVersion { get }
     
+    static var _inverseFields: [ObjectIdentifier: [String: String]] { get }
+    
     func extractPrimitiveState() -> PrimitiveState
     func applyPrimitiveState(_ state: PrimitiveState)
     

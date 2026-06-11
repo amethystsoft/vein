@@ -166,7 +166,7 @@ fileprivate enum V0_0_1: VersionedSchema {
         @Field
         var name: String
         
-        @Relationship(inverse: "author")
+        @Relationship(inverse: \Comment.author)
         var comments: [Comment]
         
         init(name: String) {
@@ -176,7 +176,7 @@ fileprivate enum V0_0_1: VersionedSchema {
     
     @Model
     final class Comment: Identifiable {
-        @Relationship(inverse: "comments")
+        @Relationship
         var author: User?
         
         @Field
@@ -197,7 +197,7 @@ fileprivate enum V0_0_2: VersionedSchema {
         @Field
         var name: String
         
-        @Relationship(inverse: "author")
+        @Relationship(inverse: \Comment.author)
         var comments: [Comment]
         
         @Field
@@ -210,7 +210,7 @@ fileprivate enum V0_0_2: VersionedSchema {
     
     @Model
     final class Comment: Identifiable {
-        @Relationship(inverse: "comments")
+        @Relationship
         var author: User?
         
         @Field
@@ -238,7 +238,7 @@ fileprivate enum V0_0_3: VersionedSchema {
         @Field
         var is2faEnabled: Bool = false
         
-        @Relationship(inverse: "authors")
+        @Relationship(inverse: \Comment.authors)
         var comments: [Comment]
         
         init(name: String) {
@@ -249,7 +249,7 @@ fileprivate enum V0_0_3: VersionedSchema {
     @Model
     final class Comment: Identifiable {
         // Migration target: changed from author: User? to authors: [User]
-        @Relationship(inverse: "comments")
+        @Relationship
         var authors: [User]
         
         @Field

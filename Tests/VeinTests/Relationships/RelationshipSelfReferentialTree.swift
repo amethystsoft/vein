@@ -37,10 +37,10 @@ fileprivate enum V0_0_1: VersionedSchema {
         @Field
         var name: String
         
-        @Relationship(inverse: "children")
+        @Relationship(inverse: \Category.children)
         var parent: Category?
         
-        @Relationship(inverse: "parent")
+        @Relationship
         var children: [Category]
         
         init(name: String) {

@@ -7,10 +7,10 @@ on:
     branches: [main]
 
 jobs:
-  macos:
+  linux:
     runs-on: blacksmith-8vcpu-ubuntu-2404-arm
     container:
-      image: swift:6.2.3-noble
+      image: swift:6.3.2-noble
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
@@ -18,4 +18,4 @@ jobs:
           persist-credentials: false
       - name: Test
         # Disable encryption for testing purposes if needed
-        run: SHOULD_DISABLE_ENCRYPTION=1 swift test
+        run: SHOULD_DISABLE_ENCRYPTION=1 swift test --enable-experimental-prebuilts
