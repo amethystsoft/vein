@@ -1,5 +1,4 @@
 import Foundation
-import Vein
 import Logging
 
 @propertyWrapper
@@ -38,22 +37,26 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
     // Post insert: read from idStore
     public var wrappedValue: Value {
         get {
-            return lock.withLock { () -> Value in
-                guard let context = model?.context else { return [] }
-                guard !idStore.isEmpty else { return [] }
-                do {
-                    let result = try context.getModels(ids: idStore, type: T.self)
-                    return result
-                } catch let error as ManagedObjectContextError {
-                    if case .noSuchTable = error {
-                        return []
-                    }
-                    if case .unexpectedlyEmptyResult = error {
-                        Self.logger.warning("Unexpectedly empty result for \(T.self)")
-                        return []
-                    }
-                    fatalError(error.localizedDescription)
-                } catch { fatalError(error.localizedDescription) }
+            guard let model, let context = model.context else { return [] }
+            let ids = lock.withLock { idStore }
+            guard !ids.isEmpty else { return [] }
+            
+            do {
+                let observer: VeinObserver = (
+                    id: model.id,
+                    block: { [weak model] in model?.notifyOfChanges() }
+                )
+                let result = try context.getModels(ids: ids, type: T.self, observer: observer)
+                return result
+            } catch {
+                if case .noSuchTable = error {
+                    return []
+                }
+                if case .unexpectedlyEmptyResult = error {
+                    Self.logger.warning("Unexpectedly empty result for \(T.self)")
+                    return []
+                }
+                fatalError(error.localizedDescription)
             }
         }
         set {
@@ -112,6 +115,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
         guard let inverseKey else { return }
         
         for target in removed {
+            target._observers.value[model.id] = nil
             target._setupFields()
             let predicateMatches = context._prepareForChange(of: target)
             
@@ -243,15 +247,19 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
     ) -> [T] {
         get {
             let storage = observed[keyPath: storageKeyPath]
-            if storage.model == nil {
-                storage.model = observed
+            storage.lock.withLock {
+                if storage.model == nil {
+                    storage.model = observed
+                }
             }
             return storage.wrappedValue
         }
         set {
             let storage = observed[keyPath: storageKeyPath]
-            if storage.model == nil {
-                storage.model = observed
+            storage.lock.withLock {
+                if storage.model == nil {
+                    storage.model = observed
+                }
             }
             storage.wrappedValue = newValue
         }

@@ -1,5 +1,4 @@
 import Foundation
-import Vein
 import Logging
 
 @propertyWrapper
@@ -38,22 +37,23 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
     // Post insert: read from idStore
     public var wrappedValue: Value {
         get {
-            return lock.withLock { () -> Value in
-                guard let context = model?.context else { return nil }
-                guard let id = idStore else { return nil }
-                do {
-                    let result = try context.getModel(id: id, type: T.self)
-                    return result
-                } catch let error as ManagedObjectContextError {
-                    if case .noSuchTable = error {
-                        return nil
-                    }
-                    if case .unexpectedlyEmptyResult = error {
-                        Self.logger.warning("Unexpectedly empty result for \(T.self)")
-                        return nil
-                    }
-                    fatalError(error.localizedDescription)
-                } catch { fatalError(error.localizedDescription) }
+            guard let model, let context = model.context else { return nil }
+            let id = lock.withLock { idStore }
+            guard let id else { return nil }
+            
+            do {
+                let result = try context.getModel(id: id, type: T.self)
+                result?._observers.value[model.id] = { [weak model] in model?.notifyOfChanges() }
+                return result
+            } catch {
+                if case .noSuchTable = error {
+                    return nil
+                }
+                if case .unexpectedlyEmptyResult = error {
+                    Self.logger.warning("Unexpectedly empty result for \(T.self)")
+                    return nil
+                }
+                fatalError(error.localizedDescription)
             }
         }
         set {
@@ -104,7 +104,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
     
     private func setAndNotify(_ newValue: Value) {
         let newID = newValue?.id
-        let isDifferent = idStore != newID
+        let isDifferent = lock.withLock { idStore != newID }
         
         if isDifferent {
             // Disconnect from the old relation first while wrappedValue points to it.
@@ -136,6 +136,8 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
             let inverseKey,
             let target = wrappedValue
         else { return }
+        
+        target._observers.value[model.id] = nil
         
         target._setupFields()
         
@@ -239,15 +241,19 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
     ) -> T? {
         get {
             let storage = observed[keyPath: storageKeyPath]
-            if storage.model == nil {
-                storage.model = observed
+            storage.lock.withLock {
+                if storage.model == nil {
+                    storage.model = observed
+                }
             }
             return storage.wrappedValue
         }
         set {
             let storage = observed[keyPath: storageKeyPath]
-            if storage.model == nil {
-                storage.model = observed
+            storage.lock.withLock {
+                if storage.model == nil {
+                    storage.model = observed
+                }
             }
             storage.wrappedValue = newValue
         }

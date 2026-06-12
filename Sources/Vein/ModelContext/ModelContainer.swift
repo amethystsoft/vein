@@ -59,9 +59,20 @@ public final class ModelContainer: @unchecked Sendable {
         }
         
         self.migration = migration
-        self.path = path
+        self.path = path?.removingPercentEncoding
         self.versionedSchema = versionedSchema
-        if let path {
+        if let path = self.path {
+            if !FileManager.default.fileExists(atPath: path) {
+                let created = FileManager.default.createFile(
+                    atPath: path,
+                    contents: nil
+                )
+                if !created {
+                    throw ManagedObjectContextError.other(
+                        message: "Failed to create database file at path: \(path)"
+                    )
+                }
+            }
             self.context = try ManagedObjectContext(
                 path: path,
                 modelContainer: self

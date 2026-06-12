@@ -4,7 +4,12 @@ import SwiftSyntaxMacroExpansion
 import SwiftDiagnostics
 import Foundation
 
+@_spi(VeinMacros)
 public struct ModelMacroBase {
+    public init(frameworkName: String) {
+        self.frameworkName = frameworkName
+    }
+    
     let frameworkName: String
     public func expansion(
         of node: SwiftSyntax.AttributeSyntax,
@@ -99,14 +104,16 @@ public struct ModelMacroBase {
 /// Gets  used to reference models in relationships.
 /// Immutable after insertion into the context.
 @PrimaryKey
-var id: ULID
+var id: Vein.ULID
 
-required init(id: ULID, fields: [String: Vein.SQLiteValue]) {
+required init(id: Vein.ULID, fields: [String: Vein.SQLiteValue]) {
     self.id = id
     \(eagerVarInit)
     \(relationshipInit)
     _setupFields()
 }
+
+let _observers = Vein.Atomic([Vein.ULID: () -> Void]())
 
 /// Sets required properties for @Field values.
 /// Gets generated automatically by @Model.
@@ -174,23 +181,10 @@ static let _fieldInformation: [Vein.FieldInformation] = [
         in context: some SwiftSyntaxMacros.MacroExpansionContext
     ) throws -> [SwiftSyntax.DeclSyntax] {
         let className = classDecl.name.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        let persistedFields: [VariableDeclSyntax] = classDecl.memberBlock.members
-            .compactMap { member in
-                guard let varDecl = member.decl.as(VariableDeclSyntax.self) else {
-                    return nil
-                }
-                
-                let hasFieldAttribute = varDecl.attributes.contains { attr in
-                    if let attrSyntax = attr.as(AttributeSyntax.self),
-                       let name = attrSyntax.attributeName.as(IdentifierTypeSyntax.self) {
-                        return name.name.text == "LazyField"  ||
-                        name.name.text == "Field"
-                    }
-                    return false
-                }
-                
-                return hasFieldAttribute ? varDecl : nil
-            }
+        
+        let lazyFieldVariables = classDecl.memberBlock.membersWithFieldType(.lazyField, frameworkName: frameworkName)
+        let fieldVariables = classDecl.memberBlock.membersWithFieldType(.field, frameworkName: frameworkName)
+        let persistedFields = lazyFieldVariables + fieldVariables
         
         var fieldNamesAndTypes = [String: String]()
         for varDecl in persistedFields {
@@ -283,7 +277,7 @@ static let _fieldInformation: [Vein.FieldInformation] = [
         
         // Determine if target type is a collection
         let isMany = isCollection(type: varDecl.bindings.first?.typeAnnotation?.type)
-        let wrapperName = isMany ? "_ManyRelationship" : "_OneRelationship"
+        let wrapperName = isMany ? "Vein._ManyRelationship" : "Vein._OneRelationship"
         
         let argumentString = transformedArguments.joined(separator: ", ")
         

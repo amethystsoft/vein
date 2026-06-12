@@ -8,6 +8,7 @@ var veinDependencies: [Target.Dependency] = [
     .product(name: "Crypto", package: "swift-crypto"),
     .product(name: "SQLiteDB", package: "swift-sqlcipher"),
     .product(name: "ULID", package: "ULID.swift"),
+    .product(name: "Logging", package: "swift-log"),
     .product(
         name: "KeychainAccess",
         package: "keychainaccess",
@@ -34,11 +35,20 @@ let package = Package(
             targets: ["VeinCore"]
         ),
         .library(
+            name: "VeinSwiftUI",
+            targets: ["VeinSwiftUI"]
+        ),
+        .library(
+            name: "VeinMacrosBase",
+            targets: ["VeinMacrosBaseWrapper"]
+        ),
+        .library(
             name: "VeinTesting",
             targets: ["VeinTesting"]
         )
     ],
     dependencies: [
+        .package(path: "./VeinMacrosCore"),
         .package(
             url: "https://github.com/skiptools/swift-sqlcipher",
             .upToNextMajor(from: "1.9.0")
@@ -65,6 +75,13 @@ let package = Package(
             ]
         ),
         .target(
+            name: "VeinSwiftUI",
+            dependencies: [
+                "Vein",
+                "VeinSwiftUIMacros"
+            ]
+        ),
+        .target(
             name: "VeinTesting",
             dependencies: [
                 "Vein"
@@ -76,7 +93,23 @@ let package = Package(
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
+                .product(name: "VeinMacrosCore", package: "VeinMacrosCore"),
             ]
+        ),
+        .macro(
+            name: "VeinSwiftUIMacros",
+            dependencies: [
+                .product(name: "SwiftSyntax", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+                .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
+                .product(name: "VeinMacrosCore", package: "VeinMacrosCore"),
+            ]
+        ),
+        .target(
+            name: "VeinMacrosBaseWrapper",
+            dependencies: [
+                .product(name: "VeinMacrosCore", package: "VeinMacrosCore")
+            ],
         ),
         .testTarget(
             name: "VeinTests",

@@ -1,5 +1,4 @@
 import Foundation
-@_exported import Vein
 
 @propertyWrapper
 public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendable {
@@ -34,19 +33,24 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
     
     public var wrappedValue: WrappedType {
         get {
-            return lock.withLock { () -> WrappedType in
-                if readFromStore {
-                    return store
-                }
-                guard let context = model?.context else {
-                    return store
-                }
-                do {
-                    let result = try context._fetchSingleProperty(field: self)
+            // Fast path: already loaded
+            let (alreadyRead, cachedValue) = lock.withLock { (readFromStore, store) }
+            if alreadyRead {
+                return cachedValue
+            }
+            
+            guard let context = model?.context else {
+                return lock.withLock { store }
+            }
+            do {
+                let result = try context._fetchSingleProperty(field: self)
+                lock.withLock {
                     store = result
                     readFromStore = true
-                    return result
-                } catch let error as ManagedObjectContextError {
+                }
+                return result
+            } catch {
+                return lock.withLock {
                     readFromStore = false
                     if case .noSuchTable = error {
                         return nil
@@ -55,7 +59,7 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
                         return store
                     }
                     fatalError(error.localizedDescription)
-                } catch { fatalError(error.localizedDescription) }
+                }
             }
         }
         set {
@@ -118,15 +122,19 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
     ) -> T? {
         get {
             let storage = observed[keyPath: storageKeyPath]
-            if storage.model == nil {
-                storage.model = observed
+            storage.lock.withLock {
+                if storage.model == nil {
+                    storage.model = observed
+                }
             }
             return storage.wrappedValue
         }
         set {
             let storage = observed[keyPath: storageKeyPath]
-            if storage.model == nil {
-                storage.model = observed
+            storage.lock.withLock {
+                if storage.model == nil {
+                    storage.model = observed
+                }
             }
             storage.wrappedValue = newValue
         }
@@ -185,7 +193,7 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
         self.key = nil
     }
     
-    // only called from inside setter during lock
+    // Acquires lock internally, then notifies outside lock to avoid callback deadlocks.
     private func setAndNotify(_ newValue: WrappedType) {
         lock.withLock {
             store = newValue
@@ -216,15 +224,19 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
     ) -> T {
         get {
             let storage = observed[keyPath: storageKeyPath]
-            if storage.model == nil {
-                storage.model = observed
+            storage.lock.withLock {
+                if storage.model == nil {
+                    storage.model = observed
+                }
             }
             return storage.wrappedValue
         }
         set {
             let storage = observed[keyPath: storageKeyPath]
-            if storage.model == nil {
-                storage.model = observed
+            storage.lock.withLock {
+                if storage.model == nil {
+                    storage.model = observed
+                }
             }
             storage.wrappedValue = newValue
         }

@@ -1,6 +1,8 @@
 import ULID
 import SQLiteDB
 
+public typealias VeinObserver = (id: ULID, block: () -> Void)
+
 extension ManagedObjectContext {
     public nonisolated func getModel<T: PersistentModel>(id: ULID, type: T.Type) throws(MOCError) -> T? {
         if let model = identityMap.getTracked(type, id: id) {
@@ -10,7 +12,7 @@ extension ManagedObjectContext {
         return try self.fetchAll(PredicateBuilder<T>().addCheck(.isEqualTo, "id", id)).first
     }
     
-    public nonisolated func getModels<T: PersistentModel>(ids: [ULID], type: T.Type) throws(MOCError) -> [T] {
+    public nonisolated func getModels<T: PersistentModel>(ids: [ULID], type: T.Type, observer: VeinObserver) throws(MOCError) -> [T] {
         var models = [ULID: T]()
         
         var identityMapMisses: [ULID] = []
@@ -30,6 +32,7 @@ extension ManagedObjectContext {
         var sortedModels: [T] = []
         for id in ids {
             if let model = models[id] {
+                model._observers.value[observer.id] = observer.block
                 sortedModels.append(model)
             } else {
                 Self.logger.warning("""

@@ -73,15 +73,19 @@ public class PrimaryKey: PersistedField, @unchecked Sendable {
     ) -> ULID {
         get {
             let storage = observed[keyPath: storageKeyPath]
-            if storage.model == nil {
-                storage.model = observed
+            storage.lock.withLock {
+                if storage.model == nil {
+                    storage.model = observed
+                }
             }
             return storage.wrappedValue
         }
         set {
             let storage = observed[keyPath: storageKeyPath]
-            if storage.model == nil {
-                storage.model = observed
+            storage.lock.withLock {
+                if storage.model == nil {
+                    storage.model = observed
+                }
             }
             storage.wrappedValue = newValue
         }

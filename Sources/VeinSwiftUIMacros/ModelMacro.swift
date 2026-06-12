@@ -6,7 +6,7 @@ import Foundation
 @_spi(VeinMacros) import VeinMacrosCore
 
 public struct ModelMacro: MemberMacro, ExtensionMacro, PeerMacro, MemberAttributeMacro {
-    static let frameworkName = "VeinCore"
+    static let frameworkName = "VeinSwiftUI"
     public static func expansion(
         of node: SwiftSyntax.AttributeSyntax,
         providingMembersOf declaration: some SwiftSyntax.DeclGroupSyntax,
@@ -25,8 +25,16 @@ public struct ModelMacro: MemberMacro, ExtensionMacro, PeerMacro, MemberAttribut
         )
         
         let specific = """
+        let objectWillChange = PassthroughSubject<Void, Never>()
+
         var notifyOfChanges: () -> Void {
-            return {}
+            { [weak self] in
+                guard let self else { return }
+                for notification in self._observers.value.values {
+                    notification()
+                }
+                self.objectWillChange.send()
+            }
         }
         """
         
@@ -44,13 +52,22 @@ public struct ModelMacro: MemberMacro, ExtensionMacro, PeerMacro, MemberAttribut
             throw MacroError.onlyApplicableToClasses
         }
         
-        return try ModelMacroBase(frameworkName: Self.frameworkName).expansion(
+        let common = try ModelMacroBase(frameworkName: Self.frameworkName).expansion(
             of: node,
             attachedTo: classDecl,
             providingExtensionsOf: type,
             conformingTo: protocols,
             in: context
         )
+        
+        let specific = try ExtensionDeclSyntax(
+            """
+            @MainActor
+            extension \(raw: type): ObservableObject { }
+            """
+        )
+        
+        return common + [specific]
     }
     
     public static func expansion(
