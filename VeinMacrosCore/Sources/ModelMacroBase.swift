@@ -65,9 +65,17 @@ public struct ModelMacroBase {
             return "Vein.FieldInformation(\(value).sqliteTypeName, \"\(key)\", true)"
         })
         fieldInformation.append(contentsOf: relationshipFields.map { key, value in
+            let relationshipType = "\(value.coreRelationshipType).self"
             // currently only ULID or ULID array is supported
             let value = value.isCollection ? "[ULID]": "ULID?"
-            return "Vein.FieldInformation(\(value).sqliteTypeName, \"\(key)\", true)"
+            return """
+            Vein.FieldInformation(
+                    \(value).sqliteTypeName,
+                    \"\(key)\",
+                    true,
+                    \(relationshipType)
+                )
+            """
         })
         
         let fieldInformationString = fieldInformation.joined(separator: ",\n    ")
@@ -103,7 +111,7 @@ public struct ModelMacroBase {
 /// The primary ID of the object.
 /// Gets  used to reference models in relationships.
 /// Immutable after insertion into the context.
-@PrimaryKey
+@Vein.PrimaryKey
 var id: Vein.ULID
 
 required init(id: Vein.ULID, fields: [String: Vein.SQLiteValue]) {
@@ -445,6 +453,17 @@ extension String {
     var isCollection: Bool {
         let modified = self.drop(while: { $0 == " " || $0 == ":" })
         return modified.hasPrefix("[") || modified.hasPrefix("Array<")
+    }
+    
+    var coreRelationshipType: String {
+        self
+            .replacingOccurrences(of: "[", with: "")
+            .replacingOccurrences(of: "]", with: "")
+            .replacingOccurrences(of: "Array<", with: "")
+            .replacingOccurrences(of: ">", with: "")
+            .replacingOccurrences(of: ":", with: "")
+            .replacingOccurrences(of: "?", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 

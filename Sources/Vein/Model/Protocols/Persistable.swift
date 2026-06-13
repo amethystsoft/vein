@@ -14,7 +14,20 @@ extension Persistable {
     public static var logger: Logger { Logger(label: "Persistable") }
 }
 
+extension SQLiteValue {
+    public var bindingValue: (any Binding)? {
+        switch self {
+            case .integer(let value): return value
+            case .real(let value): return value
+            case .text(let value): return value
+            case .blob(let value): return Blob(bytes: [UInt8](value))
+            case .null: return nil
+        }
+    }
+}
+
 public protocol ColumnType {
+    associatedtype SQLiteType
     static var sqliteTypeName: SQLiteTypeName { get }
     var sqliteValue: SQLiteValue { get }
     static func decode(sqliteValue: SQLiteValue) throws(MOCError) -> Self
@@ -23,6 +36,10 @@ public protocol ColumnType {
 extension ColumnType {
     var sqliteTypeName: SQLiteTypeName {
         Self.sqliteTypeName
+    }
+    
+    public var sqlExpression: SQLExpression<SQLiteType> {
+        SQLExpression<SQLiteType>("?", [sqliteValue.bindingValue])
     }
 }
 
@@ -201,9 +218,9 @@ extension Float: Persistable, ColumnType {
 }
 
 extension Bool: Persistable, ColumnType {
-    public var sqliteTypeRepresentation: Int64 { self ? 1: 0 }
+    public var sqliteTypeRepresentation: Bool { self }
     
-    public typealias SQLiteType = Int64
+    public typealias SQLiteType = Bool
     
     public typealias PersistentRepresentation = Self
     
@@ -351,6 +368,8 @@ extension Date: Persistable, ColumnType {
 }
 
 extension UUID: Persistable, ColumnType {
+    public typealias SQLiteType = String
+    
     public typealias PersistentRepresentation = Self
     
     public var asPersistentRepresentation: Self { self }
@@ -380,7 +399,9 @@ extension UUID: Persistable, ColumnType {
     }
 }
 
-extension Optional: Persistable, ColumnType where Wrapped: Persistable {    
+extension Optional: Persistable, ColumnType where Wrapped: Persistable {
+    public typealias SQLiteType = Wrapped.PersistentRepresentation.SQLiteType?
+    
     public typealias PersistentRepresentation = Self
     
     public var asPersistentRepresentation: Self { self }
