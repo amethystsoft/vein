@@ -440,6 +440,7 @@ struct PredicateConversionTests {
         #expect(query.expression.bindings.count == 1)
     }
     
+#if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
     @Test
     func caseInsensitiveFieldContainsString() async throws {
         let predicate = #Predicate<V0_0_1.User> { user in
@@ -479,6 +480,7 @@ struct PredicateConversionTests {
         """)
         #expect(query.expression.bindings.count == 1)
     }
+#endif
 }
 
 fileprivate enum V0_0_1: VersionedSchema {
