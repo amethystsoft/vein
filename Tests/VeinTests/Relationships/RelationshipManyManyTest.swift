@@ -68,7 +68,9 @@ extension RelationshipTest {
             
             guard
                 let fetchedPost = try newContainer.context.fetchAll(V0_0_1.Post.self).first,
-                let swiftTag = try newContainer.context.fetchAll(V0_0_1.Tag._PredicateHelper().name(.isEqualTo, "Swift")._builder()).first
+                let swiftTag = try newContainer.context.fetchAll(#Predicate<V0_0_1.Tag> { tag in
+                    tag.name == "Swift"
+                }).first
             else {
                 Issue.record("Unexpectedly found no posts")
                 return

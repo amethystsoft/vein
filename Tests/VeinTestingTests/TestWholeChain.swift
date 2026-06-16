@@ -34,7 +34,7 @@ struct WholeChain {
             validations: [
                 Version2.version: { context in
                     let users = try context
-                        .fetchAll(Version2.User._PredicateHelper()._builder())
+                        .fetchAll(Version2.User.self)
                     #expect(users.count == 1)
                     
                     if let user = users.first {
@@ -43,7 +43,7 @@ struct WholeChain {
                     }
                     
                     let profiles = try context
-                        .fetchAll(Version2.Profile._PredicateHelper()._builder())
+                        .fetchAll(Version2.Profile.self)
                     #expect(profiles.count == 1)
                     
                     if let profile = profiles.first {
@@ -52,11 +52,11 @@ struct WholeChain {
                 },
                 Version3.version: { context in
                     let users = try context
-                        .fetchAll(Version3.User._PredicateHelper()._builder())
+                        .fetchAll(Version3.User.self)
                     #expect(users.count == 1)
                     
                     let profiles = try context
-                        .fetchAll(Version3.Profile._PredicateHelper()._builder())
+                        .fetchAll(Version3.Profile.self)
                     #expect(profiles.count == 1)
                     
                     if let profile = profiles.first {
@@ -78,14 +78,14 @@ struct WholeChain {
                 },
                 Version4.version: { context in
                     let users = try context
-                        .fetchAll(Version4.User._PredicateHelper()._builder())
+                        .fetchAll(Version4.User.self)
                     #expect(users.count == 1)
                     
                     let profiles = try context
-                        .fetchAll(Version4.Profile._PredicateHelper()._builder())
+                        .fetchAll(Version4.Profile.self)
                     #expect(profiles.count == 1)
                     
-                    let posts = try context.fetchAll(Version4.Post._PredicateHelper()._builder())
+                    let posts = try context.fetchAll(Version4.Post.self)
                     #expect(posts.count == 1)
                     
                     if let post = posts.first {
@@ -95,7 +95,7 @@ struct WholeChain {
                 },
                 Version5.version: { context in
                     let users = try context
-                        .fetchAll(Version5.User._PredicateHelper()._builder())
+                        .fetchAll(Version5.User.self)
                     #expect(users.count == 1)
                     
                     if let user = users.first {
@@ -104,7 +104,7 @@ struct WholeChain {
                     }
                     
                     let profiles = try context
-                        .fetchAll(Version5.Profile._PredicateHelper()._builder())
+                        .fetchAll(Version5.Profile.self)
                     #expect(profiles.count == 1)
                     
                     if let profile = profiles.first {
@@ -113,7 +113,7 @@ struct WholeChain {
                         #expect(recordedInternalID != nil)
                     }
                     
-                    let posts = try context.fetchAll(Version5.Post._PredicateHelper()._builder())
+                    let posts = try context.fetchAll(Version5.Post.self)
                     #expect(posts.count == 1)
                     
                     if let post = posts.first {
@@ -314,7 +314,7 @@ fileprivate enum MigrationPlan: SchemaMigrationPlan {
             try Version2.User.unchangedMigration(to: Version3.User.self, on: context)
             
             // Logic migration for Profile
-            let oldProfiles = try context.fetchAll(Version2.Profile._PredicateHelper()._builder())
+            let oldProfiles = try context.fetchAll(Version2.Profile.self)
             for old in oldProfiles {
                 let new = Version3.Profile(
                     bio: old.bio,
@@ -348,7 +348,7 @@ fileprivate enum MigrationPlan: SchemaMigrationPlan {
             try Version4.Post.unchangedMigration(to: Version5.Post.self, on: context)
             
             // Transform User.username to User.displayName with sanitization
-            let oldUsers = try context.fetchAll(Version4.User._PredicateHelper()._builder())
+            let oldUsers = try context.fetchAll(Version4.User.self)
             for old in oldUsers {
                 let sanitizedName = old.username.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
                 let new = Version5.User(

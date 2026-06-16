@@ -1,11 +1,12 @@
 import SQLiteDB
 import ULID
+import Foundation
 
 extension ManagedObjectContext {
     /// Returns all models matching the predicate.
-    public nonisolated func _fetchAll<T: PersistentModel>(_ predicate: PredicateBuilder<T>) throws(MOCError) -> [T] {
+    public nonisolated func _fetchAll<T: PersistentModel>(_ predicate: ModelPredicate<T>) throws(MOCError) -> [T] {
         do {
-            let table = Table(T.schema).filter(predicate.finalize())
+            let table = Table(T.schema).filter(predicate.sql)
             let eagerLoadedFields = T._fieldInformation.eagerLoaded
             var fieldsToLoad = eagerLoadedFields.map { $0.expressible }
             fieldsToLoad.append(SQLExpression<String>("id"))
@@ -32,7 +33,7 @@ extension ManagedObjectContext {
                     if currentlyDeleted[id] != nil { continue }
                     
                     if let alreadyTrackedModel = getTracked(T.self, id) {
-                        if predicate.doesMatch(alreadyTrackedModel) {
+                        if predicate.runtimeFilter(alreadyTrackedModel) {
                             models.append(alreadyTrackedModel)
                             resultIDs.insert(alreadyTrackedModel.id)
                         }
@@ -56,7 +57,7 @@ extension ManagedObjectContext {
                 if
                     !resultIDs.contains(insert.id),
                     let model = insert as? T,
-                    predicate.doesMatch(model)
+                    predicate.runtimeFilter(model)
                 { models.append(model) }
             }
             
@@ -64,7 +65,7 @@ extension ManagedObjectContext {
                 if
                     !resultIDs.contains(touch.id),
                     let model = touch as? T,
-                    predicate.doesMatch(model)
+                    predicate.runtimeFilter(model)
                 { models.append(model) }
             }
             

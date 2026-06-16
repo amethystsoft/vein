@@ -21,11 +21,18 @@ public struct FieldInformation: Sendable {
     let typeName: SQLiteTypeName
     let key: String
     let eagerLoaded: Bool
+    let relationshipToType: (any PersistentModel.Type)?
     
-    public nonisolated init(_ typeName: SQLiteTypeName, _ key: String, _ eagerLoaded: Bool) {
+    public nonisolated init(
+        _ typeName: SQLiteTypeName,
+        _ key: String,
+        _ eagerLoaded: Bool,
+        _ relationshipToType: (any PersistentModel.Type)? = nil
+    ) {
         self.typeName = typeName
         self.key = key
         self.eagerLoaded = eagerLoaded
+        self.relationshipToType = relationshipToType
     }
 }
 

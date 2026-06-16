@@ -12,12 +12,28 @@ extension ManagedObjectContext {
     
     /// Returns all models matching the predicate.
     /// Returns [] if table doesn't exist
-    public nonisolated func fetchAll<T: PersistentModel>(_ predicate: PredicateBuilder<T>) throws(MOCError) -> [T] {
+    public nonisolated func fetchAll<T: PersistentModel>(_ predicate: Predicate<T>) throws(MOCError) -> [T] {
         do {
             guard
                 self.modelContainer.getSchema(for: T.typeIdentifier) != nil
             else { throw MOCError.inactiveModelTypeFetched(T.self)}
-            return try _fetchAll(predicate)
+            let modelPredicate = try ModelPredicate(predicate)
+            return try _fetchAll(modelPredicate)
+        } catch let error as MOCError {
+            switch error {
+                case .noSuchTable:
+                    return []
+                default: throw error
+            }
+        } catch { throw .other(message: error.localizedDescription)}
+    }
+    
+    public nonisolated func fetchAll<T: PersistentModel>(_ modelPredicate: ModelPredicate<T>) throws(MOCError) -> [T] {
+        do {
+            guard
+                self.modelContainer.getSchema(for: T.typeIdentifier) != nil
+            else { throw MOCError.inactiveModelTypeFetched(T.self)}
+            return try _fetchAll(modelPredicate)
         } catch let error as MOCError {
             switch error {
                 case .noSuchTable:
@@ -30,7 +46,7 @@ extension ManagedObjectContext {
     /// Returns all models matching the predicate.
     /// Returns [] if table doesn't exist
     public nonisolated func fetchAll<T: PersistentModel>(_ modelType: T.Type) throws(MOCError) -> [T] {
-        try fetchAll(modelType._PredicateHelper()._builder())
+        try fetchAll(#Predicate<T>{ _ in true })
     }
     
     public nonisolated func insert<M: PersistentModel>(_ model: M) throws(ManagedObjectContextError) {

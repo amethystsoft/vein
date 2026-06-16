@@ -50,7 +50,7 @@ extension MigrationTests {
         try newContainer.migrate()
         
         // Check new model was migrated correctly
-        let first = try newContainer.context.fetchAll(SimpleSchemaV0_0_4.Test._PredicateHelper()._builder()).first
+        let first = try newContainer.context.fetchAll(SimpleSchemaV0_0_4.Test.self).first
         
         #expect(first?.addedAt == test.date)
         
@@ -397,7 +397,7 @@ fileprivate enum SimpleMigrationSuccess: SchemaMigrationPlan {
         fromVersion: SimpleSchemaV0_0_2.self,
         toVersion: SimpleSchemaV0_0_3.self,
         willMigrate: { context in
-            let models = try context.fetchAll(SimpleSchemaV0_0_2._TestPredicateHelper()._builder())
+            let models = try context.fetchAll(SimpleSchemaV0_0_2.Test.self)
             
             for model in models {
                 let date = try Date.sqliteFormatStyle.parse(model.date)
@@ -414,7 +414,7 @@ fileprivate enum SimpleMigrationSuccess: SchemaMigrationPlan {
         fromVersion: SimpleSchemaV0_0_3.self,
         toVersion: SimpleSchemaV0_0_4.self,
         willMigrate: { context in
-            let models = try context.fetchAll(SimpleSchemaV0_0_3._TestPredicateHelper()._builder())
+            let models = try context.fetchAll(SimpleSchemaV0_0_3.Test.self)
             
             for model in models {
                 let date = Date(timeIntervalSince1970: Double(model.date))

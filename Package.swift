@@ -24,7 +24,7 @@ var veinDependencies: [Target.Dependency] = [
 
 let package = Package(
     name: "amethyst-vein",
-    platforms: [.macOS(.v13), .iOS(.v16), .tvOS(.v16), .macCatalyst(.v16), .visionOS(.v1)],
+    platforms: [.macOS(.v14), .iOS(.v17), .tvOS(.v17), .macCatalyst(.v17), .visionOS(.v1)],
     products: [
         .library(
             name: "Vein",
@@ -116,7 +116,8 @@ let package = Package(
             dependencies: [
                 "Vein",
                 "VeinCore",
-                .product(name: "Logging", package: "swift-log")
+                .product(name: "Logging", package: "swift-log"),
+                .product(name: "SQLiteDB", package: "swift-sqlcipher"),
             ]
         ),
         .testTarget(

@@ -3,8 +3,6 @@ import SQLiteDB
 @_exported import ULID
 
 public protocol PersistentModel: AnyObject, Sendable {
-    associatedtype _PredicateHelper: PredicateConstructor where _PredicateHelper.Model == Self
-
     var notifyOfChanges: () -> Void { get }
     
     static var schema: String { get }
@@ -33,6 +31,8 @@ public protocol PersistentModel: AnyObject, Sendable {
     
     func extractPrimitiveState() -> PrimitiveState
     func applyPrimitiveState(_ state: PrimitiveState)
+    
+    static func _predicateInformation(for keyPath: PartialKeyPath<Self>) -> FieldInformation?
     
     init(id: ULID, fields: [String: SQLiteValue])
 }

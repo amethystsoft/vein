@@ -2,7 +2,7 @@
 import SwiftUI
 import Combine
 import Vein
-import os.log
+import Logging
 
 @MainActor
 @propertyWrapper
@@ -21,20 +21,30 @@ public struct Query<M: PersistentModel>: DynamicProperty {
         return (queryObserver.primaryObserver?.results ?? queryObserver.results ?? []).sorted(by: { $0.id < $1.id })
     }
     
-    public init(_ predicate: M._PredicateHelper = M._PredicateHelper()) {
-        self._queryObserver = StateObject(wrappedValue: QueryObserver<M>(predicate._builder()))
+    public init(_ predicate: ModelPredicate<M>) {
+        self._queryObserver = StateObject(wrappedValue: QueryObserver<M>(predicate))
+    }
+    
+    public init(_ predicate: Predicate<M>) {
+        do {
+            let modelPredicate = try ModelPredicate(predicate)
+            self._queryObserver = StateObject(wrappedValue: QueryObserver(modelPredicate))
+        } catch {
+            fatalError("Creating ModelPredicate from predicate '\(predicate.expression)' failed with: \(error.localizedDescription)")
+        }
     }
 }
 
 package final class QueryObserver<M: PersistentModel>: ObservableObject, @unchecked Sendable {
     typealias ModelType = M
     public let objectWillChange = PassthroughSubject<Void, Never>()
+    static var logger: Logger { Logger(label: "Vein.QueryObserver<\(M.self)>") }
     
     private var publishToEnclosingObserver: (() -> Void)?
     
     fileprivate var primaryObserver: QueryObserver<M>?
     
-    let predicate: PredicateBuilder<M>
+    let predicate: ModelPredicate<M>
     
     public var usedPredicate: AnyPredicateBuilder { predicate }
     
@@ -73,7 +83,7 @@ package final class QueryObserver<M: PersistentModel>: ObservableObject, @unchec
             let initialResults = try context.fetchAll(predicate)
             self.results = initialResults
         } catch {
-            os_log(.error, "Failed to fetch initial query results: %{public}@", error.localizedDescription)
+            Self.logger.error("Failed to fetch initial query results: \(error.localizedDescription)")
             self.results = []
         }
     }
@@ -81,7 +91,9 @@ package final class QueryObserver<M: PersistentModel>: ObservableObject, @unchec
     
     @MainActor
     package func append(_ models: [M]) {
-        results?.append(contentsOf: models.filter{ predicate.doesMatch($0) })
+        results?.append(contentsOf: models.filter {
+            return predicate.runtimeFilter($0)
+        })
         // there is only one Query instance kept in the context for the same filter.
         // this triggers view updates on any other Query oberservers using the registered
         // Query as their source
@@ -95,14 +107,14 @@ package final class QueryObserver<M: PersistentModel>: ObservableObject, @unchec
         append(typedModels)
     }
     
-    package init(_ predicate: PredicateBuilder<M>) {
+    package init(_ predicate: ModelPredicate<M>) {
         self.predicate = predicate
     }
     
     @MainActor
     package func handleUpdate(_ model: any PersistentModel, matchedBeforeChange: Bool) {
         guard let model = model as? ModelType else { return }
-        if predicate.doesMatch(model) {
+        if predicate.runtimeFilter(model) {
             if !matchedBeforeChange {
                 results?.append(model)
             }
@@ -116,7 +128,7 @@ package final class QueryObserver<M: PersistentModel>: ObservableObject, @unchec
     @MainActor
     package func doesMatch(_ model: any PersistentModel) -> Bool {
         guard let model = model as? ModelType else { return false }
-        return predicate.doesMatch(model)
+        return predicate.runtimeFilter(model)
     }
     
     @MainActor

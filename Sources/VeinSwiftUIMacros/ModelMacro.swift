@@ -5,7 +5,7 @@ import SwiftDiagnostics
 import Foundation
 @_spi(VeinMacros) import VeinMacrosCore
 
-public struct ModelMacro: MemberMacro, ExtensionMacro, PeerMacro, MemberAttributeMacro {
+public struct ModelMacro: MemberMacro, ExtensionMacro, MemberAttributeMacro {
     static let frameworkName = "VeinSwiftUI"
     public static func expansion(
         of node: SwiftSyntax.AttributeSyntax,
@@ -69,23 +69,7 @@ public struct ModelMacro: MemberMacro, ExtensionMacro, PeerMacro, MemberAttribut
         
         return common + [specific]
     }
-    
-    public static func expansion(
-        of node: SwiftSyntax.AttributeSyntax,
-        providingPeersOf declaration: some SwiftSyntax.DeclSyntaxProtocol,
-        in context: some SwiftSyntaxMacros.MacroExpansionContext
-    ) throws -> [SwiftSyntax.DeclSyntax] {
-        guard let classDecl = declaration.as(ClassDeclSyntax.self) else {
-            throw MacroError.onlyApplicableToClasses
-        }
-        
-        return try ModelMacroBase(frameworkName: Self.frameworkName).expansion(
-            of: node,
-            providingPeersOf: classDecl,
-            in: context
-        )
-    }
-    
+
     public static func expansion(
         of node: SwiftSyntax.AttributeSyntax,
         attachedTo declaration: some SwiftSyntax.DeclGroupSyntax,

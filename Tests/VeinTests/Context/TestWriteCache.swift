@@ -220,9 +220,9 @@ struct WriteCache {
         m1.someValue = "2"
         
         let results = try container.context.fetchAll(
-            V0_0_1.Test._PredicateHelper()
-            .someValue(.isEqualTo, "2")
-            ._builder()
+            #Predicate<V0_0_1.Test> { test in
+                test.someValue == "2"
+            }
         )
         
         #expect(results.count == 2)
@@ -232,9 +232,9 @@ struct WriteCache {
         m2.someValue = "1"
         
         let secondResults = try container.context.fetchAll(
-            V0_0_1.Test._PredicateHelper()
-                .someValue(.isEqualTo, "2")
-                ._builder()
+            #Predicate<V0_0_1.Test> { test in
+                test.someValue == "2"
+            }
         )
         
         #expect(secondResults.count == 1)

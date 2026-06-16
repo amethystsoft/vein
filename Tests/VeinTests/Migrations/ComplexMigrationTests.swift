@@ -60,7 +60,7 @@ struct MigrationTests {
         try newContainer.migrate()
         
         // Check new model was migrated correctly
-        let first = try newContainer.context.fetchAll(ComplexSchemaV0_0_2.Test._PredicateHelper()._builder()).first
+        let first = try newContainer.context.fetchAll(ComplexSchemaV0_0_2.Test.self).first
         
         #expect(first?.flag == model.flag)
         #expect(first?.someValue == model.someValue)

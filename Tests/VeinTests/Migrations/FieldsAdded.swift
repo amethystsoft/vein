@@ -46,7 +46,7 @@ extension MigrationTests {
         
         // Check new model was migrated correctly
         let first = try newContainer.context.fetchAll(
-            SimpleSchemaV0_0_4.AddingFieldsModel._PredicateHelper()._builder()
+            SimpleSchemaV0_0_4.AddingFieldsModel.self
         ).first
         
         #expect(first?.newValue == nil)
@@ -447,7 +447,7 @@ fileprivate enum SimpleMigration: SchemaMigrationPlan {
                 )
             
             let models = try context.fetchAll(
-                SimpleSchemaV0_0_3.Test._PredicateHelper()._builder()
+                SimpleSchemaV0_0_3.Test.self
             )
             
             for model in models {

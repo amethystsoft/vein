@@ -42,7 +42,9 @@ struct VeinTestEnvironmentApp: App {
                 HStack {
                     ContentView()
                     #if !canImport(UIKit)
-                    ContentView(predicate: .randomValue(.isBiggerOrEqualTo, 500).flag(.isEqualTo, true))
+                    ContentView(predicate: #Predicate<Test> { test in
+                        test.randomValue >= 500 && test.flag == true
+                    })
                     #endif
                 }
             }

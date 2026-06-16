@@ -53,8 +53,8 @@ import Logging
         )
         try newContainer.migrate()
         
-        let firstUser = try newContainer.context.fetchAll(V0_0_2.User._PredicateHelper()._builder()).first
-        let firstComment = try newContainer.context.fetchAll(V0_0_2.Comment._PredicateHelper()._builder()).first
+        let firstUser = try newContainer.context.fetchAll(V0_0_2.User.self).first
+        let firstComment = try newContainer.context.fetchAll(V0_0_2.Comment.self).first
         
         #expect(firstUser?.is2faEnabled == false)
         #expect(firstUser?.name == "Mia")

@@ -56,21 +56,43 @@ public struct ModelMacroBase {
         }.joined(separator: ",\n        ")
         
         // MARK: - Field information
-        var fieldInformation = lazyFields.map { key, value in
+        var predicateInformation: [String] = []
+        var fieldInformation: [String] = []
+        for (key, value) in lazyFields {
             let value = value.drop(while: { $0 == " " || $0 == ":" })
-            return "Vein.FieldInformation(\(value).sqliteTypeName, \"\(key)\", false)"
+            let information = "Vein.FieldInformation(\(value).sqliteTypeName, \"\(key)\", false)"
+            fieldInformation.append(information)
+            predicateInformation.append("case \\.\(key): \(information)")
         }
-        fieldInformation.append(contentsOf: eagerFields.map { key, value in
+        for (key, value) in eagerFields {
             let value = value.drop(while: { $0 == " " || $0 == ":" })
-            return "Vein.FieldInformation(\(value).sqliteTypeName, \"\(key)\", true)"
-        })
-        fieldInformation.append(contentsOf: relationshipFields.map { key, value in
+            let information = "Vein.FieldInformation(\(value).sqliteTypeName, \"\(key)\", true)"
+            fieldInformation.append(information)
+            predicateInformation.append("case \\.\(key): \(information)")
+        }
+        for (key, value) in relationshipFields {
+            let relationshipType = "\(value.coreRelationshipType).self"
             // currently only ULID or ULID array is supported
             let value = value.isCollection ? "[ULID]": "ULID?"
-            return "Vein.FieldInformation(\(value).sqliteTypeName, \"\(key)\", true)"
-        })
+            let information = "Vein.FieldInformation(\(value).sqliteTypeName, \"\(key)\", true, \(relationshipType))"
+            
+            fieldInformation.append(information)
+            predicateInformation.append("case \\.\(key): \(information)")
+        }
         
         let fieldInformationString = fieldInformation.joined(separator: ",\n    ")
+        var predicateInformationString: String
+        
+        predicateInformation.append("case \\.id: Vein.FieldInformation(ULID.sqliteTypeName, \"id\", true)")
+        
+        if !predicateInformation.isEmpty {
+            predicateInformationString = "switch keyPath {\n        "
+            predicateInformationString.append(contentsOf: predicateInformation.joined(separator: "\n        "))
+            predicateInformationString.append("\n        default: nil")
+            predicateInformationString.append("\n    }")
+        } else {
+            predicateInformationString = "nil"
+        }
         
         // MARK: - inverse field data
         let inverseFieldData: String = relationshipVariables.compactMap {
@@ -98,12 +120,10 @@ public struct ModelMacroBase {
         
         let body =
 """
-    typealias _PredicateHelper = _\(className)PredicateHelper
-
 /// The primary ID of the object.
 /// Gets  used to reference models in relationships.
 /// Immutable after insertion into the context.
-@PrimaryKey
+@Vein.PrimaryKey
 var id: Vein.ULID
 
 required init(id: Vein.ULID, fields: [String: Vein.SQLiteValue]) {
@@ -147,6 +167,10 @@ static let _inverseFields = {
     return map
 }()
 
+static func _predicateInformation(for keyPath: PartialKeyPath<\(className)>) -> Vein.FieldInformation? {
+    \(predicateInformationString)
+}
+
 static let _fieldInformation: [Vein.FieldInformation] = [
     \(fieldInformationString)
 ]
@@ -173,64 +197,6 @@ static let _fieldInformation: [Vein.FieldInformation] = [
         )
         
         return [extensionDecl]
-    }
-    
-    public func expansion(
-        of node: SwiftSyntax.AttributeSyntax,
-        providingPeersOf classDecl: ClassDeclSyntax,
-        in context: some SwiftSyntaxMacros.MacroExpansionContext
-    ) throws -> [SwiftSyntax.DeclSyntax] {
-        let className = classDecl.name.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        let lazyFieldVariables = classDecl.memberBlock.membersWithFieldType(.lazyField, frameworkName: frameworkName)
-        let fieldVariables = classDecl.memberBlock.membersWithFieldType(.field, frameworkName: frameworkName)
-        let persistedFields = lazyFieldVariables + fieldVariables
-        
-        var fieldNamesAndTypes = [String: String]()
-        for varDecl in persistedFields {
-            guard let binding = varDecl.bindings.first else { continue }
-            guard
-                let name = binding.pattern.as(IdentifierPatternSyntax.self)?.identifier.text,
-                let datatype = binding.typeAnnotation?.description
-            else { continue }
-            fieldNamesAndTypes[name] = datatype.dropFirst().trimmingCharacters(in: .whitespacesAndNewlines)
-        }
-        fieldNamesAndTypes["id"] = "ULID"
-        
-        let methods = fieldNamesAndTypes.map { (name, type) in
-            """
-            func \(name)(_ op: Vein.ComparisonOperator, _ value: \(type)) -> Self {
-                    var copy = self
-                    copy.builder = builder.addCheck(op, "\(name)", value)
-                    return copy
-                }
-
-            static func \(name)(_ op: Vein.ComparisonOperator, _ value: \(type)) -> Self {
-                var copy = Self()
-                copy.builder = copy.builder.addCheck(op, "\(name)", value)
-                return copy
-            }
-            """
-        }.joined(separator: "\n    ")
-        
-        let predicateBuilder = """
-        struct _\(className)PredicateHelper: Vein.PredicateConstructor {
-            typealias Model = \(className)
-            private var builder: Vein.PredicateBuilder<\(className)>
-            
-            init() {
-                self.builder = Vein.PredicateBuilder<\(className)>()
-            }
-            
-            \(methods)
-        
-            func _builder() -> Vein.PredicateBuilder<\(className)> {
-                return builder
-            }
-        }
-        """
-        
-        return [DeclSyntax(stringLiteral: predicateBuilder)]
     }
     
     public func expansion(
@@ -445,6 +411,17 @@ extension String {
     var isCollection: Bool {
         let modified = self.drop(while: { $0 == " " || $0 == ":" })
         return modified.hasPrefix("[") || modified.hasPrefix("Array<")
+    }
+    
+    var coreRelationshipType: String {
+        self
+            .replacingOccurrences(of: "[", with: "")
+            .replacingOccurrences(of: "]", with: "")
+            .replacingOccurrences(of: "Array<", with: "")
+            .replacingOccurrences(of: ">", with: "")
+            .replacingOccurrences(of: ":", with: "")
+            .replacingOccurrences(of: "?", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 
