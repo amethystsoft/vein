@@ -76,7 +76,7 @@ extension ColumnType {
     ///
     /// Columns of type JSONB convert it to the JSONB format from a JSON string.
     public func sqliteSetter(key: String) -> SQLiteDB.Setter {
-        if Self.sqliteTypeName == .jsonb {
+        if SQLiteTypeName.notNull(Self.sqliteTypeName) == .jsonb {
             switch self.sqliteValue {
                 case .text(let jsonString):
                     // Binds the string value and wraps it via the native database function: jsonb(?)

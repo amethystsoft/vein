@@ -49,6 +49,8 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "./VeinMacrosCore"),
+        // SQLite >= 3.45.0 is required to support JSONB.
+        // The bundled version of swift-sqlcipher >= 1.9.0 matches that requirement.
         .package(
             url: "https://github.com/skiptools/swift-sqlcipher",
             .upToNextMajor(from: "1.9.0")
