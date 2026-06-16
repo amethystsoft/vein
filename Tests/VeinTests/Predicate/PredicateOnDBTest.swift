@@ -184,7 +184,8 @@ struct RealDatabasePredicateTests {
         
         #expect(results.count == 2)
     }
-    
+
+#if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
     @Test
     func testCaseInsensitiveContains() async throws {
         let container = try makeContainer(name: "CaseInsensitiveContains")
@@ -196,6 +197,7 @@ struct RealDatabasePredicateTests {
         #expect(results.count == 1)
         #expect(results.first?.name == "Mia")
     }
+#endif
     
     @Test
     func testStartsWithString() async throws {
