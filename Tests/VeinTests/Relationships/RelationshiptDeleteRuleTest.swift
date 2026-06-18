@@ -10,10 +10,6 @@ extension RelationshipTest {
     func testDeleteCascade() async throws {
         let dbPath = try prepareContainerLocation(name: "DeleteCascade")
         
-        Self.logger.info(
-            "Relationship migration test started with db location: \(dbPath)"
-        )
-        
         let container = try ModelContainer(
             CommentRelationshipCascade.self,
             migration: CascadeMigration.self,
@@ -66,11 +62,7 @@ extension RelationshipTest {
     @Test(.timeLimit(.minutes(1)))
     func testDeleteCascadeCascade() async throws {
         let dbPath = try prepareContainerLocation(name: "DeleteCascadeCascade")
-        
-        Self.logger.info(
-            "Relationship migration test started with db location: \(dbPath)"
-        )
-        
+
         let container = try ModelContainer(
             RelationshipCascadeCascade.self,
             migration: CascadeCascadeMigration.self,
@@ -123,10 +115,6 @@ extension RelationshipTest {
     @Test(.timeLimit(.minutes(1)))
     func testDeleteNullify() async throws {
         let dbPath = try prepareContainerLocation(name: "DeleteNullify")
-        
-        Self.logger.info(
-            "Relationship migration test started with db location: \(dbPath)"
-        )
         
         let container = try ModelContainer(
             CommentRelationshipNullify.self,

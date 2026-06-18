@@ -8,7 +8,7 @@ import Logging
 extension RelationshipTest {    
     @Test func testUpdate() async throws {
         let dbPath = try prepareContainerLocation(name: "RelationshipUpdate")
-        Self.logger.info("started with database path: \(dbPath)")
+
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,

@@ -14,4 +14,4 @@ jobs:
         with:
           persist-credentials: false
       - name: Test macOS
-        run: SHOULD_DISABLE_ENCRYPTION=1 swift test --enable-experimental-prebuilts
+        run: ./Scripts/tsan-test.sh

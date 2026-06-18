@@ -35,15 +35,21 @@ extension ManagedObjectContext {
         }
         
         var sortedModels: [T] = []
+        let isInMigration = isInActiveMigration.value
         for id in ids {
             if let model = models[id] {
                 model._observers.value[observer.id] = observer.block
                 sortedModels.append(model)
             } else {
-                Self.logger.warning("""
-                    Mismatch between Relationship IDs and existing models. \
-                    Potential data corruption.
-                """)
+                if !isInMigration {
+                    Self.logger.warning(
+                        "Relationship ID mismatch for \(T.self). Potential data corruption."
+                    )
+                } else {
+                    Self.logger.info(
+                        "[Migration] Relationship ID mismatch for \(T.self). Verify migration integrity if unexpected."
+                    )
+                }
             }
         }
         
