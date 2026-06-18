@@ -7,7 +7,7 @@ on:
     branches: [main]
 jobs:
   linux-android:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
         with:
@@ -17,6 +17,6 @@ jobs:
         with:
           # Ubuntu runners low on space causes the emulator to fail to install
           free-disk-space: true
-          swift-build-flags: --enable-experimental-prebuilts -Xswiftc -index-store-path -Xswiftc /tmp
+          swift-build-flags: --enable-experimental-prebuilts
           test-env: SHOULD_DISABLE_ENCRYPTION=1
           
