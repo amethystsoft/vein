@@ -163,7 +163,6 @@ var _relationships: [any Vein.PersistedRelationship] {
 static let _inverseFields = {
     var map = [ObjectIdentifier: [String: String]]()
     \(inverseFieldData)
-    
     return map
 }()
 
@@ -302,7 +301,7 @@ extension Array where Element == VariableDeclSyntax {
             guard let binding = varDecl.bindings.first else { continue }
             guard
                 let name = binding.pattern.as(IdentifierPatternSyntax.self)?.identifier.text,
-                let datatype = binding.typeAnnotation?.description
+                let datatype = binding.typeAnnotation?.type.trimmedDescription
             else { continue }
             fields[name] = datatype
         }

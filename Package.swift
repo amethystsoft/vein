@@ -124,6 +124,7 @@ let package = Package(
                 "VeinCore",
                 .product(name: "Logging", package: "swift-log"),
                 .product(name: "SQLiteDB", package: "swift-sqlcipher"),
+                .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax")
             ]
         ),
         .testTarget(
@@ -132,6 +133,9 @@ let package = Package(
                 "VeinTesting",
                 "Vein",
                 "VeinCore",
+                "VeinCoreMacros",
+                .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
                 .product(name: "Logging", package: "swift-log")
             ]
         ),
