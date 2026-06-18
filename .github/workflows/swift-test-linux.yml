@@ -18,4 +18,4 @@ jobs:
           persist-credentials: false
       - name: Test
         # Disable encryption for testing purposes if needed
-        run: SHOULD_DISABLE_ENCRYPTION=1 swift test --enable-experimental-prebuilts
+        run: ./Scripts/tsan-test.sh

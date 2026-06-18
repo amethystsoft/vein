@@ -9,10 +9,6 @@ extension MigrationTests {
     func fieldsAddedMigration() throws {
         let dbPath = try prepareContainerLocation(name: "fieldAddedMigration")
         
-        logger.info(
-            "Field added migration test started with db location: \(dbPath)"
-        )
-        
         let container = try ModelContainer(
             SimpleSchemaV0_0_3.self,
             migration: SimpleMigration.self,

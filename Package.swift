@@ -7,7 +7,7 @@ import CompilerPluginSupport
 var veinDependencies: [Target.Dependency] = [
     .product(name: "Crypto", package: "swift-crypto"),
     .product(name: "SQLiteDB", package: "swift-sqlcipher"),
-    .product(name: "ULID", package: "ULID.swift"),
+    "ULID",
     .product(name: "Logging", package: "swift-log"),
     .product(
         name: "KeychainAccess",
@@ -45,6 +45,10 @@ let package = Package(
         .library(
             name: "VeinTesting",
             targets: ["VeinTesting"]
+        ),
+        .library(
+            name: "ULID",
+            targets: ["ULID"]
         )
     ],
     dependencies: [
@@ -58,7 +62,6 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-crypto.git", "1.0.0" ..< "5.0.0"),
         .package(url: "https://github.com/swiftlang/swift-syntax.git", "600.0.0" ..< "610.0.0"),
         .package(url: "https://github.com/apple/swift-log.git", .upToNextMajor(from: "1.9.1")),
-        .package(url: "https://github.com/yaslab/ULID.swift", .upToNextMajor(from: "1.3.1")),
         .package(url: "https://github.com/kishikawakatsumi/keychainaccess", .upToNextMajor(from: "4.2.2")),
         .package(url: "https://github.com/amethystsoft/KeyringAccess", .upToNextMajor(from: "1.0.0")),
     ],
@@ -113,6 +116,7 @@ let package = Package(
                 .product(name: "VeinMacrosCore", package: "VeinMacrosCore")
             ],
         ),
+        .target(name: "ULID"),
         .testTarget(
             name: "VeinTests",
             dependencies: [
@@ -130,6 +134,10 @@ let package = Package(
                 "VeinCore",
                 .product(name: "Logging", package: "swift-log")
             ]
+        ),
+        .testTarget(
+            name: "ULIDTests",
+            dependencies: ["ULID"]
         )
     ]
 )
