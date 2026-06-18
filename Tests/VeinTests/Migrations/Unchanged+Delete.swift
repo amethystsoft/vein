@@ -9,10 +9,6 @@ extension MigrationTests {
     func simpleMigration() throws {
         let dbPath = try prepareContainerLocation(name: "simpleMigration")
         
-        logger.info(
-            "Simple migration test started with db location: \(dbPath)"
-        )
-        
         let container = try ModelContainer(
             SimpleSchemaV0_0_1.self,
             migration: SimpleMigrationSuccess.self,

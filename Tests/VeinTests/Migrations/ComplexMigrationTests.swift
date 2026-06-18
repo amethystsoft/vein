@@ -15,10 +15,6 @@ struct MigrationTests {
     func complexMigration() async throws {
         let dbPath = try prepareContainerLocation(name: "complexMigration")
         
-        logger.info(
-            "Complex migration test started with db location: \(dbPath)"
-        )
-        
         let container = try ModelContainer(
             ComplexSchemaV0_0_1.self,
             migration: ComplexMigrationSuccess.self,

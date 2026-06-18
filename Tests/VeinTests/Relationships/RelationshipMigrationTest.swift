@@ -11,10 +11,6 @@ import Logging
     @Test func testPersist() async throws {
         let dbPath = try prepareContainerLocation(name: "RelationshipMigration")
         
-        Self.logger.info(
-            "Relationship migration test started with db location: \(dbPath)"
-        )
-        
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
@@ -51,6 +47,7 @@ import Logging
             appID: "de.amethystsoft.vein.RelationshipTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
+        
         try newContainer.migrate()
         
         let firstUser = try newContainer.context.fetchAll(V0_0_2.User.self).first
@@ -101,6 +98,7 @@ import Logging
             appID: "de.amethystsoft.vein.ManyToManyTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
+        
         try newContainer.migrate()
         
         // 3. Verify Many-to-Many integrity on V3
