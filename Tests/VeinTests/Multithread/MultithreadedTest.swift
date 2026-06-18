@@ -4,7 +4,6 @@ import Testing
 import Vein
 import VeinCore
 
-@MainActor
 struct MultithreadedTest {
     @Test
     func run() async throws {
@@ -19,7 +18,7 @@ struct MultithreadedTest {
         await withTaskGroup(of: Void.self) { group in
             for i in 0..<100 {
                 group.addTask {
-                    // 1. Write an object
+                    try? await Task.sleep(nanoseconds: UInt64.random(in: 10_000...50_000))
                     let model = Version1.Task(name: "Task \(i)")
                     try! container.context.insert(model)
                     try! container.context.save()
@@ -29,8 +28,7 @@ struct MultithreadedTest {
             }
         }
         
-        // Assert all 100 records exist and matches expected count
-        let total = try container.context.fetchAll(Version1.Task.self).count
+        let total = try! container.context.fetchAll(Version1.Task.self).count
         #expect(total == 100)
     }
 }
