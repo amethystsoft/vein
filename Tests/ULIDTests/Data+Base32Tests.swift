@@ -5,6 +5,7 @@
 //  Created by Yasuhiro Hatta on 2019/01/12.
 //  Copyright © 2019 yaslab. All rights reserved.
 //
+#if !os(Android)
 import XCTest
 @testable import ULID
 
@@ -224,3 +225,4 @@ final class Base32Tests: XCTestCase {
     }
 
 }
+#endif
