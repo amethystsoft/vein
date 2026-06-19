@@ -8,12 +8,6 @@ import Testing
 struct WriteCache {
     
     private func setupContainer() throws -> ModelContainer {
-#if os(Linux)
-        Keyring.appIdentifier.withLock { identifier in
-            identifier = "de.amethystsoft.vein.tests"
-        }
-#endif
-        
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,

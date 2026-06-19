@@ -4,11 +4,6 @@ import Logging
 import SQLiteDB
 @testable import Vein
 @testable import VeinCore
-#if os(Linux)
-let globalInit: Void = {
-    _ = Keyring.appIdentifier
-}()
-#endif
 @Suite
 struct BugTests {
     @Test
