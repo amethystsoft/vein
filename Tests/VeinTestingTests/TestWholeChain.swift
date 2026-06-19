@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import VeinTesting
 import Vein
@@ -8,8 +9,10 @@ struct WholeChain {
     @Test
     func wholeChainMigration() async throws {
 #if os(Linux)
-        Keyring.appIdentifier.withLock { identifier in
-            identifier = "de.amethystsoft.vein.tests"
+        if ProcessInfo.shouldEnableEncryption {
+            Keyring.appIdentifier.withLock { identifier in
+                identifier = "de.amethystsoft.vein.tests"
+            }
         }
 #endif
         

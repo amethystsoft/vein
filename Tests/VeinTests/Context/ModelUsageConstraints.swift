@@ -8,8 +8,10 @@ import Testing
 struct ModelUsageConstraints {
     func prepareContainerLocation(name: String) throws -> String {
 #if os(Linux)
-        Keyring.appIdentifier.withLock { identifier in
-            identifier = "de.amethystsoft.vein.tests"
+        if ProcessInfo.shouldEnableEncryption {
+            Keyring.appIdentifier.withLock { identifier in
+                identifier = "de.amethystsoft.vein.tests"
+            }
         }
 #endif
         
