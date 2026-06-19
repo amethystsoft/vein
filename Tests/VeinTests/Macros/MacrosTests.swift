@@ -1,4 +1,3 @@
-#if !os(Android)
 import Testing
 import SwiftSyntaxMacrosGenericTestSupport
 import SwiftSyntaxMacros
@@ -111,4 +110,3 @@ struct MacrosTests {
         )
     }
 }
-#endif
