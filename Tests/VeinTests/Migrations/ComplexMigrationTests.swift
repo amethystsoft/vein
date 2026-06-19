@@ -68,12 +68,6 @@ struct MigrationTests {
     }
     
     func prepareContainerLocation(name: String) throws -> String {
-#if os(Linux)
-        Keyring.appIdentifier.withLock { identifier in
-            identifier = "de.amethystsoft.vein.tests"
-        }
-#endif
-        
         let containerPath = FileManager.default.temporaryDirectory
         
         let dbDir = containerPath.relativePath.appending("/veinTests/\(testID.uuidString)")

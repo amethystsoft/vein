@@ -4,7 +4,6 @@ import Logging
 import SQLiteDB
 @testable import Vein
 @testable import VeinCore
-
 @Suite
 struct BugTests {
     @Test

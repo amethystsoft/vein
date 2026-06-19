@@ -21,7 +21,6 @@ var veinDependencies: [Target.Dependency] = [
     )
 ]
 
-
 let package = Package(
     name: "amethyst-vein",
     platforms: [.macOS(.v14), .iOS(.v17), .tvOS(.v17), .macCatalyst(.v17), .visionOS(.v1)],
@@ -55,10 +54,10 @@ let package = Package(
         .package(path: "./VeinMacrosCore"),
         // SQLite >= 3.45.0 is required to support JSONB.
         // The bundled version of swift-sqlcipher >= 1.9.0 matches that requirement.
-        .package(
-            url: "https://github.com/skiptools/swift-sqlcipher",
-            .upToNextMajor(from: "1.9.0")
-        ),
+            .package(
+                url: "https://github.com/skiptools/swift-sqlcipher",
+                .upToNextMajor(from: "1.9.0")
+            ),
         .package(url: "https://github.com/apple/swift-crypto.git", "1.0.0" ..< "5.0.0"),
         .package(url: "https://github.com/swiftlang/swift-syntax.git", "600.0.0" ..< "610.0.0"),
         .package(url: "https://github.com/apple/swift-log.git", .upToNextMajor(from: "1.9.1")),
@@ -66,8 +65,6 @@ let package = Package(
         .package(url: "https://github.com/amethystsoft/KeyringAccess", .upToNextMajor(from: "1.0.0")),
     ],
     targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
         .target(
             name: "Vein",
             dependencies: veinDependencies
@@ -122,8 +119,12 @@ let package = Package(
             dependencies: [
                 "Vein",
                 "VeinCore",
+                "VeinCoreMacros",
                 .product(name: "Logging", package: "swift-log"),
                 .product(name: "SQLiteDB", package: "swift-sqlcipher"),
+                .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxMacroExpansion", package: "swift-syntax")
             ]
         ),
         .testTarget(
