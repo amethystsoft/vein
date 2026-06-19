@@ -13,9 +13,9 @@ jobs:
         with:
           persist-credentials: false
       - name: "Test Swift Package on Android"
-        uses: skiptools/swift-android-action@8db781febb546110d48dee035131db8f4e259e91 # 2.9.4
+        uses: skiptools/swift-android-action@2044b79660f201ccef8cbce62877e4ec5409f9c8 # 2.9.5
         with:
+          swift-version: 'nightly-main'
           # Ubuntu runners low on space causes the emulator to fail to install
           free-disk-space: true
           test-env: SHOULD_DISABLE_ENCRYPTION=1
-          
