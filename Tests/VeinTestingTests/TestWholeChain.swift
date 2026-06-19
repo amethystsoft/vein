@@ -9,11 +9,9 @@ struct WholeChain {
     @Test
     func wholeChainMigration() async throws {
 #if os(Linux)
-        if ProcessInfo.shouldEnableEncryption {
             Keyring.appIdentifier.withLock { identifier in
                 identifier = "de.amethystsoft.vein.tests"
             }
-        }
 #endif
         
         let tester = try MigrationTester(migrationPlan: MigrationPlan.self)

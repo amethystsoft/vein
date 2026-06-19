@@ -9,10 +9,8 @@ struct WriteCache {
     
     private func setupContainer() throws -> ModelContainer {
 #if os(Linux)
-        if ProcessInfo.shouldEnableEncryption {
-            Keyring.appIdentifier.withLock { identifier in
-                identifier = "de.amethystsoft.vein.tests"
-            }
+        Keyring.appIdentifier.withLock { identifier in
+            identifier = "de.amethystsoft.vein.tests"
         }
 #endif
         
