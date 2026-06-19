@@ -9,12 +9,6 @@ jobs:
   linux-android:
     runs-on: ubuntu-24.04
     steps:
-      - name: Clean Build Cache
-        run: |
-          rm -rf .build/
-          rm -rf ~/.swiftpm/cache
-          rm -rf ~/.swiftpm/swift-sdks/.build
-          rm -rf ~/.cache/swiftpm
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
         with:
           persist-credentials: false
@@ -23,6 +17,6 @@ jobs:
         with:
           # Ubuntu runners low on space causes the emulator to fail to install
           free-disk-space: true
-          swift-build-flags: --enable-experimental-prebuilts
+          swift-build-flags: --enable-experimental-prebuilts --disable-index-store
           test-env: SHOULD_DISABLE_ENCRYPTION=1
           
