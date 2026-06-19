@@ -4,7 +4,7 @@ import Logging
 import SQLiteDB
 @testable import Vein
 @testable import VeinCore
-#if canImport(Linux)
+#if os(Linux)
 let globalInit: Void = {
     _ = Keyring.appIdentifier
 }()
