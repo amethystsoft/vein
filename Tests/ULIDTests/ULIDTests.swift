@@ -5,7 +5,6 @@
 //  Created by Yasuhiro Hatta on 2019/01/11.
 //  Copyright © 2019 yaslab. All rights reserved.
 //
-#if os(macOS)
 import XCTest
 import ULID
 
@@ -295,4 +294,3 @@ private struct MockRandomNumberGenerator: RandomNumberGenerator {
     }
 
 }
-#endif
