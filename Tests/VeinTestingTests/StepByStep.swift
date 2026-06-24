@@ -2,7 +2,11 @@ import Foundation
 import Testing
 @testable import VeinTesting
 import Vein
+#if TEST_SWIFTUI
+import VeinSwiftUI
+#elseif !TEST_SWIFTUI
 import VeinCore
+#endif
 
 @MainActor
 struct StepByStep {

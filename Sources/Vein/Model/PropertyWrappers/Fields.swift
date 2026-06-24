@@ -6,6 +6,9 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
     
     private let lock = NSLock()
     private var store: WrappedType
+    @_spi(VeinTesting) public var testingStoreSnapshot: WrappedType {
+        lock.withLock { store }
+    }
     private var readFromStore = false
     
     /// ONLY LET MACRO SET

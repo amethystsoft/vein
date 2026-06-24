@@ -3,7 +3,12 @@ import Testing
 import Logging
 import SQLiteDB
 @testable import Vein
+#if TEST_SWIFTUI
+@testable import VeinSwiftUI
+#elseif !TEST_SWIFTUI
 @testable import VeinCore
+#endif
+
 
 extension BugTests {
     @Test

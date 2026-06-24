@@ -9,9 +9,11 @@ import KeychainAccess
 @_exported import KeyringAccess
 #endif
 
+typealias Connection = SQLiteDB.Connection
+
 public actor ManagedObjectContext {
     public static let logger = Logger(label: "ManagedObjectContext")
-    package nonisolated let connection: Connection
+    package nonisolated let connection: SQLiteDB.Connection
     nonisolated unowned let modelContainer: ModelContainer
     
     // MARK: - Migrations
