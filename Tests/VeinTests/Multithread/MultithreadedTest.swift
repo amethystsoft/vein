@@ -43,7 +43,7 @@ struct MultithreadedTest {
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         
-        let tasks = try! newContainer.context.fetchAll(Version1.Task.self)
+        let tasks = try newContainer.context.fetchAll(Version1.Task.self)
         #expect(tasks.count == 100)
         #expect(tasks.allSatisfy { $0.text?.hasPrefix("Test ") == true })
     }
@@ -82,7 +82,7 @@ struct MultithreadedTest {
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         
-        guard let result = try! newContainer.context.fetchAll(Version1.Task.self).first else {
+        guard let result = try newContainer.context.fetchAll(Version1.Task.self).first else {
             Issue.record("Unexpectedly no result for Version1.Task")
             return
         }
@@ -123,7 +123,7 @@ struct MultithreadedTest {
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         
-        guard let result = try! newContainer.context.fetchAll(Version1.Task.self).first else {
+        guard let result = try newContainer.context.fetchAll(Version1.Task.self).first else {
             Issue.record("Unexpectedly no result for Version1.Task")
             return
         }
