@@ -353,7 +353,8 @@ extension Dictionary where Key == String, Value == String {
 
 extension VariableDeclSyntax {
     var isPlainInstanceField: Bool {
-        bindings.count == 1
+        bindingSpecifier.trimmedDescription == "var"
+        && bindings.count == 1
         && bindings.first?.accessorBlock == nil
         && !modifiers.contains(where: { $0.name.text == "static" || $0.name.text == "class" })
     }
