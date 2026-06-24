@@ -19,18 +19,20 @@ struct MultithreadedTest {
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         
-        await withTaskGroup(of: Void.self) { group in
+        try await withThrowingTaskGroup(of: Void.self) { group in
             for i in 0..<100 {
                 group.addTask {
                     try? await Task.sleep(nanoseconds: UInt64.random(in: 10_000...50_000))
                     let model = Version1.Task(name: "Task \(i)")
                     model.text = "Test \(i)"
-                    try! container.context.insert(model)
-                    try! container.context.save()
+                    try container.context.insert(model)
+                    try container.context.save()
                     
-                    _ = try! container.context.fetchAll(Version1.Task.self)
+                    _ = try container.context.fetchAll(Version1.Task.self)
                 }
             }
+            
+            try await group.waitForAll()
         }
         
         let newContainer = try ModelContainer(
@@ -59,15 +61,17 @@ struct MultithreadedTest {
         let model = Version1.Task(name: "Test")
         try container.context.insert(model)
         
-        await withTaskGroup(of: Void.self) { group in
+        try await withThrowingTaskGroup(of: Void.self) { group in
             for i in 0..<100 {
                 group.addTask {
                     try? await Task.sleep(nanoseconds: UInt64.random(in: 10_000...50_000))
                     _ = model.text
                     model.text = "Test \(i)"
-                    try! container.context.save()
+                    try container.context.save()
                 }
             }
+            
+            try await group.waitForAll()
         }
         
         let newContainer = try ModelContainer(
@@ -98,15 +102,17 @@ struct MultithreadedTest {
         let model = Version1.Task(name: "Base")
         try container.context.insert(model)
         
-        await withTaskGroup(of: Void.self) { group in
+        try await withThrowingTaskGroup(of: Void.self) { group in
             for i in 0..<100 {
                 group.addTask {
                     try? await Task.sleep(nanoseconds: UInt64.random(in: 10_000...50_000))
                     _ = model.name
                     model.name = "Test \(i)"
-                    try! container.context.save()
+                    try container.context.save()
                 }
             }
+            
+            try await group.waitForAll()
         }
         
         let newContainer = try ModelContainer(
