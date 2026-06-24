@@ -3,6 +3,20 @@
 
 import PackageDescription
 import CompilerPluginSupport
+import Foundation
+
+#if os(macOS)
+let testSwiftUI = ProcessInfo.processInfo.environment["TEST_SWIFTUI"] != nil
+
+let veinAPIToTestDependencies: [Target.Dependency] = testSwiftUI ?
+    ["VeinSwiftUI", "VeinSwiftUIMacros"]:
+    ["VeinCore", "VeinCoreMacros"]
+
+let testSwiftSettings: [SwiftSetting] = testSwiftUI ? [.define("TEST_SWIFTUI")] : []
+#else
+let veinAPIToTestDependencies: [Target.Dependency] = ["VeinCore", "VeinCoreMacros"]
+let testSwiftSettings: [SwiftSetting] = []
+#endif
 
 var veinDependencies: [Target.Dependency] = [
     .product(name: "Crypto", package: "swift-crypto"),
@@ -48,7 +62,7 @@ let package = Package(
         .library(
             name: "ULID",
             targets: ["ULID"]
-        )
+        ),
     ],
     dependencies: [
         .package(path: "./VeinMacrosCore"),
@@ -118,23 +132,22 @@ let package = Package(
             name: "VeinTests",
             dependencies: [
                 "Vein",
-                "VeinCore",
-                "VeinCoreMacros",
                 .product(name: "Logging", package: "swift-log"),
                 .product(name: "SQLiteDB", package: "swift-sqlcipher"),
                 .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxMacroExpansion", package: "swift-syntax")
-            ]
+            ] + veinAPIToTestDependencies,
+            swiftSettings: testSwiftSettings
         ),
         .testTarget(
             name: "VeinTestingTests",
             dependencies: [
                 "VeinTesting",
                 "Vein",
-                "VeinCore",
                 .product(name: "Logging", package: "swift-log")
-            ]
+            ] + veinAPIToTestDependencies,
+            swiftSettings: testSwiftSettings
         ),
         .testTarget(
             name: "ULIDTests",

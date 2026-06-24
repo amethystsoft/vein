@@ -13,5 +13,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
         with:
           persist-credentials: false
-      - name: Test macOS
+      - name: Test VeinCore
         run: ./Scripts/tsan-test.sh
+      - name: Test VeinSwiftUI
+        run: TEST_SWIFTUI=1 ./Scripts/tsan-test.sh

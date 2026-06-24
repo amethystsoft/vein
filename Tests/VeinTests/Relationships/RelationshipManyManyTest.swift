@@ -2,7 +2,11 @@ import Foundation
 import Testing
 import Logging
 @testable import Vein
+#if TEST_SWIFTUI
+@testable import VeinSwiftUI
+#elseif !TEST_SWIFTUI
 @testable import VeinCore
+#endif
 
 extension RelationshipTest {
     // Example Schema: Tag (inverse: "posts") <-> Post (inverse: "tags")

@@ -1,7 +1,11 @@
 import Foundation
 import Testing
 @testable import Vein
+#if TEST_SWIFTUI
+@testable import VeinSwiftUI
+#elseif !TEST_SWIFTUI
 @testable import VeinCore
+#endif
 
 @MainActor
 @Suite(.serialized)
@@ -98,6 +102,7 @@ struct WriteCache {
         
         // Test Insert Rollback
         let newModel = V0_0_1.Test(flag: true, someValue: "New", randomValue: 5)
+        newModel.text = "Test"
         try container.context.insert(newModel)
         container.context.rollback()
         #expect(newModel.context == nil)
@@ -105,13 +110,17 @@ struct WriteCache {
         
         // Test Update Rollback
         let existingModel = V0_0_1.Test(flag: false, someValue: "Original", randomValue: 100)
-        existingModel.context = container.context
-        existingModel._setupFields()
+        existingModel.text = "Test"
+        try container.context.insert(existingModel)
+        try container.context.save()
 
         existingModel.someValue = "Changed"
+        existingModel.text = "Updated"
+        
         
         container.context.rollback()
         #expect(existingModel.someValue == "Original")
+        #expect(existingModel.text == "Test")
         #expect(container.context.hasChanges == false)
         
         // Test Delete Rollback
@@ -267,6 +276,9 @@ fileprivate enum V0_0_1: VersionedSchema {
         
         @Field
         var randomValue: Int
+        
+        @LazyField
+        var text: String?
         
         init(flag: Bool, someValue: String, randomValue: Int) {
             self.flag = flag

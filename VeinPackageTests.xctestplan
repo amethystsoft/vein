@@ -1,0 +1,45 @@
+{
+  "configurations" : [
+    {
+      "id" : "F5294850-430D-46D7-BDA4-FED0C722FF02",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "environmentVariableEntries" : [
+      {
+        "key" : "SHOULD_DISABLE_ENCRYPTION",
+        "value" : "1"
+      }
+    ],
+    "testInteropMode" : "complete",
+    "testTimeoutsEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "VeinTests",
+        "name" : "VeinTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "VeinTestingTests",
+        "name" : "VeinTestingTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "ULIDTests",
+        "name" : "ULIDTests"
+      }
+    }
+  ],
+  "version" : 1
+}

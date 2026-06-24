@@ -1,7 +1,11 @@
 import Foundation
 import Testing
 @testable import Vein
+#if TEST_SWIFTUI
+@testable import VeinSwiftUI
+#elseif !TEST_SWIFTUI
 @testable import VeinCore
+#endif
 
 @MainActor
 @Suite(.serialized)

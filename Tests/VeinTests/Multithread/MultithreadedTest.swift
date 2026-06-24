@@ -1,8 +1,12 @@
 import Foundation
 import Testing
 @testable import VeinTesting
-import Vein
-import VeinCore
+@testable import Vein
+#if TEST_SWIFTUI
+@testable import VeinSwiftUI
+#elseif !TEST_SWIFTUI
+@testable import VeinCore
+#endif
 
 struct MultithreadedTest {
     @Test
@@ -20,6 +24,7 @@ struct MultithreadedTest {
                 group.addTask {
                     try? await Task.sleep(nanoseconds: UInt64.random(in: 10_000...50_000))
                     let model = Version1.Task(name: "Task \(i)")
+                    model.text = "Test \(i)"
                     try! container.context.insert(model)
                     try! container.context.save()
                     
@@ -28,8 +33,95 @@ struct MultithreadedTest {
             }
         }
         
-        let total = try! container.context.fetchAll(Version1.Task.self).count
-        #expect(total == 100)
+        let newContainer = try ModelContainer(
+            Version1.self,
+            migration: MigrationPlan.self,
+            connection: container.getConnection(),
+            appID: "de.amethystsoft.vein.tests.multithreaded",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+        )
+        
+        let tasks = try! newContainer.context.fetchAll(Version1.Task.self)
+        #expect(tasks.count == 100)
+        #expect(tasks.allSatisfy { $0.text?.hasPrefix("Test ") == true })
+    }
+    
+    @Test
+    func multithreadedLazyFieldReadWrite() async throws {
+        let container = try ModelContainer(
+            Version1.self,
+            migration: MigrationPlan.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.tests.multithreaded",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+        )
+        
+        let model = Version1.Task(name: "Test")
+        try container.context.insert(model)
+        
+        await withTaskGroup(of: Void.self) { group in
+            for i in 0..<100 {
+                group.addTask {
+                    try? await Task.sleep(nanoseconds: UInt64.random(in: 10_000...50_000))
+                    _ = model.text
+                    model.text = "Test \(i)"
+                    try! container.context.save()
+                }
+            }
+        }
+        
+        let newContainer = try ModelContainer(
+            Version1.self,
+            migration: MigrationPlan.self,
+            connection: container.getConnection(),
+            appID: "de.amethystsoft.vein.tests.multithreaded",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+        )
+        
+        guard let result = try! newContainer.context.fetchAll(Version1.Task.self).first else {
+            Issue.record("Unexpectedly no result for Version1.Task")
+            return
+        }
+        #expect(result.text?.hasPrefix("Test ") == true)
+    }
+    
+    @Test
+    func multithreadedFieldReadWrite() async throws {
+        let container = try ModelContainer(
+            Version1.self,
+            migration: MigrationPlan.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.tests.multithreaded",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+        )
+        
+        let model = Version1.Task(name: "Base")
+        try container.context.insert(model)
+        
+        await withTaskGroup(of: Void.self) { group in
+            for i in 0..<100 {
+                group.addTask {
+                    try? await Task.sleep(nanoseconds: UInt64.random(in: 10_000...50_000))
+                    _ = model.name
+                    model.name = "Test \(i)"
+                    try! container.context.save()
+                }
+            }
+        }
+        
+        let newContainer = try ModelContainer(
+            Version1.self,
+            migration: MigrationPlan.self,
+            connection: container.getConnection(),
+            appID: "de.amethystsoft.vein.tests.multithreaded",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+        )
+        
+        guard let result = try! newContainer.context.fetchAll(Version1.Task.self).first else {
+            Issue.record("Unexpectedly no result for Version1.Task")
+            return
+        }
+        #expect(result.name.hasPrefix("Test"))
     }
 }
 
@@ -42,6 +134,8 @@ fileprivate enum Version1: VersionedSchema {
     @Model
     final class Task {
         @Field var name: String
+        @LazyField var text: String?
+        
         init(name: String) { self.name = name }
     }
 }
