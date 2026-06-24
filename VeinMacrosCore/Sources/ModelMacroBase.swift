@@ -206,6 +206,13 @@ static let _fieldInformation: [Vein.FieldInformation] = [
     ) throws -> [AttributeSyntax] {
         // Find the marker @Relationship attribute on the property
         guard let relationshipAttr = findRelationshipAttribute(in: varDecl) else {
+            guard varDecl.isPlainInstanceField else { return [] }
+            if
+                FieldType.field.matches(varDecl, frameworkName: frameworkName),
+                !FieldType.field.matches(varDecl, frameworkName: frameworkName, checkNoFieldAttribute: false)
+            {
+                return ["@Vein.Field"]
+            }
             return []
         }
         
@@ -265,11 +272,18 @@ public enum FieldType {
 }
 
 extension FieldType {
-    func matches(_ variable: VariableDeclSyntax, frameworkName: String) -> Bool {
+    func matches(_ variable: VariableDeclSyntax, frameworkName: String, checkNoFieldAttribute: Bool = true) -> Bool {
+        let hasExplicitField = variable.hasAttributeOrMacro(named: "Field")
+            || variable.hasAttributeOrMacro(named: "\(frameworkName).Field")
+        
         return switch self {
             case .field:
-                variable.hasAttributeOrMacro(named: "Field")
-                || variable.hasAttributeOrMacro(named: "\(frameworkName).Field")
+                hasExplicitField || (
+                    checkNoFieldAttribute
+                    && variable.isPlainInstanceField
+                    && !FieldType.lazyField.matches(variable, frameworkName: frameworkName)
+                    && !FieldType.relationship.matches(variable, frameworkName: frameworkName)
+                )
             case .lazyField:
                 variable.hasAttributeOrMacro(named: "LazyField")
                 || variable.hasAttributeOrMacro(named: "\(frameworkName).LazyField")
@@ -338,6 +352,12 @@ extension Dictionary where Key == String, Value == String {
 }
 
 extension VariableDeclSyntax {
+    var isPlainInstanceField: Bool {
+        bindings.count == 1
+        && bindings.first?.accessorBlock == nil
+        && !modifiers.contains(where: { $0.name.text == "static" || $0.name.text == "class" })
+    }
+    
     func hasAttributeOrMacro(named name: String) -> Bool {
         let parts = name.split(separator: ".")
         

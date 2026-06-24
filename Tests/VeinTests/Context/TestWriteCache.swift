@@ -6,7 +6,6 @@ import Testing
 @MainActor
 @Suite(.serialized)
 struct WriteCache {
-    
     private func setupContainer() throws -> ModelContainer {
         let container = try ModelContainer(
             V0_0_1.self,
@@ -283,14 +282,10 @@ fileprivate enum V0_0_2: VersionedSchema {
     
     @Model
     final class Test: Identifiable {
-        @Field
         var flag: Bool
-        
-        @Field
         var someValue: String
         
         // Renamed and transformed from randomValue
-        @Field
         var securityCode: String
         
         init(flag: Bool, someValue: String, securityCode: String) {
