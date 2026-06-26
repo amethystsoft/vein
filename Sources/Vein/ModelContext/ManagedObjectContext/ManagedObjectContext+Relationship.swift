@@ -17,7 +17,12 @@ extension ManagedObjectContext {
         ).first
     }
     
-    public nonisolated func getModels<T: PersistentModel>(ids: [ULID], type: T.Type, observer: VeinObserver) throws(MOCError) -> [T] {
+    public nonisolated func getModels<T: PersistentModel>(
+        ids: [ULID],
+        type: T.Type,
+        observer: VeinObserver,
+        requestingModel: any PersistentModel
+    ) throws(MOCError) -> [T] {
         var models = [ULID: T]()
         
         var identityMapMisses: [ULID] = []
@@ -39,6 +44,12 @@ extension ManagedObjectContext {
         for id in ids {
             if let model = models[id] {
                 model._observers.value[observer.id] = observer.block
+                requestingModel._observers.value[model.id] = { [weak model] in
+                    guard !VeinNotificationGuard.isProcessing else { return }
+                    VeinNotificationGuard.$isProcessing.withValue(true) {
+                        model?.notifyOfChanges()
+                    }
+                }
                 sortedModels.append(model)
             } else {
                 if !isInMigration {

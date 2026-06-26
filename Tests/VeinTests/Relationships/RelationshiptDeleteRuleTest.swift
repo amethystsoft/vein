@@ -3,9 +3,9 @@ import Testing
 import Logging
 @testable import Vein
 #if TEST_SWIFTUI
-@testable import VeinSwiftUI
+@_spi(VeinTesting) @testable import VeinSwiftUI
 #elseif !TEST_SWIFTUI
-@testable import VeinCore
+@_spi(VeinTesting) @testable import VeinCore
 #endif
 
 @MainActor

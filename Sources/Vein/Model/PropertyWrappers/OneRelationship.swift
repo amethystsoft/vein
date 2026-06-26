@@ -5,18 +5,30 @@ import Logging
 public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unchecked Sendable {
     static var logger: Logger { .init(label: "Vein.OneRelationship") }
     
-    public let isLazy: Bool = false
+    public var isLazy: Bool { false }
     public typealias Value = T?
     public typealias WrappedType = ULID?
     
     private let lock = NSLock()
     private var idStore: ULID?
-    public var inverseKey: String?
-    public var deleteRule: DeleteRule
+    private let _inverseKey = Atomic<String?>(nil)
+    public var inverseKey: String? {
+        get {
+            _inverseKey.value
+        }
+        set {
+            _inverseKey.value = newValue
+        }
+    }
+    public let deleteRule: DeleteRule
     
     /// ONLY LET MACRO SET
+    /// It is not protected from other threads,
+    /// because proper use cannot change it to something wrong
     public var key: String?
     /// ONLY LET MACRO SET
+    /// It is not protected from other threads,
+    /// because proper use cannot change it to something wrong
     public weak var model: (any PersistentModel)?
     
     private var _wasTouched: Bool = false
@@ -37,24 +49,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
     // Post insert: read from idStore
     public var wrappedValue: Value {
         get {
-            guard let model, let context = model.context else { return nil }
-            let id = lock.withLock { idStore }
-            guard let id else { return nil }
-            
-            do {
-                let result = try context.getModel(id: id, type: T.self)
-                result?._observers.value[model.id] = { [weak model] in model?.notifyOfChanges() }
-                return result
-            } catch {
-                if case .noSuchTable = error {
-                    return nil
-                }
-                if case .unexpectedlyEmptyResult = error {
-                    Self.logger.warning("Unexpectedly empty result for \(T.self)")
-                    return nil
-                }
-                fatalError(error.localizedDescription)
-            }
+            get(for: lock.withLock { idStore })
         }
         set {
             guard
@@ -96,48 +91,80 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         inverse: String? = nil,
         deleteRule: DeleteRule = .nullify
     ) {
-        self.key = nil
-        self.idStore = nil
-        self.inverseKey = inverse
+        self._inverseKey.value = inverse
         self.deleteRule = deleteRule
+    }
+    
+    private func get(for id: ULID?) -> Value {
+        guard let model, let context = model.context else { return nil }
+        guard let id else { return nil }
+        
+        do {
+            let result = try context.getModel(id: id, type: T.self)
+            
+            setObservers(on: result, id: id)
+            
+            return result
+        } catch {
+            if case .noSuchTable = error {
+                return nil
+            }
+            if case .unexpectedlyEmptyResult = error {
+                Self.logger.warning("Unexpectedly empty result for \(T.self)")
+                return nil
+            }
+            fatalError(error.localizedDescription)
+        }
     }
     
     private func setAndNotify(_ newValue: Value) {
         let newID = newValue?.id
-        let isDifferent = lock.withLock { idStore != newID }
-        
-        if isDifferent {
-            // Disconnect from the old relation first while wrappedValue points to it.
-            updateOtherSide(isRemoving: true)
-        }
+        var previousID: ULID?
         
         lock.withLock {
+            previousID = idStore
             idStore = newID
         }
         
-        if isDifferent {
-            // Connect to the new relation now that wrappedValue points to it.
-            updateOtherSide(isRemoving: false)
-        }
+        let isDifferent = previousID != newID
         
-        model?.notifyOfChanges()
+        VeinNotificationGuard.$isProcessing.withValue(true) {
+            if isDifferent {
+                // Disconnect from the old relation first while wrappedValue points to it.
+                updateOtherSide(isRemoving: true, id: previousID)
+            }
+            
+            if isDifferent {
+                // Connect to the new relation now that wrappedValue points to it.
+                updateOtherSide(isRemoving: false, id: newID)
+            }
+            
+            model?.notifyOfChanges()
+        }
         
         wasTouched = true
     }
     
-    private func updateOtherSide(isRemoving: Bool) {
+    private func updateOtherSide(isRemoving: Bool, id: ULID?) {
         guard let model, let context = model.context else { return }
         
-        if inverseKey.isNil {
-            inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
+        lock.withLock {
+            if inverseKey == nil {
+                inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
+            }
         }
         
         guard
             let inverseKey,
-            let target = wrappedValue
+            let target = get(for: id)
         else { return }
         
-        target._observers.value[model.id] = nil
+        if isRemoving {
+            target._observers.value[model.id] = nil
+            model._observers.value[target.id] = nil
+        } else {
+            setObservers(on: target, id: target.id)
+        }
         
         target._setupFields()
         
@@ -162,6 +189,26 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         }
         
         context._markTouched(target, previouslyMatching: predicateMatches)
+    }
+    
+    private func setObservers(on result: T?, id: ULID) {
+        guard let model else { return }
+        if result?._observers.value[model.id] == nil {
+            result?._observers.value[model.id] = { [weak model] in
+                guard !VeinNotificationGuard.isProcessing else { return }
+                VeinNotificationGuard.$isProcessing.withValue(true) {
+                    model?.notifyOfChanges()
+                }
+            }
+        }
+        if model._observers.value[id] == nil {
+            model._observers.value[id] = { [weak result] in
+                guard !VeinNotificationGuard.isProcessing else { return }
+                VeinNotificationGuard.$isProcessing.withValue(true) {
+                    result?.notifyOfChanges()
+                }
+            }
+        }
     }
     
     public func setStoreToCapturedState(_ state: Any) {
@@ -200,17 +247,27 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
     public func _handleModelDeletion() {
         guard
             let model,
-            let context = model.context,
+            let context = model.context
+        else { return }
+        
+        lock.withLock {
+            if inverseKey == nil {
+                inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
+            }
+        }
+        
+        guard
             let inverseKey,
             let target = wrappedValue
         else { return }
         
+        defer {
+            target.notifyOfChanges()
+        }
+        
         switch deleteRule {
             case .nullify:
                 let predicateMatches = context._prepareForChange(of: target)
-                defer {
-                    target.notifyOfChanges()
-                }
                 
                 let inverse = target._fields.first { $0.key == inverseKey }
                 
