@@ -85,19 +85,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
         }
         
         do {
-            let observer: VeinObserver?
-            if let inverseKey {
-               observer = (
-                    id: model.id,
-                    key: inverseKey,
-                    block: { [weak model] in
-                        guard !VeinNotificationGuard.isProcessing else { return }
-                        VeinNotificationGuard.$isProcessing.withValue(true) {
-                            model?.notifyOfChanges()
-                        }
-                    })
-            } else { observer = nil }
-            let result = try context.getModels(ids: ids, type: T.self, observer: observer, requestingModel: model, fieldKey: instanceKey)
+            let result = try context.getModels(ids: ids, type: T.self, requestingModel: model, fieldKey: instanceKey, inverseKey: inverseKey)
             return result
         } catch {
             if case .noSuchTable = error {
@@ -148,7 +136,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
             guard let inverseKey else {
                 continue
             }
-            target._observers.value.removeObserver(id: target.id, key: inverseKey)
+            model._observers.value.removeObserver(id: target.id, key: inverseKey)
             
             target._setupFields()
             let predicateMatches = context._prepareForChange(of: target)

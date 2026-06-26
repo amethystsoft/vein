@@ -1,6 +1,5 @@
 import Foundation
 import Testing
-@testable import Vein
 #if TEST_SWIFTUI
 @_spi(VeinTesting) @testable import VeinSwiftUI
 #elseif !TEST_SWIFTUI
@@ -9,8 +8,8 @@ import Testing
 
 @Suite
 struct ReferenceCountedObserversTest {
-    @Test
-    mutating func `Observer is retained until all registered keys are removed`() {
+    @Test("Observer is retained until all registered keys are removed")
+    mutating func observerRetaining() {
         var tracker = ReferenceCountedObservers()
         let targetID = ULID()
         var notificationCount = 0
@@ -40,8 +39,8 @@ struct ReferenceCountedObserversTest {
         #expect(tracker.observers[targetID] == nil)
     }
     
-    @Test
-    func `Observers persist and clean up across multiple relationships`() throws {
+    @Test("Observers persist and clean up across multiple relationships (OneRelationship)")
+    func observerPersistanceAndCleanupOneRelationship() throws {
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
@@ -56,25 +55,84 @@ struct ReferenceCountedObserversTest {
         try container.context.insert(child)
         
         let childID = child.id
+        let parentID = parent.id
         
         // 1. Act & Assert: Connect first relationship
         child.parent = parent
         #expect(parent._observers.value.references[childID]?.contains("parent") == true)
+        #expect(child._observers.value.references[parentID]?.contains("children") == true)
         
         // 2. Act & Assert: Connect second relationship
         child.test = parent
         #expect(parent._observers.value.references[childID] == ["parent", "test"])
         #expect(parent._observers.value.observers[childID] != nil)
         
+        #expect(child._observers.value.references[parentID] == ["children", "otherChildren"])
+        #expect(child._observers.value.observers[parentID] != nil)
+        
         // 3. Act & Assert: Disconnect first relationship
         child.parent = nil
         #expect(parent._observers.value.references[childID] == ["test"])
         #expect(parent._observers.value.observers[childID] != nil)
         
+        #expect(child._observers.value.references[parentID] == ["otherChildren"])
+        #expect(child._observers.value.observers[parentID] != nil)
+        
         // 4. Act & Assert: Disconnect second relationship
         child.test = nil
         #expect(parent._observers.value.references[childID] == nil)
         #expect(parent._observers.value.observers[childID] == nil)
+        
+        #expect(parent._observers.value.references[parentID] == nil)
+        #expect(parent._observers.value.observers[parentID] == nil)
+    }
+    
+    @Test("Observers persist and clean up across multiple relationships (ManyRelationship)")
+    func observerPersistanceAndCleanupManyRelationship() throws {
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.tests.observers"
+        )
+        
+        let parent = V0_0_1.Test()
+        let child = V0_0_1.Child()
+        
+        try container.context.insert(parent)
+        try container.context.insert(child)
+        
+        let childID = child.id
+        let parentID = parent.id
+        
+        // 1. Act & Assert: Connect first relationship
+        parent.children.append(child)
+        #expect(parent._observers.value.references[childID]?.contains("parent") == true)
+        #expect(child._observers.value.references[parentID]?.contains("children") == true)
+        
+        // 2. Act & Assert: Connect second relationship
+        parent.otherChildren.append(child)
+        #expect(parent._observers.value.references[childID] == ["parent", "test"])
+        #expect(parent._observers.value.observers[childID] != nil)
+        
+        #expect(child._observers.value.references[parentID] == ["children", "otherChildren"])
+        #expect(child._observers.value.observers[parentID] != nil)
+        
+        // 3. Act & Assert: Disconnect first relationship
+        parent.children = []
+        #expect(parent._observers.value.references[childID] == ["test"])
+        #expect(parent._observers.value.observers[childID] != nil)
+        
+        #expect(child._observers.value.references[parentID] == ["otherChildren"])
+        #expect(child._observers.value.observers[parentID] != nil)
+        
+        // 4. Act & Assert: Disconnect second relationship
+        parent.otherChildren = []
+        #expect(parent._observers.value.references[childID] == nil)
+        #expect(parent._observers.value.observers[childID] == nil)
+        
+        #expect(parent._observers.value.references[parentID] == nil)
+        #expect(parent._observers.value.observers[parentID] == nil)
     }
 }
 
