@@ -30,9 +30,7 @@ public struct ModelMacro: MemberMacro, ExtensionMacro, MemberAttributeMacro {
         var notifyOfChanges: () -> Void {
             { [weak self] in
                 guard let self else { return }
-                for notification in self._observers.value.values {
-                    notification()
-                }
+                self._observers.value.notifyAll()
                 self.objectWillChange.send()
             }
         }

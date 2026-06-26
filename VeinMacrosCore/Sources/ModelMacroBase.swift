@@ -133,7 +133,7 @@ required init(id: Vein.ULID, fields: [String: Vein.SQLiteValue]) {
     _setupFields()
 }
 
-let _observers = Vein.Atomic([Vein.ULID: () -> Void]())
+let _observers = Vein.Atomic(Vein.ReferenceCountedObservers())
 
 /// Sets required properties for @Field values.
 /// Gets generated automatically by @Model.

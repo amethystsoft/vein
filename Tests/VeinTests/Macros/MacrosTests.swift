@@ -47,7 +47,7 @@ struct MacrosTests {
                     _setupFields()
                 }
             
-                let _observers = Vein.Atomic([Vein.ULID: () -> Void]())
+                let _observers = Vein.Atomic(Vein.ReferenceCountedObservers())
             
                 /// Sets required properties for @Field values.
                 /// Gets generated automatically by @Model.
@@ -144,7 +144,7 @@ struct MacrosTests {
                     _setupFields()
                 }
             
-                let _observers = Vein.Atomic([Vein.ULID: () -> Void]())
+                let _observers = Vein.Atomic(Vein.ReferenceCountedObservers())
             
                 /// Sets required properties for @Field values.
                 /// Gets generated automatically by @Model.
@@ -197,9 +197,7 @@ struct MacrosTests {
                 var notifyOfChanges: () -> Void {
                     { [weak self] in
                         guard let self else { return }
-                        for notification in self._observers.value.values {
-                            notification()
-                        }
+                        self._observers.value.notifyAll()
                         self.objectWillChange.send()
                     }
                 }
@@ -256,7 +254,7 @@ struct MacrosTests {
                     _setupFields()
                 }
             
-                let _observers = Vein.Atomic([Vein.ULID: () -> Void]())
+                let _observers = Vein.Atomic(Vein.ReferenceCountedObservers())
             
                 /// Sets required properties for @Field values.
                 /// Gets generated automatically by @Model.
@@ -352,7 +350,7 @@ struct MacrosTests {
                     _setupFields()
                 }
             
-                let _observers = Vein.Atomic([Vein.ULID: () -> Void]())
+                let _observers = Vein.Atomic(Vein.ReferenceCountedObservers())
             
                 /// Sets required properties for @Field values.
                 /// Gets generated automatically by @Model.
@@ -405,9 +403,7 @@ struct MacrosTests {
                 var notifyOfChanges: () -> Void {
                     { [weak self] in
                         guard let self else { return }
-                        for notification in self._observers.value.values {
-                            notification()
-                        }
+                        self._observers.value.notifyAll()
                         self.objectWillChange.send()
                     }
                 }

@@ -25,7 +25,7 @@ public protocol PersistentModel: AnyObject, Sendable {
     
     static var version: ModelVersion { get }
     
-    nonisolated var _observers: Atomic<[ULID: () -> Void]> { get }
+    nonisolated var _observers: Atomic<ReferenceCountedObservers> { get }
     
     static var _inverseFields: [ObjectIdentifier: [String: String]] { get }
     

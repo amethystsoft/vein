@@ -80,17 +80,24 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
         guard let model, let context = model.context else { return [] }
         guard !ids.isEmpty else { return [] }
         
+        if inverseKey.isNil {
+            inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
+        }
+        
         do {
-            let observer: VeinObserver = (
-                id: model.id,
-                block: { [weak model] in
-                    guard !VeinNotificationGuard.isProcessing else { return }
-                    VeinNotificationGuard.$isProcessing.withValue(true) {
-                        model?.notifyOfChanges()
-                    }
-                }
-            )
-            let result = try context.getModels(ids: ids, type: T.self, observer: observer, requestingModel: model)
+            let observer: VeinObserver?
+            if let inverseKey {
+               observer = (
+                    id: model.id,
+                    key: inverseKey,
+                    block: { [weak model] in
+                        guard !VeinNotificationGuard.isProcessing else { return }
+                        VeinNotificationGuard.$isProcessing.withValue(true) {
+                            model?.notifyOfChanges()
+                        }
+                    })
+            } else { observer = nil }
+            let result = try context.getModels(ids: ids, type: T.self, observer: observer, requestingModel: model, fieldKey: instanceKey)
             return result
         } catch {
             if case .noSuchTable = error {
@@ -135,11 +142,13 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
             inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
         }
         
-        guard let inverseKey else { return }
-        
         for target in removed {
-            target._observers.value[model.id] = nil
-            model._observers.value[target.id] = nil
+            target._observers.value.removeObserver(id: model.id, key: instanceKey)
+
+            guard let inverseKey else {
+                continue
+            }
+            target._observers.value.removeObserver(id: target.id, key: inverseKey)
             
             target._setupFields()
             let predicateMatches = context._prepareForChange(of: target)
@@ -161,18 +170,10 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
         }
         
         for target in added {
-            target._observers.value[model.id] = { [weak model] in
-                guard !VeinNotificationGuard.isProcessing else { return }
-                VeinNotificationGuard.$isProcessing.withValue(true) {
-                    model?.notifyOfChanges()
-                }
-            }
+            setObservers(on: target, id: target.id)
             
-            model._observers.value[target.id] = { [weak target] in
-                guard !VeinNotificationGuard.isProcessing else { return }
-                VeinNotificationGuard.$isProcessing.withValue(true) {
-                    target?.notifyOfChanges()
-                }
+            guard let inverseKey else {
+                continue
             }
             
             target._setupFields()
@@ -212,6 +213,31 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
             }
             
             context._markTouched(target, previouslyMatching: predicateMatches)
+        }
+    }
+    
+    private func setObservers(on target: T?, id: ULID) {
+        guard let model else { return }
+        lock.withLock {
+            if inverseKey == nil {
+                inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
+            }
+        }
+        
+        target?._observers.value.addObserver(id: model.id, key: instanceKey, observer: { [weak model] in
+            guard !VeinNotificationGuard.isProcessing else { return }
+            VeinNotificationGuard.$isProcessing.withValue(true) {
+                model?.notifyOfChanges()
+            }
+        })
+        
+        if let inverseKey {
+            model._observers.value.addObserver(id: id, key: inverseKey, observer: { [weak target] in
+                guard !VeinNotificationGuard.isProcessing else { return }
+                VeinNotificationGuard.$isProcessing.withValue(true) {
+                    target?.notifyOfChanges()
+                }
+            })
         }
     }
     

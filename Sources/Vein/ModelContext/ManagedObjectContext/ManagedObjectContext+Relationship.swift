@@ -2,7 +2,7 @@ import ULID
 import SQLiteDB
 import Foundation
 
-public typealias VeinObserver = (id: ULID, block: () -> Void)
+public typealias VeinObserver = (id: ULID, key: String, block: () -> Void)
 
 extension ManagedObjectContext {
     public nonisolated func getModel<T: PersistentModel>(id: ULID, type: T.Type) throws(MOCError) -> T? {
@@ -20,8 +20,9 @@ extension ManagedObjectContext {
     public nonisolated func getModels<T: PersistentModel>(
         ids: [ULID],
         type: T.Type,
-        observer: VeinObserver,
-        requestingModel: any PersistentModel
+        observer: VeinObserver?,
+        requestingModel: any PersistentModel,
+        fieldKey: String
     ) throws(MOCError) -> [T] {
         var models = [ULID: T]()
         
@@ -43,13 +44,15 @@ extension ManagedObjectContext {
         let isInMigration = isInActiveMigration.value
         for id in ids {
             if let model = models[id] {
-                model._observers.value[observer.id] = observer.block
-                requestingModel._observers.value[model.id] = { [weak model] in
+                if let observer {
+                    model._observers.value.addObserver(id: observer.id, key: observer.key, observer: observer.block)
+                }
+                requestingModel._observers.value.addObserver(id: model.id, key: fieldKey, observer: { [weak model] in
                     guard !VeinNotificationGuard.isProcessing else { return }
                     VeinNotificationGuard.$isProcessing.withValue(true) {
                         model?.notifyOfChanges()
                     }
-                }
+                })
                 sortedModels.append(model)
             } else {
                 if !isInMigration {
