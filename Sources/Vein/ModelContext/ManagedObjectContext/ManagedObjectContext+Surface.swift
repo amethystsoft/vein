@@ -50,6 +50,7 @@ extension ManagedObjectContext {
     }
     
     public nonisolated func insert<M: PersistentModel>(_ model: M) throws(ManagedObjectContextError) {
+        _updateModelMetadata(on: model)
         guard model.context == nil else {
             throw MOCError.insertManagedModel(message: "raised by model of type '\(M.self)' with id \(model.id.ulidString)")
         }
@@ -126,6 +127,8 @@ extension ManagedObjectContext {
                 default: [:]
             ][model.id] = model
         }
+        
+        _updateModelMetadata(on: model)
         
         guard
             let observers = registeredQueries.value[model.typeIdentifier],
@@ -415,6 +418,15 @@ extension ManagedObjectContext {
                 inserts.removeAll()
                 touches.removeAll()
                 deletes.removeAll()
+            }
+        }
+    }
+    
+    nonisolated func _updateModelMetadata(on model: any PersistentModel) {
+        if !Self.isSettingInternalMetdata {
+            Self.$isSettingInternalMetdata.withValue(true) {
+                model._updatedAt = Date()
+                model._clientID = clientID
             }
         }
     }

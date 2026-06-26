@@ -16,6 +16,28 @@ public actor ManagedObjectContext {
     package nonisolated let connection: SQLiteDB.Connection
     nonisolated unowned let modelContainer: ModelContainer
     
+    @TaskLocal static var isSettingInternalMetdata = false
+    
+    nonisolated let _clientID = Atomic<String?>(nil)
+    nonisolated var clientID: String {
+        _clientID.mutate { clientID in
+            if let clientID {
+                return clientID
+            }
+            
+            let key = "de.amethystsoft.vein-database.clientID"
+            if let stored = UserDefaults.standard.string(forKey: key) {
+                clientID = stored
+                return stored
+            }
+            let id = UUID().uuidString
+            UserDefaults.standard.set(id, forKey: key)
+
+            clientID = id
+            return id
+        }
+    }
+    
     // MARK: - Migrations
     package nonisolated let isInActiveMigration = Atomic(false)
     

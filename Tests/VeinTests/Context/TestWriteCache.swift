@@ -26,7 +26,20 @@ struct WriteCache {
         let container = try setupContainer()
         let model = V0_0_1.Test(flag: true, someValue: "Hello", randomValue: 42)
         
+        let clientID = container.context.clientID
+        let currentTime = Date().timeIntervalSince1970
+        
         try container.context.insert(model)
+        
+        let endTime = Date().timeIntervalSince1970
+        
+        guard let updatedAt = model._updatedAt?.timeIntervalSince1970 else {
+            Issue.record("updatedAt was unexpectedly found nil.")
+            return
+        }
+        #expect(updatedAt >= currentTime)
+        #expect(updatedAt <= endTime + 0.1)
+        #expect(model._clientID == clientID)
         
         #expect(container.context.hasChanges == true)
         #expect(model.context === container.context)
@@ -49,7 +62,21 @@ struct WriteCache {
         model.context = container.context
         model._setupFields()
         
+        let clientID = container.context.clientID
+        let currentTime = Date().timeIntervalSince1970
+        
         model.someValue = "Updated"
+        
+        let endTime = Date().timeIntervalSince1970
+        
+        guard let updatedAt = model._updatedAt?.timeIntervalSince1970 else {
+            Issue.record("updatedAt was unexpectedly found nil.")
+            return
+        }
+        
+        #expect(updatedAt >= currentTime)
+        #expect(updatedAt <= endTime + 0.1)
+        #expect(model._clientID == clientID)
         
         #expect(container.context.hasChanges == true)
         container.context.writeCache.mutate { _, touches,_, states in

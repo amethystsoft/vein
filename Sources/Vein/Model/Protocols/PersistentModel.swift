@@ -34,6 +34,12 @@ public protocol PersistentModel: AnyObject, Sendable {
     
     static func _predicateInformation(for keyPath: PartialKeyPath<Self>) -> FieldInformation?
     
+    var _updatedAt: Foundation.Date? { get set }
+    
+    var _clientID: String? { get set }
+    
+    var _isDeleted: Bool? { get set }
+    
     init(id: ULID, fields: [String: SQLiteValue])
 }
 

@@ -30,7 +30,11 @@ public struct ModelMacroBase {
             .membersWithFieldType(.relationship, frameworkName: frameworkName)
         
         let relationshipFields = relationshipVariables.fields()
-        let lazyFields = lazyFieldVariables.fields()
+        var lazyFields = lazyFieldVariables.fields()
+        lazyFields["_updatedAt"] = "Foundation.Date?"
+        lazyFields["_clientID"] = "String?"
+        lazyFields["_isDeleted"] = "Bool?"
+        
         let eagerFields = fieldVariables.fields()
         
         // MARK: - Setup Fields & _fields accessor
@@ -42,7 +46,7 @@ public struct ModelMacroBase {
         
         fieldAccessorBodies.append("self._id")
         
-        for name in allFieldNames {
+        for name in allFieldNames.sorted(by: { $0 < $1 }) {
             // This is not needed in every case, but its handy for internal ones
             // not using the wrappedValue.
             fieldBodys.append("self._\(name).model = self")
@@ -58,19 +62,19 @@ public struct ModelMacroBase {
         // MARK: - Field information
         var predicateInformation: [String] = []
         var fieldInformation: [String] = []
-        for (key, value) in lazyFields {
+        for (key, value) in lazyFields.sorted(by: { $0.key < $1.key }) {
             let value = value.drop(while: { $0 == " " || $0 == ":" })
             let information = "Vein.FieldInformation(\(value).sqliteTypeName, \"\(key)\", false)"
             fieldInformation.append(information)
             predicateInformation.append("case \\.\(key): \(information)")
         }
-        for (key, value) in eagerFields {
+        for (key, value) in eagerFields.sorted(by: { $0.key < $1.key }) {
             let value = value.drop(while: { $0 == " " || $0 == ":" })
             let information = "Vein.FieldInformation(\(value).sqliteTypeName, \"\(key)\", true)"
             fieldInformation.append(information)
             predicateInformation.append("case \\.\(key): \(information)")
         }
-        for (key, value) in relationshipFields {
+        for (key, value) in relationshipFields.sorted(by: { $0.key < $1.key }) {
             let relationshipType = "\(value.coreRelationshipType).self"
             // currently only ULID or ULID array is supported
             let value = value.isCollection ? "[ULID]": "ULID?"
@@ -125,6 +129,15 @@ public struct ModelMacroBase {
 /// Immutable after insertion into the context.
 @Vein.PrimaryKey
 var id: Vein.ULID
+
+@Vein.LazyField(suppressUIUpdates: true)
+var _updatedAt: Foundation.Date?
+
+@Vein.LazyField(suppressUIUpdates: true)
+var _clientID: String?
+
+@Vein.LazyField(suppressUIUpdates: true)
+var _isDeleted: Bool? = false
 
 required init(id: Vein.ULID, fields: [String: Vein.SQLiteValue]) {
     self.id = id
@@ -296,7 +309,7 @@ extension FieldType {
 
 extension MemberBlockSyntax {
     func membersWithFieldType(_ type: FieldType, frameworkName: String) -> [VariableDeclSyntax] {
-        members.compactMap { (member: MemberBlockItemSyntax) -> VariableDeclSyntax? in
+        let result = members.compactMap { (member: MemberBlockItemSyntax) -> VariableDeclSyntax? in
             guard let varDecl = member.decl.as(VariableDeclSyntax.self) else {
                 return nil
             }
@@ -305,6 +318,8 @@ extension MemberBlockSyntax {
             
             return hasFieldAttribute ? varDecl : nil
         }
+        
+        return result
     }
 }
 

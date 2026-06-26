@@ -5,9 +5,9 @@ import SQLiteDB
 @testable import Vein
 
 #if TEST_SWIFTUI
-@testable import VeinSwiftUI
+@_spi(VeinTesting) @testable import VeinSwiftUI
 #elseif !TEST_SWIFTUI
-@testable import VeinCore
+@_spi(VeinTesting) @testable import VeinCore
 #endif
 
 @Suite
@@ -42,6 +42,25 @@ struct BugTests {
         
         let result2 = try newContainer.context.getModel(id: model2.id, type: V0_0_1.User.self)
         #expect(result2?.name == model2.name)
+    }
+    
+    @Test
+    func `validateMetadataFields`() async throws {
+        let model = V0_0_1.User(name: "Test")
+        model._setupFields()
+        let fields = model._fields
+        guard
+            let updatedAt = fields.first(where: { $0.key == "_updatedAt" }) as? LazyField<Date>,
+            let isDeleted = fields.first(where: { $0.key == "_isDeleted" }) as? LazyField<Bool>,
+            let clientID = fields.first(where: { $0.key == "_clientID" }) as? LazyField<String>
+        else {
+            Issue.record("One or more metadata fields are missing. Got: \(fields.map(\.key))")
+            return
+        }
+        #expect(isDeleted.wrappedValue == false)
+        #expect(isDeleted.suppressUIUpdates)
+        #expect(updatedAt.suppressUIUpdates)
+        #expect(clientID.suppressUIUpdates)
     }
 }
 

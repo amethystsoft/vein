@@ -11,6 +11,7 @@ extension ManagedObjectContext {
                     .asPersistentRepresentation
                     .sqliteSetter(key: $0.instanceKey)
             }
+            
             try connection.run(table.insert(values))
         } catch let error as ManagedObjectContextError { throw error }
         catch let error as SQLiteDB.Result {

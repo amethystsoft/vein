@@ -36,6 +36,15 @@ struct MacrosTests {
                 @Vein.PrimaryKey
                 var id: Vein.ULID
             
+                @Vein.LazyField(suppressUIUpdates: true)
+                var _updatedAt: Foundation.Date?
+            
+                @Vein.LazyField(suppressUIUpdates: true)
+                var _clientID: String?
+            
+                @Vein.LazyField(suppressUIUpdates: true)
+                var _isDeleted: Bool? = false
+            
                 required init(id: Vein.ULID, fields: [String: Vein.SQLiteValue]) {
                     self.id = id
                     self.test = try! String.init(
@@ -52,6 +61,12 @@ struct MacrosTests {
                 /// Sets required properties for @Field values.
                 /// Gets generated automatically by @Model.
                 public func _setupFields() {
+                    self.__clientID.model = self
+                    self.__clientID.key = "_clientID"
+                    self.__isDeleted.model = self
+                    self.__isDeleted.key = "_isDeleted"
+                    self.__updatedAt.model = self
+                    self.__updatedAt.key = "_updatedAt"
                     self._test.model = self
                     self._test.key = "test"
                     self._id.model = self
@@ -67,6 +82,9 @@ struct MacrosTests {
                 var _fields: [any Vein.FieldBase] {
                     [
                         self._id,
+                        self.__clientID,
+                        self.__isDeleted,
+                        self.__updatedAt,
                         self._test
                     ]
                 }
@@ -85,6 +103,9 @@ struct MacrosTests {
             
                 static func _predicateInformation(for keyPath: PartialKeyPath<Test>) -> Vein.FieldInformation? {
                     switch keyPath {
+                        case \\._clientID: Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false)
+                        case \\._isDeleted: Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false)
+                        case \\._updatedAt: Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false)
                         case \\.test: Vein.FieldInformation(String.sqliteTypeName, "test", true)
                         case \\.id: Vein.FieldInformation(ULID.sqliteTypeName, "id", true)
                         default: nil
@@ -92,6 +113,9 @@ struct MacrosTests {
                 }
             
                 static let _fieldInformation: [Vein.FieldInformation] = [
+                    Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false),
+                    Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false),
+                    Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false),
                     Vein.FieldInformation(String.sqliteTypeName, "test", true)
                 ]
             
@@ -132,6 +156,15 @@ struct MacrosTests {
                 /// Immutable after insertion into the context.
                 @Vein.PrimaryKey
                 var id: Vein.ULID
+
+                @Vein.LazyField(suppressUIUpdates: true)
+                var _updatedAt: Foundation.Date?
+            
+                @Vein.LazyField(suppressUIUpdates: true)
+                var _clientID: String?
+            
+                @Vein.LazyField(suppressUIUpdates: true)
+                var _isDeleted: Bool? = false
             
                 required init(id: Vein.ULID, fields: [String: Vein.SQLiteValue]) {
                     self.id = id
@@ -149,6 +182,12 @@ struct MacrosTests {
                 /// Sets required properties for @Field values.
                 /// Gets generated automatically by @Model.
                 public func _setupFields() {
+                    self.__clientID.model = self
+                    self.__clientID.key = "_clientID"
+                    self.__isDeleted.model = self
+                    self.__isDeleted.key = "_isDeleted"
+                    self.__updatedAt.model = self
+                    self.__updatedAt.key = "_updatedAt"
                     self._test.model = self
                     self._test.key = "test"
                     self._id.model = self
@@ -164,6 +203,9 @@ struct MacrosTests {
                 var _fields: [any Vein.FieldBase] {
                     [
                         self._id,
+                        self.__clientID,
+                        self.__isDeleted,
+                        self.__updatedAt,
                         self._test
                     ]
                 }
@@ -182,6 +224,9 @@ struct MacrosTests {
             
                 static func _predicateInformation(for keyPath: PartialKeyPath<Test>) -> Vein.FieldInformation? {
                     switch keyPath {
+                        case \\._clientID: Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false)
+                        case \\._isDeleted: Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false)
+                        case \\._updatedAt: Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false)
                         case \\.test: Vein.FieldInformation(String.sqliteTypeName, "test", true)
                         case \\.id: Vein.FieldInformation(ULID.sqliteTypeName, "id", true)
                         default: nil
@@ -189,6 +234,9 @@ struct MacrosTests {
                 }
             
                 static let _fieldInformation: [Vein.FieldInformation] = [
+                    Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false),
+                    Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false),
+                    Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false),
                     Vein.FieldInformation(String.sqliteTypeName, "test", true)
                 ]
             
@@ -243,6 +291,15 @@ struct MacrosTests {
                 @Vein.PrimaryKey
                 var id: Vein.ULID
             
+                @Vein.LazyField(suppressUIUpdates: true)
+                var _updatedAt: Foundation.Date?
+            
+                @Vein.LazyField(suppressUIUpdates: true)
+                var _clientID: String?
+            
+                @Vein.LazyField(suppressUIUpdates: true)
+                var _isDeleted: Bool? = false
+            
                 required init(id: Vein.ULID, fields: [String: Vein.SQLiteValue]) {
                     self.id = id
                     self.test = try! String.init(
@@ -259,6 +316,12 @@ struct MacrosTests {
                 /// Sets required properties for @Field values.
                 /// Gets generated automatically by @Model.
                 public func _setupFields() {
+                    self.__clientID.model = self
+                    self.__clientID.key = "_clientID"
+                    self.__isDeleted.model = self
+                    self.__isDeleted.key = "_isDeleted"
+                    self.__updatedAt.model = self
+                    self.__updatedAt.key = "_updatedAt"
                     self._test.model = self
                     self._test.key = "test"
                     self._id.model = self
@@ -274,6 +337,9 @@ struct MacrosTests {
                 var _fields: [any Vein.FieldBase] {
                     [
                         self._id,
+                        self.__clientID,
+                        self.__isDeleted,
+                        self.__updatedAt,
                         self._test
                     ]
                 }
@@ -292,6 +358,9 @@ struct MacrosTests {
             
                 static func _predicateInformation(for keyPath: PartialKeyPath<Test>) -> Vein.FieldInformation? {
                     switch keyPath {
+                        case \\._clientID: Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false)
+                        case \\._isDeleted: Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false)
+                        case \\._updatedAt: Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false)
                         case \\.test: Vein.FieldInformation(String.sqliteTypeName, "test", true)
                         case \\.id: Vein.FieldInformation(ULID.sqliteTypeName, "id", true)
                         default: nil
@@ -299,6 +368,9 @@ struct MacrosTests {
                 }
             
                 static let _fieldInformation: [Vein.FieldInformation] = [
+                    Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false),
+                    Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false),
+                    Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false),
                     Vein.FieldInformation(String.sqliteTypeName, "test", true)
                 ]
             
@@ -338,6 +410,15 @@ struct MacrosTests {
                 /// Immutable after insertion into the context.
                 @Vein.PrimaryKey
                 var id: Vein.ULID
+
+                @Vein.LazyField(suppressUIUpdates: true)
+                var _updatedAt: Foundation.Date?
+            
+                @Vein.LazyField(suppressUIUpdates: true)
+                var _clientID: String?
+            
+                @Vein.LazyField(suppressUIUpdates: true)
+                var _isDeleted: Bool? = false
             
                 required init(id: Vein.ULID, fields: [String: Vein.SQLiteValue]) {
                     self.id = id
@@ -355,6 +436,12 @@ struct MacrosTests {
                 /// Sets required properties for @Field values.
                 /// Gets generated automatically by @Model.
                 public func _setupFields() {
+                    self.__clientID.model = self
+                    self.__clientID.key = "_clientID"
+                    self.__isDeleted.model = self
+                    self.__isDeleted.key = "_isDeleted"
+                    self.__updatedAt.model = self
+                    self.__updatedAt.key = "_updatedAt"
                     self._test.model = self
                     self._test.key = "test"
                     self._id.model = self
@@ -370,6 +457,9 @@ struct MacrosTests {
                 var _fields: [any Vein.FieldBase] {
                     [
                         self._id,
+                        self.__clientID,
+                        self.__isDeleted,
+                        self.__updatedAt,
                         self._test
                     ]
                 }
@@ -388,6 +478,9 @@ struct MacrosTests {
             
                 static func _predicateInformation(for keyPath: PartialKeyPath<Test>) -> Vein.FieldInformation? {
                     switch keyPath {
+                        case \\._clientID: Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false)
+                        case \\._isDeleted: Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false)
+                        case \\._updatedAt: Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false)
                         case \\.test: Vein.FieldInformation(String.sqliteTypeName, "test", true)
                         case \\.id: Vein.FieldInformation(ULID.sqliteTypeName, "id", true)
                         default: nil
@@ -395,6 +488,9 @@ struct MacrosTests {
                 }
             
                 static let _fieldInformation: [Vein.FieldInformation] = [
+                    Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false),
+                    Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false),
+                    Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false),
                     Vein.FieldInformation(String.sqliteTypeName, "test", true)
                 ]
             

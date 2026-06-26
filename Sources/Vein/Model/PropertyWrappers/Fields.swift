@@ -16,6 +16,8 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
     /// ONLY LET MACRO SET
     public weak var model: (any PersistentModel)?
     
+    @_spi(VeinTesting) public let suppressUIUpdates: Bool
+    
     private var _wasTouched: Bool = false
     public private(set) var wasTouched: Bool {
         get {
@@ -79,18 +81,10 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
         }
     }
     
-    /* TODO: add async fetch
-    public func readAsynchronously() async throws -> T? {
-        guard let context = model?.context else {
-            return store
-        }
-        return try await context.fetchSingleProperty(field: self)
-    }
-    */
-    
-    public init(wrappedValue: T?) {
+    public init(wrappedValue: T? = nil, suppressUIUpdates: Bool = false) {
         self.key = nil
         self.store = wrappedValue
+        self.suppressUIUpdates = suppressUIUpdates
     }
     
     private func setAndNotify(_ newValue: WrappedType) {
@@ -98,7 +92,9 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
             store = newValue
             readFromStore = true
         }
-        model?.notifyOfChanges()
+        if !suppressUIUpdates {
+            model?.notifyOfChanges()
+        }
     }
     
     public func setStoreToCapturedState(_ state: Any) {
