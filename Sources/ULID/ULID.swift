@@ -6,6 +6,8 @@
 //  Copyright © 2019 yaslab. All rights reserved.
 //
 //  Adapted for Amethyst Vein to resolve concurrent metadata TSan false positives.
+//
+// copied at https://github.com/yaslab/ULID.swift/tree/15c21a2f4a6d27f65df2468c5338c949ae857903
 
 import Foundation
 

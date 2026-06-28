@@ -5,6 +5,7 @@
 //  Created by Yasuhiro Hatta on 2019/01/11.
 //  Copyright © 2019 yaslab. All rights reserved.
 //
+// copied at https://github.com/yaslab/ULID.swift/tree/15c21a2f4a6d27f65df2468c5338c949ae857903
 
 import Foundation
 

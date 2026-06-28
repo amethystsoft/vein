@@ -5,12 +5,17 @@
 //  Created by Yasuhiro Hatta on 2019/01/11.
 //  Copyright © 2019 yaslab. All rights reserved.
 //
-#if !os(Android)
-import XCTest
+//  Adapted for Amethyst Vein
+//
+//  copied at https://github.com/yaslab/ULID.swift/tree/15c21a2f4a6d27f65df2468c5338c949ae857903
+
+import Foundation
+import Testing
 import ULID
 
-final class ULIDTests: XCTestCase {
-
+@Suite
+struct ULIDTests {
+    @Test
     func testGenerateTimestamp() {
         let expected: [UInt8] = [
             0x01, 0x68, 0x3D, 0x17, 0x73, 0x09, 0xE5
@@ -19,20 +24,21 @@ final class ULIDTests: XCTestCase {
         let timestamp = Date(timeIntervalSince1970: 1547213173.513)
         let actual = ULID(timestamp: timestamp)
 
-        XCTAssertEqual(expected[0], actual.ulid.0)
-        XCTAssertEqual(expected[1], actual.ulid.1)
-        XCTAssertEqual(expected[2], actual.ulid.2)
-        XCTAssertEqual(expected[3], actual.ulid.3)
-        XCTAssertEqual(expected[4], actual.ulid.4)
-        XCTAssertEqual(expected[5], actual.ulid.5)
+        #expect(expected[0] == actual.ulid.0)
+        #expect(expected[1] == actual.ulid.1)
+        #expect(expected[2] == actual.ulid.2)
+        #expect(expected[3] == actual.ulid.3)
+        #expect(expected[4] == actual.ulid.4)
+        #expect(expected[5] == actual.ulid.5)
 
-        XCTAssertEqual(timestamp, actual.timestamp)
+        #expect(timestamp == actual.timestamp)
 
-        XCTAssertEqual(Array(expected.prefix(6)), Array(actual.ulidData.prefix(6)))
+        #expect(Array(expected.prefix(6)) == Array(actual.ulidData.prefix(6)))
 
-        XCTAssertEqual("01D0YHEWR9", actual.ulidString.prefix(10))
+        #expect("01D0YHEWR9" == actual.ulidString.prefix(10))
     }
     
+    @Test
     func testGenerateTimestampAndRandomnes(){
         let timestamp = Date(timeIntervalSince1970: 1547213173.513)
         let uuidCorrectSize: [UInt8] = [
@@ -40,20 +46,18 @@ final class ULIDTests: XCTestCase {
         ]
         
         let actual = ULID(timestamp: timestamp, randomPartData: Data(uuidCorrectSize))!
-        XCTAssertEqual(timestamp, actual.timestamp)
+        #expect(timestamp == actual.timestamp)
         
-        XCTAssertEqual(0x01, actual.ulid.6)
-        XCTAssertEqual(0x68, actual.ulid.7)
-        XCTAssertEqual(0x3D, actual.ulid.8)
-        XCTAssertEqual(0x17, actual.ulid.9)
-        XCTAssertEqual(0x73, actual.ulid.10)
-        XCTAssertEqual(0x09, actual.ulid.11)
-        XCTAssertEqual(0x69, actual.ulid.12)
-        XCTAssertEqual(0xF4, actual.ulid.13)
-        XCTAssertEqual(0xA2, actual.ulid.14)
-        XCTAssertEqual(0xB1, actual.ulid.15)
-
-        
+        #expect(0x01 == actual.ulid.6)
+        #expect(0x68 == actual.ulid.7)
+        #expect(0x3D == actual.ulid.8)
+        #expect(0x17 == actual.ulid.9)
+        #expect(0x73 == actual.ulid.10)
+        #expect(0x09 == actual.ulid.11)
+        #expect(0x69 == actual.ulid.12)
+        #expect(0xF4 == actual.ulid.13)
+        #expect(0xA2 == actual.ulid.14)
+        #expect(0xB1 == actual.ulid.15)
         
         //Test if initializer discards bytes beyond 10 bytes
         let uuidTooBigSize: [UInt8] = [
@@ -61,60 +65,63 @@ final class ULIDTests: XCTestCase {
         ]
         
         let actual2 = ULID(timestamp: timestamp, randomPartData: Data(uuidTooBigSize))!
-        XCTAssertEqual(timestamp, actual.timestamp)
+        #expect(timestamp == actual.timestamp)
         
-        XCTAssertEqual(0x01, actual2.ulid.6)
-        XCTAssertEqual(0x68, actual2.ulid.7)
-        XCTAssertEqual(0x3D, actual2.ulid.8)
-        XCTAssertEqual(0x17, actual2.ulid.9)
-        XCTAssertEqual(0x73, actual2.ulid.10)
-        XCTAssertEqual(0x09, actual2.ulid.11)
-        XCTAssertEqual(0x69, actual2.ulid.12)
-        XCTAssertEqual(0xF4, actual2.ulid.13)
-        XCTAssertEqual(0xA2, actual2.ulid.14)
-        XCTAssertEqual(0xB1, actual2.ulid.15)
-        
+        #expect(0x01 == actual2.ulid.6)
+        #expect(0x68 == actual2.ulid.7)
+        #expect(0x3D == actual2.ulid.8)
+        #expect(0x17 == actual2.ulid.9)
+        #expect(0x73 == actual2.ulid.10)
+        #expect(0x09 == actual2.ulid.11)
+        #expect(0x69 == actual2.ulid.12)
+        #expect(0xF4 == actual2.ulid.13)
+        #expect(0xA2 == actual2.ulid.14)
+        #expect(0xB1 == actual2.ulid.15)
         
         let uuidTooSmallSize: [UInt8] = [
             0x01, 0x68, 0x3D, 0x17, 0x73,
         ]
         
-        XCTAssertNil(ULID(timestamp: timestamp, randomPartData: Data(uuidTooSmallSize)))
+        #expect(nil == ULID(timestamp: timestamp, randomPartData: Data(uuidTooSmallSize)))
     }
 
+    @Test
     func testGenerateRandomness() {
         let timestamp = Date(timeIntervalSince1970: 1547213173.513)
         var generator = MockRandomNumberGenerator(value: 0x1122334455667788)
         let actual = ULID(timestamp: timestamp, generator: &generator)
 
-        XCTAssertEqual(timestamp, actual.timestamp)
+        #expect(timestamp == actual.timestamp)
 
-        XCTAssertEqual(0x77, actual.ulid.6)
-        XCTAssertEqual(0x88, actual.ulid.7)
-        XCTAssertEqual(0x11, actual.ulid.8)
-        XCTAssertEqual(0x22, actual.ulid.9)
-        XCTAssertEqual(0x33, actual.ulid.10)
-        XCTAssertEqual(0x44, actual.ulid.11)
-        XCTAssertEqual(0x55, actual.ulid.12)
-        XCTAssertEqual(0x66, actual.ulid.13)
-        XCTAssertEqual(0x77, actual.ulid.14)
-        XCTAssertEqual(0x88, actual.ulid.15)
+        #expect(0x77 == actual.ulid.6)
+        #expect(0x88 == actual.ulid.7)
+        #expect(0x11 == actual.ulid.8)
+        #expect(0x22 == actual.ulid.9)
+        #expect(0x33 == actual.ulid.10)
+        #expect(0x44 == actual.ulid.11)
+        #expect(0x55 == actual.ulid.12)
+        #expect(0x66 == actual.ulid.13)
+        #expect(0x77 == actual.ulid.14)
+        #expect(0x88 == actual.ulid.15)
     }
 
+    @Test
     func testParseULIDString() {
         let expected = "01D0YHEWR9WMPY4NNTPK1MR1TQ"
 
         let actual = ULID(ulidString: expected)
 
-        XCTAssertNotNil(actual)
-        XCTAssertEqual(expected, actual!.ulidString)
+        #expect(nil != actual)
+        #expect(expected == actual!.ulidString)
     }
 
+    @Test
     func testParseULIDStringError() {
         let zero = ""
-        XCTAssertNil(ULID(ulidString: zero))
+        #expect(nil == ULID(ulidString: zero))
     }
 
+    @Test
     func testParseULIDData() {
         let expected: [UInt8] = [
             0x01, 0x68, 0x3D, 0x17, 0x73, 0x09, 0xE5, 0x2D,
@@ -123,89 +130,101 @@ final class ULIDTests: XCTestCase {
 
         let actual = ULID(ulidData: Data(expected))
 
-        XCTAssertNotNil(actual)
-        XCTAssertEqual(expected, Array(actual!.ulidData))
+        #expect(nil != actual)
+        #expect(expected == Array(actual!.ulidData))
     }
 
+    @Test
     func testParseULIDDataError() {
         let zero = Data()
-        XCTAssertNil(ULID(ulidData: zero))
+        #expect(nil == ULID(ulidData: zero))
     }
 
+    @Test
     func testULIDDataLength() {
         let ulid = ULID()
-        XCTAssertEqual(16, ulid.ulidData.count)
+        #expect(16 == ulid.ulidData.count)
     }
 
+    @Test
     func testULIDStringLength() {
         let ulid = ULID()
-        XCTAssertEqual(26, ulid.ulidString.count)
+        #expect(26 == ulid.ulidString.count)
     }
 
+    @Test
     func testHashable1() {
         // Note: Hash values are not guaranteed to be equal across different executions.
         let ulid1 = ULID()
         let ulid2 = ULID(ulid: ulid1.ulid)
-        XCTAssertEqual(ulid1.hashValue, ulid2.hashValue)
+        #expect(ulid1.hashValue == ulid2.hashValue)
     }
 
+    @Test
     func testHashable2() {
         let timestamp = Date(timeIntervalSince1970: 1547213173.513)
 
         let ulid1 = ULID(timestamp: timestamp)
         let ulid2 = ULID(timestamp: timestamp)
 
-        XCTAssertNotEqual(ulid1.hashValue, ulid2.hashValue)
+        #expect(ulid1.hashValue != ulid2.hashValue)
     }
 
+    @Test
     func testHashable3() {
         let ulid1 = ULID()
         let ulid2 = ULID()
         let map = [ulid1: 1, ulid2: 2]
 
-        XCTAssertEqual(1, map[ulid1]!)
-        XCTAssertEqual(2, map[ulid2]!)
+        #expect(1 == map[ulid1]!)
+        #expect(2 == map[ulid2]!)
     }
 
+    @Test
     func testEquatable1() {
         let timestamp = Date(timeIntervalSince1970: 1547213173.513)
 
         let ulid1 = ULID(timestamp: timestamp)
         let ulid2 = ULID(ulid: ulid1.ulid)
 
-        XCTAssertEqual(ulid1, ulid2)
+        #expect(ulid1 == ulid2)
     }
 
+    @Test
     func testEquatable2() {
         let timestamp = Date(timeIntervalSince1970: 1547213173.513)
 
         let ulid1 = ULID(timestamp: timestamp)
         let ulid2 = ULID(timestamp: timestamp)
 
-        XCTAssertNotEqual(ulid1, ulid2)
+        #expect(ulid1 != ulid2)
     }
 
+    @Test
     func testComparable1() {
         let lhs = ULID(ulid: (1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
         let rhs = ULID(ulid: (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
-        XCTAssertFalse(lhs < rhs)
-        XCTAssertTrue(lhs > rhs)
+        #expect(!(lhs < rhs))
+        #expect(lhs > rhs)
     }
 
+    @Test
     func testComparable2() {
         let lhs = ULID(ulid: (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1))
         let rhs = ULID(ulid: (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
-        XCTAssertFalse(lhs < rhs)
-        XCTAssertTrue(lhs > rhs)
+        #expect(!(lhs < rhs))
+        #expect(lhs > rhs)
     }
 
+    @Test
     func testComparable3() {
         let lhs = ULID(ulid: (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
         let rhs = ULID(ulid: (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1))
-        XCTAssertTrue(lhs < rhs)
-        XCTAssertFalse(lhs > rhs)
+        #expect(lhs < rhs)
+        #expect(!(lhs > rhs))
     }
 
+    @Test
     func testComparable4() {
         let now = Date()
         let ulid0 = ULID(timestamp: now.addingTimeInterval(-120))
@@ -215,22 +234,24 @@ final class ULIDTests: XCTestCase {
         let ulid4 = ULID(timestamp: now.addingTimeInterval(120))
         let sorted = [ulid2, ulid0, ulid3, ulid4, ulid1].sorted()
 
-        XCTAssertEqual(ulid0, sorted[0])
-        XCTAssertEqual(ulid1, sorted[1])
-        XCTAssertEqual(ulid2, sorted[2])
-        XCTAssertEqual(ulid3, sorted[3])
-        XCTAssertEqual(ulid4, sorted[4])
+        #expect(ulid0 == sorted[0])
+        #expect(ulid1 == sorted[1])
+        #expect(ulid2 == sorted[2])
+        #expect(ulid3 == sorted[3])
+        #expect(ulid4 == sorted[4])
     }
 
+    @Test
     func testCustomStringConvertible() {
         let ulid = ULID()
-        XCTAssertEqual(ulid.ulidString, ulid.description)
+        #expect(ulid.ulidString == ulid.description)
     }
 
     struct CodableModel: Codable {
         let ulid: ULID
     }
 
+    @Test
     func testDecodable() {
         let ulidString = "01D0YHEWR9WMPY4NNTPK1MR1TQ"
         let json = """
@@ -239,12 +260,13 @@ final class ULIDTests: XCTestCase {
         do {
             let decoder = JSONDecoder()
             let model = try decoder.decode(CodableModel.self, from: json.data(using: .utf8)!)
-            XCTAssertEqual(ulidString, model.ulid.ulidString)
+            #expect(ulidString == model.ulid.ulidString)
         } catch {
-            XCTFail("\(error)")
+            Issue.record(error)
         }
     }
 
+    @Test
     func testDecodableError() {
         let json = """
             { "ulid" : "" }
@@ -252,14 +274,15 @@ final class ULIDTests: XCTestCase {
         do {
             let decoder = JSONDecoder()
             _ = try decoder.decode(CodableModel.self, from: json.data(using: .utf8)!)
-            XCTFail()
+            Issue.record()
         } catch DecodingError.dataCorrupted {
             // Success
         } catch {
-            XCTFail()
+            Issue.record()
         }
     }
 
+    @Test
     func testEncodable() {
         let ulidString = "01D0YHEWR9WMPY4NNTPK1MR1TQ"
         let expected = """
@@ -269,14 +292,15 @@ final class ULIDTests: XCTestCase {
             let encoder = JSONEncoder()
             let model = CodableModel(ulid: ULID(ulidString: ulidString)!)
             let actual = try String(data: encoder.encode(model), encoding: .utf8)
-            XCTAssertEqual(expected, actual)
+            #expect(expected == actual)
         } catch {
-            XCTFail("\(error)")
+            Issue.record(error)
         }
     }
 
+    @Test
     func testMemorySize() {
-        XCTAssertEqual(16, MemoryLayout<ULID>.size)
+        #expect(16 == MemoryLayout<ULID>.size)
     }
 
 }
@@ -295,4 +319,3 @@ private struct MockRandomNumberGenerator: RandomNumberGenerator {
     }
 
 }
-#endif
