@@ -65,7 +65,7 @@ struct ULIDTests {
         ]
         
         let actual2 = ULID(timestamp: timestamp, randomPartData: Data(uuidTooBigSize))!
-        #expect(timestamp == actual.timestamp)
+        #expect(timestamp == actual2.timestamp)
         
         #expect(0x01 == actual2.ulid.6)
         #expect(0x68 == actual2.ulid.7)
