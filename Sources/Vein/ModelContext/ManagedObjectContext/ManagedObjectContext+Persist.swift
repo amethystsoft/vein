@@ -12,7 +12,15 @@ extension ManagedObjectContext {
                     .sqliteSetter(key: $0.instanceKey)
             }
             
-            try connection.run(table.insert(values))
+            let insert = table.insert(values)
+            
+            if modelContainer.logConfiguration.sqlQueries {
+                Self.logger.info(
+                    "Inserting \(M.self) with \nQuery: '\(insert.expression.template)'\nBindings:\(insert.expression.bindings)"
+                )
+            }
+            
+            try connection.run(insert)
         } catch let error as ManagedObjectContextError { throw error }
         catch let error as SQLiteDB.Result {
             let parsed = error.parse()
@@ -46,6 +54,12 @@ extension ManagedObjectContext {
                         }
                 )
             
+            if modelContainer.logConfiguration.sqlQueries {
+                Self.logger.info(
+                    "Updating \(M.self) with \nQuery: '\(query.expression.template)'\nBindings:\(query.expression.bindings)"
+                )
+            }
+            
             try connection.run(
                 query
             )
@@ -63,8 +77,16 @@ extension ManagedObjectContext {
     
     nonisolated func _writeDelete(_ model: any PersistentModel) throws(MOCError) {
         let filter = Table(model._getSchema()).filter(SQLExpression<String>("id") == model.id.ulidString)
+        let query = filter.delete()
+        
+        if modelContainer.logConfiguration.sqlQueries {
+            Self.logger.info(
+                "Deleting \(model._getSchema()) with \nQuery: '\(query.expression.template)'\nBindings:\(query.expression.bindings)"
+            )
+        }
+        
         do {
-            try connection.run(filter.delete())
+            try connection.run(query)
             model.context = nil
             
             Task { @MainActor in
@@ -94,6 +116,11 @@ extension ManagedObjectContext {
     }
     
     package nonisolated func run(_ query: String) throws(ManagedObjectContextError) {
+        if modelContainer.logConfiguration.sqlQueries {
+            Self.logger.info(
+                "Running query '\(query)'"
+            )
+        }
         do {
             try connection.run(query)
         } catch let error as SQLiteDB.Result {

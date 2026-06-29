@@ -2,7 +2,7 @@ import Foundation
 import SQLiteDB
 
 public final class ModelContainer: @unchecked Sendable {
-    private let migration: SchemaMigrationPlan.Type
+    public let migration: SchemaMigrationPlan.Type
     private let path: String?
     
     // Only force unwrapped to count as initialized,
@@ -20,11 +20,19 @@ public final class ModelContainer: @unchecked Sendable {
     
     public let encryptionEnabled: Bool
     
+    public let logConfiguration: LogConfiguration
+    
     
     /// Manages the schema and storage for a Vein database.
     ///
-    /// - Parameter appID: A unique identifier used per-database to construct the keyring
+    /// - Parameters:
+    ///   - versionedSchema: The VersionedSchema you want to use models of.
+    ///   - migration: The MigrationPlan to use if migrations are necessary.
+    ///   - path: The path of the database file or nil for in memory.
+    ///   - appID: A unique identifier used per-database to construct the keyring
     ///   service string: `"com.amethyst.vein.sqlcipher.\(appID)"`.
+    ///   - encryptionEnabled: Whether to apply DB-level encryption.
+    ///   - logConfiguration: What information to log.
     ///
     /// - Note: `Keyring.appIdentifier` is a global, one-time configuration for the
     ///   underlying `KeyringAccess` library, typically set once per process or environment.
@@ -49,8 +57,18 @@ public final class ModelContainer: @unchecked Sendable {
         migration: SchemaMigrationPlan.Type,
         at path: String?,
         appID: String,
-        encryptionEnabled: Bool = true
+        encryptionEnabled: Bool = true,
+        logConfiguration: LogConfiguration? = nil
     ) throws(ManagedObjectContextError) {
+        if let logConfiguration {
+            self.logConfiguration = logConfiguration
+        } else {
+            #if DEBUG
+            self.logConfiguration = .debug
+            #else
+            self.logConfiguration = .release
+            #endif
+        }
         self.encryptionEnabled = encryptionEnabled
         self.appID = appID
         
@@ -101,8 +119,14 @@ public final class ModelContainer: @unchecked Sendable {
     
     /// Manages the schema and storage for a Vein database.
     ///
-    /// - Parameter appID: A unique identifier used per-database to construct the keyring
+    /// - Parameters:
+    ///   - versionedSchema: The VersionedSchema you want to use models of.
+    ///   - migration: The MigrationPlan to use if migrations are necessary.
+    ///   - connection: The existing connection to the database.
+    ///   - appID: A unique identifier used per-database to construct the keyring
     ///   service string: `"com.amethyst.vein.sqlcipher.\(appID)"`.
+    ///   - encryptionEnabled: Whether to apply DB-level encryption.
+    ///   - logConfiguration: What information to log.
     ///
     /// - Note: `Keyring.appIdentifier` is a global, one-time configuration for the
     ///   underlying `KeyringAccess` library, typically set once per process or environment.
@@ -127,8 +151,19 @@ public final class ModelContainer: @unchecked Sendable {
         migration: SchemaMigrationPlan.Type,
         connection: Connection,
         appID: String,
-        encryptionEnabled: Bool = true
+        encryptionEnabled: Bool = true,
+        logConfiguration: LogConfiguration? = nil
     ) throws(ManagedObjectContextError) {
+        if let logConfiguration {
+            self.logConfiguration = logConfiguration
+        } else {
+            #if DEBUG
+            self.logConfiguration = .debug
+            #else
+            self.logConfiguration = .release
+            #endif
+        }
+        
         self.encryptionEnabled = encryptionEnabled
         self.appID = appID
         

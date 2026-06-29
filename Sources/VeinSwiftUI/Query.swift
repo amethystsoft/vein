@@ -83,7 +83,9 @@ package final class QueryObserver<M: PersistentModel>: ObservableObject, @unchec
             let initialResults = try context.fetchAll(predicate)
             self.results = initialResults
         } catch {
-            Self.logger.error("Failed to fetch initial query results: \(error.localizedDescription)")
+            if context.modelContainer.logConfiguration.modelContextErrors {
+                Self.logger.error("Failed to fetch initial query results: \(error.localizedDescription)")
+            }
             self.results = []
         }
     }
@@ -169,6 +171,7 @@ public struct VeinContainer<Content: View>: View {
     @State private var isInitialized: Bool = false
     @State var error: Error?
     private let content: () -> Content
+    static var logger: Logger { Logger(label: "Vein.VeinContainer") }
     
     public init(@ViewBuilder content: @escaping () -> Content ) {
         self.content = content
@@ -199,7 +202,9 @@ public struct VeinContainer<Content: View>: View {
                             isInitialized = true
                         } catch {
                             self.error = error
-                            print(error.localizedDescription)
+                            if container.logConfiguration.modelContextErrors {
+                                Self.logger.error("An error occurred during migration of ModelContainer with version \(container.versionedSchema) and MigrationPlan \(container.migration): \(error.localizedDescription)")
+                            }
                         }
                     }
             }

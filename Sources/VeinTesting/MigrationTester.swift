@@ -17,6 +17,7 @@ public struct MigrationTester {
     
     public func seed(
         version: VersionedSchema.Type,
+        logConfiguration: LogConfiguration? = nil,
         with block: (ManagedObjectContext) throws -> Void
     ) throws {
         let container = try ModelContainer(
@@ -24,7 +25,8 @@ public struct MigrationTester {
             migration: migrationPlan,
             at: containerPath,
             appID: "de.amethystsoft.vein.MigrationTests",
-            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption,
+            logConfiguration: logConfiguration
         )
         try block(container.context)
     }
