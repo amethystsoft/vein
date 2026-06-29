@@ -30,11 +30,15 @@ nonisolated final class ThreadSafeIdentityMap {
     }
     
     func getTracked<T: PersistentModel>(_ type: T.Type, id: ULID) -> T? {
-        get(type.typeIdentifier, id: id)
+        lock.withLock {
+            get(type.typeIdentifier, id: id)
+        }
     }
     
     func getTracked<T: PersistentModel>(_ type: ObjectIdentifier, id: ULID) -> T? {
-        get(type, id: id)
+        lock.withLock {
+            get(type, id: id)
+        }
     }
     
     func getTrackedCount() -> Int {

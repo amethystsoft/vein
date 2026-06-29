@@ -10,7 +10,6 @@ public protocol PersistentModel: AnyObject, Sendable {
     /// Gets  used to reference models in relationships.
     /// Immutable after insertion into the context.
     var id: ULID { get set }
-    var context: ManagedObjectContext? { get set }
     
     /// Whether a model is prepared to be deleted.
     ///

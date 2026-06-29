@@ -2,6 +2,10 @@ name: Swift Test release
 
 on:
   workflow_dispatch:
+
+permissions:
+  contents: read
+
 jobs:
   linux-android:
     runs-on: ubuntu-24.04
