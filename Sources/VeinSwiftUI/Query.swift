@@ -83,7 +83,7 @@ package final class QueryObserver<M: PersistentModel>: ObservableObject, @unchec
             let initialResults = try context.fetchAll(predicate)
             self.results = initialResults
         } catch {
-            if context.modelContainer.logConfiguration.unexpectedlyEmptyResults {
+            if context.modelContainer.logConfiguration.modelContextErrors {
                 Self.logger.error("Failed to fetch initial query results: \(error.localizedDescription)")
             }
             self.results = []
