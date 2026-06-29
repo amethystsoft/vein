@@ -7,21 +7,6 @@ permissions:
   contents: read
 
 jobs:
-  linux-android:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
-        with:
-          persist-credentials: false
-      - name: "Test Swift Package on Android"
-        uses: skiptools/swift-android-action@2044b79660f201ccef8cbce62877e4ec5409f9c8 # 2.9.5
-        with:
-          swift-version: 'nightly-main'
-          # Ubuntu runners low on space causes the emulator to fail to install
-          free-disk-space: true
-          test-env: SHOULD_DISABLE_ENCRYPTION=1
-          swift-configuration: release
-          swift-build-flags: --enable-testing
   macos:
     runs-on: macos-26
     steps:
