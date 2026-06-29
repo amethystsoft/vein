@@ -27,8 +27,8 @@ extension MigrationTests {
                     migration
                 ) = error
             {
-                #expect("\(schema)" == "\(Version0_0_2.self)")
-                #expect("\(migration)" == "\(MigrationPlan.self)")
+                #expect("\(schema)" == "Version0_0_2")
+                #expect("\(migration)" == "MigrationPlan")
                 return
             }
             Issue.record("Thrown error does not match expectations: \(error.errorDescription)")

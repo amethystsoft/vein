@@ -10,7 +10,6 @@ public protocol PersistentModel: AnyObject, Sendable {
     /// Gets  used to reference models in relationships.
     /// Immutable after insertion into the context.
     var id: ULID { get set }
-    var context: ManagedObjectContext? { get set }
     
     /// Whether a model is prepared to be deleted.
     ///
@@ -40,6 +39,8 @@ public protocol PersistentModel: AnyObject, Sendable {
     
     var _isDeleted: Bool? { get set }
     
+    var _context: Vein.Atomic<Vein.ManagedObjectContext?> { get }
+    
     init(id: ULID, fields: [String: SQLiteValue])
 }
 
@@ -47,6 +48,15 @@ extension PersistentModel {
     public static var typeIdentifier: ObjectIdentifier { ObjectIdentifier(Self.self) }
     public var typeIdentifier: ObjectIdentifier { ObjectIdentifier(Self.self) }
     public func _getSchema() -> String { Self.schema }
+    
+    public var context: ManagedObjectContext? {
+        get {
+            _context.value
+        }
+        set {
+            _context.value = newValue
+        }
+    }
     
     public func extractPrimitiveState() -> PrimitiveState {
         var data = [String: Any]()

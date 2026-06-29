@@ -154,7 +154,7 @@ public func _setupFields() {
     \(fieldSetup)
 }
 
-var context: Vein.ManagedObjectContext? = nil
+let _context = Vein.Atomic<Vein.ManagedObjectContext?>(nil)
 
 /// Whether a model is prepared to be deleted.
 ///

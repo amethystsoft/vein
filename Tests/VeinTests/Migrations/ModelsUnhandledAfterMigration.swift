@@ -39,8 +39,8 @@ extension MigrationTests {
                     schemas
                 ) = error
             {
-                #expect("\(origin)" == "\(Version0_0_1.self)")
-                #expect("\(destination)" == "\(Version0_0_2.self)")
+                #expect("\(origin)" == "Version0_0_1")
+                #expect("\(destination)" == "Version0_0_2")
                 #expect(schemas == [Version0_0_1.BasicModel.schema])
                 return
             }
