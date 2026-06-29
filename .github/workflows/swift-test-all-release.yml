@@ -21,7 +21,7 @@ jobs:
           free-disk-space: true
           test-env: SHOULD_DISABLE_ENCRYPTION=1
           swift-configuration: release
-          swift-build-flags: --enable-testing
+          swift-build-flags: --enable-swift-testing
   macos:
     runs-on: macos-26
     steps:
