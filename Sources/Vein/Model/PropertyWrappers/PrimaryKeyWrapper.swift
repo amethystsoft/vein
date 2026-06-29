@@ -25,13 +25,15 @@ public class PrimaryKey: PersistedField, @unchecked Sendable {
         }
         set {
             lock.withLock {
-                if model?.context == nil {
-                    store = newValue
+                if let context = model?.context {
+                    if context.modelContainer.logConfiguration.primaryKeyMutation {
+                        PrimaryKey.logger.warning("""
+                        Attempted to mutate ID of inserted model with ID: \(store). \
+                        This is not supported.
+                        """)
+                    }
                 } else {
-                    PrimaryKey.logger.warning("""
-                    Attempted to mutate ID of inserted model with ID: \(store). \
-                    This is not supported.
-                    """)
+                    store = newValue
                 }
             }
         }

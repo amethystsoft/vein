@@ -13,6 +13,12 @@ extension ManagedObjectContext {
             fieldsToLoad.append(SQLExpression<String>("id"))
             let select = table.select(fieldsToLoad)
             
+            if modelContainer.logConfiguration.sqlQueries {
+                Self.logger.info(
+                    "Fetching \(T.self) with \nQuery: '\(select.expression.template)'\nBindings:\(select.expression.bindings)"
+                )
+            }
+            
             var models = [T]()
             
             var currentlyDeleted = [ULID: any PersistentModel]()
@@ -93,6 +99,12 @@ extension ManagedObjectContext {
         
         let table = Table(model._getSchema()).filter(SQLExpression<String>("id") == model.id.ulidString)
         let select = table.select(distinct: [field.fetchExpressible]).limit(1)
+        
+        if modelContainer.logConfiguration.sqlQueries {
+            Self.logger.info(
+                "Fetching \(field.instanceKey) of \(model._getSchema()) with \nQuery: '\(select.expression.template)'\nBindings:\(select.expression.bindings)"
+            )
+        }
         
         do {
             for row in try connection.prepare(select) {

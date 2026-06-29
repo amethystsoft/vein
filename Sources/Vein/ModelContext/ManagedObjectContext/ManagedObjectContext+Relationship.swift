@@ -59,13 +59,17 @@ extension ManagedObjectContext {
                 sortedModels.append(target)
             } else {
                 if !isInMigration {
-                    Self.logger.warning(
-                        "Relationship ID mismatch for \(T.self). Potential data corruption."
-                    )
+                    if modelContainer.logConfiguration.potentialDataCorruption {
+                        Self.logger.warning(
+                            "Relationship ID mismatch for \(T.self). Potential data corruption."
+                        )
+                    }
                 } else {
-                    Self.logger.info(
-                        "[Migration] Relationship ID mismatch for \(T.self). Verify migration integrity if unexpected."
-                    )
+                    if modelContainer.logConfiguration.potentialDataCorruptionInMigration {
+                        Self.logger.info(
+                            "[Migration] Relationship ID mismatch for \(T.self). Verify migration integrity if unexpected."
+                        )
+                    }
                 }
             }
         }
@@ -83,6 +87,13 @@ extension ManagedObjectContext {
             var fieldsToLoad = eagerLoadedFields.map { $0.fetchExpressible }
             fieldsToLoad.append(SQLExpression<String>("id"))
             let select = table.select(distinct: fieldsToLoad)
+            
+            if modelContainer.logConfiguration.sqlQueries {
+                Self.logger.info(
+                    "Fetching \(T.self) with \nQuery: \(select.expression.template)\nBindings:\(select.expression.bindings)"
+                )
+            }
+            
             var models = [ULID: T]()
             
             var currentlyDeleted = [ULID: any PersistentModel]()

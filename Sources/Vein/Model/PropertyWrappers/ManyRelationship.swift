@@ -92,9 +92,12 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                 return []
             }
             if case .unexpectedlyEmptyResult = error {
-                Self.logger.warning("Unexpectedly empty result for \(T.self)")
+                if context.modelContainer.logConfiguration.unexpectedlyEmptyResults {
+                    Self.logger.warning("Unexpectedly empty result for \(T.self)")
+                }
                 return []
             }
+            
             fatalError(error.localizedDescription)
         }
     }
@@ -293,7 +296,9 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                     do {
                         try context.delete(target)
                     } catch {
-                        Self.logger.error("An error occurred while cascading deletion: \(error)")
+                        if context.modelContainer.logConfiguration.errorWhileCascadeDeletion {
+                            Self.logger.error("An error occurred while cascading deletion: \(error)")
+                        }
                     }
             }
         }

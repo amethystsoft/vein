@@ -14,7 +14,7 @@ typealias Connection = SQLiteDB.Connection
 public actor ManagedObjectContext {
     public static let logger = Logger(label: "ManagedObjectContext")
     package nonisolated let connection: SQLiteDB.Connection
-    nonisolated unowned let modelContainer: ModelContainer
+    public nonisolated unowned let modelContainer: ModelContainer
     
     @TaskLocal static var isSettingInternalMetdata = false
     

@@ -110,7 +110,9 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
                 return nil
             }
             if case .unexpectedlyEmptyResult = error {
-                Self.logger.warning("Unexpectedly empty result for \(T.self)")
+                if context.modelContainer.logConfiguration.unexpectedlyEmptyResults {
+                    Self.logger.warning("Unexpectedly empty result for \(T.self)")
+                }
                 return nil
             }
             fatalError(error.localizedDescription)
@@ -288,7 +290,9 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
                 do {
                     try context.delete(target)
                 } catch {
-                    Self.logger.error("An error occurred while cascading deletion: \(error)")
+                    if context.modelContainer.logConfiguration.errorWhileCascadeDeletion {
+                        Self.logger.error("An error occurred while cascading deletion: \(error)")
+                    }
                 }
         }
     }
