@@ -38,7 +38,7 @@ extension MigrationTests {
                     version
                 ) = error
             {
-                #expect("\(migration)" == "\(MigrationPlan.self)")
+                #expect("\(migration)" == "MigrationPlan")
                 #expect(version == Version0_0_1.version)
                 return
             }

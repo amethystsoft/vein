@@ -40,6 +40,8 @@ public protocol PersistentModel: AnyObject, Sendable {
     
     var _isDeleted: Bool? { get set }
     
+    var _context: Vein.Atomic<Vein.ManagedObjectContext?> { get }
+    
     init(id: ULID, fields: [String: SQLiteValue])
 }
 
@@ -47,6 +49,15 @@ extension PersistentModel {
     public static var typeIdentifier: ObjectIdentifier { ObjectIdentifier(Self.self) }
     public var typeIdentifier: ObjectIdentifier { ObjectIdentifier(Self.self) }
     public func _getSchema() -> String { Self.schema }
+    
+    public var context: ManagedObjectContext? {
+        get {
+            _context.value
+        }
+        set {
+            _context.value = newValue
+        }
+    }
     
     public func extractPrimitiveState() -> PrimitiveState {
         var data = [String: Any]()

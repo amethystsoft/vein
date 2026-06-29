@@ -1,0 +1,41 @@
+name: Swift Test release
+
+on:
+  workflow_dispatch:
+jobs:
+  linux-android:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
+        with:
+          persist-credentials: false
+      - name: "Test Swift Package on Android"
+        uses: skiptools/swift-android-action@2044b79660f201ccef8cbce62877e4ec5409f9c8 # 2.9.5
+        with:
+          swift-version: 'nightly-main'
+          # Ubuntu runners low on space causes the emulator to fail to install
+          free-disk-space: true
+          test-env: SHOULD_DISABLE_ENCRYPTION=1
+          swift-configuration: release
+  macos:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
+        with:
+          persist-credentials: false
+      - name: Test VeinCore
+        run: ./Scripts/tsan-test-release.sh
+      - name: Test VeinSwiftUI
+        run: TEST_SWIFTUI=1 ./Scripts/tsan-test-release.sh
+  linux:
+    runs-on: blacksmith-8vcpu-ubuntu-2404-arm
+    container:
+      image: swift:6.3.2-noble
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
+        with:
+          persist-credentials: false
+      - name: Test
+        # Disable encryption for testing purposes if needed
+        run: ./Scripts/tsan-test-release.sh
