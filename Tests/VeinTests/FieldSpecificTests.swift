@@ -10,9 +10,10 @@ import Testing
 @Suite
 struct FieldSpecificTests {
     @Test
-    func testLazyFieldRetursStoreWithoutContext() async throws {
+    func testLazyFieldReturnsStoreWithoutContext() async throws {
         let field = LazyField(wrappedValue: "Test")
         #expect(field.wrappedValue == "Test")
+        print(field.callBeforeChange)
     }
     
     @Test

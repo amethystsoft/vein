@@ -105,25 +105,28 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
     private func setAndNotify(_ newValue: Value) {
         var oldIDs = [ULID]()
         let newIDs = newValue.map(\.id)
-        lock.withLock {
-            oldIDs = idStore
-            idStore = newIDs
-        }
         
-        let oldValue = get(for: oldIDs)
-        
-        let removed = oldValue.filter { !newIDs.contains($0.id) }
-        let added = newValue.filter { !oldIDs.contains($0.id) }
-        
-        updateOtherSide(removed: removed, added: added)
-        
-        if !VeinNotificationGuard.isProcessing {
-            VeinNotificationGuard.$isProcessing.withValue(true) {
-                model?.notifyOfChanges()
+        withObservationNotification {
+            if !VeinNotificationGuard.isProcessing {
+                VeinNotificationGuard.$isProcessing.withValue(true) {
+                    model?.notifyOfChanges()
+                }
             }
+        } block: {
+            lock.withLock {
+                oldIDs = idStore
+                idStore = newIDs
+            }
+            
+            let oldValue = get(for: oldIDs)
+            
+            let removed = oldValue.filter { !newIDs.contains($0.id) }
+            let added = newValue.filter { !oldIDs.contains($0.id) }
+            
+            updateOtherSide(removed: removed, added: added)
+            
+            wasTouched = true
         }
-        
-        wasTouched = true
     }
     
     private func updateOtherSide(removed: [T], added: [T]) {
@@ -145,19 +148,20 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
             let predicateMatches = context._prepareForChange(of: target)
             
             let matchingField = target._fields.first { $0.key == inverseKey }
-            defer { matchingField?.model?.notifyOfChanges() }
             
-            if var manyField = matchingField as? (any ManyRelationship) {
-                manyField.persistableValue.removeAll { $0 == model.id }
-                manyField.wasTouched = true
-            } else if var oneField = matchingField as? (any OneRelationship) {
-                if oneField.persistableValue == model.id {
-                    oneField.persistableValue = nil
+            withObservationNotification({ matchingField?.model?.notifyOfChanges() }) {
+                if var manyField = matchingField as? (any ManyRelationship) {
+                    manyField.persistableValue.removeAll { $0 == model.id }
+                    manyField.wasTouched = true
+                } else if var oneField = matchingField as? (any OneRelationship) {
+                    if oneField.persistableValue == model.id {
+                        oneField.persistableValue = nil
+                    }
+                    oneField.wasTouched = true
                 }
-                oneField.wasTouched = true
+                
+                context._markTouched(target, previouslyMatching: predicateMatches)
             }
-            
-            context._markTouched(target, previouslyMatching: predicateMatches)
         }
         
         for target in added {
@@ -172,38 +176,38 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
             
             let matchingField = target._fields.first { $0.key == inverseKey }
             
-            defer {
+            withObservationNotification {
                 if !VeinNotificationGuard.isProcessing {
                     VeinNotificationGuard.$isProcessing.withValue(true) {
                         target.notifyOfChanges()
                     }
                 }
-            }
-            
-            do {
-                if target.context.isNil {
-                    try context.insert(target)
-                } else if target.context?.identifier != context.identifier {
-                    fatalError("""
+            } block: {
+                do {
+                    if target.context.isNil {
+                        try context.insert(target)
+                    } else if target.context?.identifier != context.identifier {
+                        fatalError("""
                 Tried set model from different context as relationship. \
                 Schema: \(model._getSchema())
                 """)
+                    }
+                } catch {
+                    fatalError(error.localizedDescription)
                 }
-            } catch {
-                fatalError(error.localizedDescription)
-            }
-            
-            if var manyField = matchingField as? (any ManyRelationship) {
-                if !manyField.persistableValue.contains(model.id) {
-                    manyField.persistableValue.append(model.id)
+                
+                if var manyField = matchingField as? (any ManyRelationship) {
+                    if !manyField.persistableValue.contains(model.id) {
+                        manyField.persistableValue.append(model.id)
+                    }
+                    manyField.wasTouched = true
+                } else if var oneField = matchingField as? (any OneRelationship) {
+                    oneField.persistableValue = model.id
+                    oneField.wasTouched = true
                 }
-                manyField.wasTouched = true
-            } else if var oneField = matchingField as? (any OneRelationship) {
-                oneField.persistableValue = model.id
-                oneField.wasTouched = true
+                
+                context._markTouched(target, previouslyMatching: predicateMatches)
             }
-            
-            context._markTouched(target, previouslyMatching: predicateMatches)
         }
     }
     
@@ -273,33 +277,32 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
         else { return }
         
         for target in wrappedValue {
-            defer {
-                target.notifyOfChanges()
-            }
-            switch deleteRule {
-                case .nullify:
-                    let predicateMatches = context._prepareForChange(of: target)
-                    
-                    let inverse = target._fields.first { $0.key == inverseKey }
-                    
-                    if var manyField = inverse as? (any ManyRelationship) {
-                        manyField.persistableValue.removeAll(where: { $0 == model.id })
-                        manyField.wasTouched = true
-                    } else if var oneField = inverse as? (any OneRelationship) {
-                        oneField.persistableValue = nil
-                        oneField.wasTouched = true
-                    }
-                    
-                    context._markTouched(target, previouslyMatching: predicateMatches)
-                case .cascade:
-                    guard !target._isPreparedForDeletion else { continue }
-                    do {
-                        try context.delete(target)
-                    } catch {
-                        if context.modelContainer.logConfiguration.errorWhileCascadeDeletion {
-                            Self.logger.error("An error occurred while cascading deletion: \(error)")
+            withObservationNotification({ target.notifyOfChanges() }) {
+                switch deleteRule {
+                    case .nullify:
+                        let predicateMatches = context._prepareForChange(of: target)
+                        
+                        let inverse = target._fields.first { $0.key == inverseKey }
+                        
+                        if var manyField = inverse as? (any ManyRelationship) {
+                            manyField.persistableValue.removeAll(where: { $0 == model.id })
+                            manyField.wasTouched = true
+                        } else if var oneField = inverse as? (any OneRelationship) {
+                            oneField.persistableValue = nil
+                            oneField.wasTouched = true
                         }
-                    }
+                        
+                        context._markTouched(target, previouslyMatching: predicateMatches)
+                    case .cascade:
+                        guard !target._isPreparedForDeletion else { return }
+                        do {
+                            try context.delete(target)
+                        } catch {
+                            if context.modelContainer.logConfiguration.errorWhileCascadeDeletion {
+                                Self.logger.error("An error occurred while cascading deletion: \(error)")
+                            }
+                        }
+                }
             }
         }
     }

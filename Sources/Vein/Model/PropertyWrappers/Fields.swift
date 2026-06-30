@@ -88,12 +88,15 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
     }
     
     private func setAndNotify(_ newValue: WrappedType) {
-        lock.withLock {
-            store = newValue
-            readFromStore = true
-        }
-        if !suppressUIUpdates {
-            model?.notifyOfChanges()
+        withObservationNotification {
+            if !suppressUIUpdates {
+                model?.notifyOfChanges()
+            }
+        } block: {
+            lock.withLock {
+                store = newValue
+                readFromStore = true
+            }
         }
     }
     
@@ -192,12 +195,14 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
         self.key = nil
     }
     
-    // Acquires lock internally, then notifies outside lock to avoid callback deadlocks.
+    // Notifies before or after the locked store mutation depending on `callBeforeChange`;
+    // notification always runs outside the lock to avoid callback deadlocks.
     private func setAndNotify(_ newValue: WrappedType) {
-        lock.withLock {
-            store = newValue
+        withObservationNotification({ model?.notifyOfChanges() }) {
+            lock.withLock {
+                store = newValue
+            }
         }
-        model?.notifyOfChanges()
     }
     
     public func setStoreToCapturedState(_ state: Any) {
