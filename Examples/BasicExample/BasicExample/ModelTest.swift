@@ -56,31 +56,7 @@ enum TestMigration: SchemaMigrationPlan {
     }
 }
 
-nonisolated enum Group: String, Persistable, CaseIterable {
-    var asPersistentRepresentation: String {
-        self.rawValue
-    }
-    
-    typealias PersistentRepresentation = String
-    
-    static var sqliteTypeName: Vein.SQLiteTypeName { String.sqliteTypeName }
-    
-    var sqliteValue: Vein.SQLiteValue {
-        .text(rawValue)
-    }
-    
-    static func decode(sqliteValue: Vein.SQLiteValue) throws(Vein.MOCError) -> Group {
-        guard
-            case .text(let value) = sqliteValue,
-            let correspondingValue = Group(rawValue: value)
-        else { throw .propertyDecode(message: "raised by enum Group decoder")}
-        return correspondingValue
-    }
-    
-    init?(fromPersistent representation: String) {
-        self.init(rawValue: representation)
-    }
-    
+nonisolated enum Group: String, RawRepresentablePersistable, CaseIterable {    
     case football
     case soccer
     case baseball

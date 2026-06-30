@@ -3,7 +3,7 @@ import SQLiteDB
 
 public final class ModelContainer: @unchecked Sendable {
     public let migration: SchemaMigrationPlan.Type
-    private let path: String?
+    public let path: String?
     
     // Only force unwrapped to count as initialized,
     // so ManagedObjectContex.init can recieve the function

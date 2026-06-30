@@ -510,3 +510,56 @@ extension Array: Persistable where Element == ULID {
         return SQLiteJSONB(jsonString: serialized)
     }
 }
+
+/// Conform to this protocol as an easy way to make your RawRepresentable type ``Persistable``.
+///
+/// It will be stored as the RawValue's `PersistentRepresentation` in SQLite.
+/// Please note that changing the RawRepresentable implementation within one version might break decoding.
+/// It is recommended to only change it during Schema Version bumps.
+public protocol RawRepresentablePersistable: RawRepresentable, Persistable where
+    RawValue: Persistable,
+    PersistentRepresentation == RawValue.PersistentRepresentation
+{}
+extension RawRepresentablePersistable {
+    public init?(fromPersistent representation: RawValue.PersistentRepresentation) {
+        guard let rawValue = RawValue.init(fromPersistent: representation) else {
+            return nil
+        }
+        self.init(rawValue: rawValue)
+    }
+    
+    public var asPersistentRepresentation: RawValue.PersistentRepresentation {
+        self.rawValue.asPersistentRepresentation
+    }
+}
+
+/// Conform to this protocol as an easy way to make your custom codable struct ``Persistable``.
+///
+/// It will be stored as JSONB in SQLite, allowing for performant custom filtering.
+/// Please note that changing the Codable implementation within one version might break decoding.
+/// It is recommended to only change it during Schema Version bumps.
+public protocol CodablePersistable: Codable, Persistable where PersistentRepresentation == SQLiteJSONB {}
+extension CodablePersistable {
+    public init?(fromPersistent representation: SQLiteJSONB) {
+        guard
+            let data = representation.jsonString.data(using: .utf8),
+            let instance = try? JSONDecoder().decode(Self.self, from: data)
+        else {
+            return nil
+        }
+        
+        self = instance
+    }
+    
+    public var asPersistentRepresentation: SQLiteJSONB {
+        do {
+            let serialized = try JSONEncoder().encode(self)
+            guard let jsonString = String(data: serialized, encoding: .utf8) else {
+                fatalError("Failed to convert JSON data for \(Self.self) to string.")
+            }
+            return SQLiteJSONB(jsonString: jsonString)
+        } catch {
+            fatalError("Failed to JSON-encode data for \(Self.self). Error: \(error), Description: \(error.localizedDescription)")
+        }
+    }
+}

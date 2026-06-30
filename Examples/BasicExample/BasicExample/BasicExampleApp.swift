@@ -39,6 +39,11 @@ struct VeinTestEnvironmentApp: App {
     var body: some Scene {
         WindowGroup("VeinTest") {
             VeinContainer {
+                // This is displayed here to make debugging and looking at
+                // the db example easier.
+                // NEVER do this in prod.
+                Text(modelContainer.context.getDatabaseKey() ?? "no key")
+                    .textSelection(.enabled)
                 HStack {
                     ContentView()
                     #if !canImport(UIKit)

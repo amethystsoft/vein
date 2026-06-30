@@ -31,7 +31,11 @@ struct ContentView: View {
                 print(context.trackedObjectCount)
             }
             Button("save changes") {
-                try? context.save()
+                do {
+                    try context.save()
+                } catch {
+                    print(error.localizedDescription)
+                }
             }
             Button("add one") {
                 do {

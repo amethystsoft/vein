@@ -115,7 +115,25 @@ public actor ManagedObjectContext {
         self.connection = connection
     }
     
-    public static func getKeyForDatabase(at path: String, appID: String) -> String? {
+    /// Retrieve the key encrypting the database, if applicable.
+    ///
+    /// Do not keep the key in memory or on screen for extended periods of time in production apps.
+    /// It should only be displayed as long as absolutely needed.
+    public nonisolated func getDatabaseKey() -> String? {
+        guard
+            let path = modelContainer.path,
+            modelContainer.encryptionEnabled
+        else {
+            return nil
+        }
+        return Self.getKeyForDatabase(
+            at: path,
+            appID: modelContainer.appID,
+            createIfMissing: false
+        )
+    }
+    
+    public static func getKeyForDatabase(at path: String, appID: String, createIfMissing: Bool = true) -> String? {
         let url = URL(fileURLWithPath: path)
         let fileName = url.lastPathComponent
         
@@ -124,7 +142,7 @@ public actor ManagedObjectContext {
         
         if let key = keychain[fileName] {
             return key
-        } else {
+        } else if createIfMissing {
             let keyData = SymmetricKey(size: .bits256).withUnsafeBytes { Data($0) }
             let hexKey = keyData.map { String(format: "%02hhx", $0) }.joined()
             
@@ -138,7 +156,7 @@ public actor ManagedObjectContext {
         
         if let key = keyring[fileName] {
             return key
-        } else {
+        } else if createIfMissing {
             let keyData = SymmetricKey(size: .bits256).withUnsafeBytes { Data($0) }
             let hexKey = keyData.map { String(format: "%02hhx", $0) }.joined()
             
@@ -147,9 +165,8 @@ public actor ManagedObjectContext {
             }
             return hexKey
         }
-        #else
-        return nil
         #endif
+        return nil
     }
 }
 
