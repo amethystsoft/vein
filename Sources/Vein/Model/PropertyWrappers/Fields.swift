@@ -1,5 +1,5 @@
 import Foundation
-
+// swiftlint:disable multiple_closures_with_trailing_closure
 @propertyWrapper
 public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendable {
     public typealias WrappedType = T?

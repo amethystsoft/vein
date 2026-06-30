@@ -19,4 +19,4 @@ jobs:
       - name: Test VeinCore
         run: ./Scripts/tsan-test.sh
       - name: Test VeinSwiftUI
-        run: TEST_SWIFTUI=1 ./Scripts/tsan-test.sh
+        run: IS_RUNNING_HEADLESS=1 TEST_SWIFTUI=1 ./Scripts/tsan-test.sh

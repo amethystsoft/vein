@@ -1,6 +1,6 @@
 import Foundation
 import Logging
-
+// swiftling:disable multiple_closures_with_trailing_closure
 @propertyWrapper
 public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unchecked Sendable {
     static var logger: Logger { .init(label: "Vein.OneRelationship") }
@@ -124,13 +124,14 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         var previousID: ULID?
         
         VeinNotificationGuard.$isProcessing.withValue(true) {
-            lock.withLock {
-                previousID = idStore
-                idStore = newID
-            }
-            
-            let isDifferent = previousID != newID
             withObservationNotification( { model?.notifyOfChanges() }) {
+                lock.withLock {
+                    previousID = idStore
+                    idStore = newID
+                }
+                
+                let isDifferent = previousID != newID
+                
                 if isDifferent {
                     // Disconnect from the old relation first while wrappedValue points to it.
                     updateOtherSide(isRemoving: true, id: previousID)

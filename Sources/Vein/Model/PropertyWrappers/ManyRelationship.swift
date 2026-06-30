@@ -1,6 +1,6 @@
 import Foundation
 import Logging
-
+// swiftlint:disable multiple_closures_with_trailing_closure
 @propertyWrapper
 public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unchecked Sendable {
     static var logger: Logger { .init(label: "Vein.ManyRelationship") }
