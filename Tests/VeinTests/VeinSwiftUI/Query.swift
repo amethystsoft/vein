@@ -105,6 +105,14 @@ struct QueryTests {
             .modelContainer(container)
         
         let hostingController = NSHostingController(rootView: view)
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 100, height: 100),
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false
+        )
+        window.contentView = hostingController.view
+        window.orderFrontRegardless() 
         hostingController.view.layoutSubtreeIfNeeded()
         
         var iterator = stream.makeAsyncIterator()
