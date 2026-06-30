@@ -11,7 +11,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
     
     private let lock = NSLock()
     private var idStore: ULID?
-    private let _inverseKey = Atomic<String?>(nil)
+    private let _inverseKey = Mutex<String?>(nil)
     public var inverseKey: String? {
         get {
             _inverseKey.value

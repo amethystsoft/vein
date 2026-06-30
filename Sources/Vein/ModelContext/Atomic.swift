@@ -1,6 +1,6 @@
 import Foundation
 
-public final class Atomic<Value>: @unchecked Sendable {
+public final class Mutex<Value>: @unchecked Sendable {
     private let lock = NSLock()
     private var _value: Value
 

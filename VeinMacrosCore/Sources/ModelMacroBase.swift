@@ -146,7 +146,7 @@ required init(id: Vein.ULID, fields: [String: Vein.SQLiteValue]) {
     _setupFields()
 }
 
-let _observers = Vein.Atomic(Vein.ReferenceCountedObservers())
+let _observers = Vein.Mutex(Vein.ReferenceCountedObservers())
 
 /// Sets required properties for @Field values.
 /// Gets generated automatically by @Model.
@@ -154,7 +154,7 @@ public func _setupFields() {
     \(fieldSetup)
 }
 
-let _context = Vein.Atomic<Vein.ManagedObjectContext?>(nil)
+let _context = Vein.Mutex<Vein.ManagedObjectContext?>(nil)
 
 /// Whether a model is prepared to be deleted.
 ///

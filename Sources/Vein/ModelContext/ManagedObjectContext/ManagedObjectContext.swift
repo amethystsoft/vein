@@ -23,7 +23,7 @@ public actor ManagedObjectContext {
     
     @TaskLocal static var isSettingInternalMetdata = false
     
-    nonisolated let _clientID = Atomic<String?>(nil)
+    nonisolated let _clientID = Mutex<String?>(nil)
     nonisolated var clientID: String {
         _clientID.mutate { clientID in
             if let clientID {
@@ -37,14 +37,14 @@ public actor ManagedObjectContext {
             }
             let id = UUID().uuidString
             UserDefaults.standard.set(id, forKey: key)
-
+            
             clientID = id
             return id
         }
     }
     
     // MARK: - Migrations
-    package nonisolated let isInActiveMigration = Atomic(false)
+    package nonisolated let isInActiveMigration = Mutex(false)
     
     // MARK: - In memory write caching and rollback
     package nonisolated let writeCache = WriteCache()
@@ -59,13 +59,13 @@ public actor ManagedObjectContext {
     nonisolated(unsafe) let identityMap = ThreadSafeIdentityMap()
     
     // MARK: - UI change notification
-    nonisolated let registeredQueries = Atomic(
+    nonisolated let registeredQueries = Mutex(
         [ObjectIdentifier: [Int: WeakQueryObserver]]()
     )
-    nonisolated let pendingNotifications = Atomic(
+    nonisolated let pendingNotifications = Mutex(
         [ObjectIdentifier: [AnyObject]]()
     )
-    nonisolated let notificationTask = Atomic(Task<Void, Never>?.none)
+    nonisolated let notificationTask = Mutex(Task<Void, Never>?.none)
     
     // MARK: - Initializers
     /// Connects to database at `path`, creates a new one if it doesn't exist
@@ -77,7 +77,7 @@ public actor ManagedObjectContext {
         do {
             self.connection = try Connection(path)
             
-            #if canImport(AppKit) || canImport(UIKit) || os(Linux)
+#if canImport(AppKit) || canImport(UIKit) || os(Linux)
             if modelContainer.encryptionEnabled {
                 guard
                     let key = Self.getKeyForDatabase(
@@ -88,7 +88,7 @@ public actor ManagedObjectContext {
                 }
                 try self.connection.key(key)
             }
-            #endif
+#endif
             
             try self.connection.execute("PRAGMA journal_mode=WAL;")
         } catch let error as SQLiteDB.Result {
@@ -142,7 +142,7 @@ public actor ManagedObjectContext {
         let url = URL(fileURLWithPath: path)
         let fileName = url.lastPathComponent
         
-        #if canImport(AppKit) || canImport(UIKit)
+#if canImport(AppKit) || canImport(UIKit)
         let keychain = Keychain(service: "com.amethyst.vein.sqlcipher.\(appID)")
         
         if let key = keychain[fileName] {
@@ -156,7 +156,7 @@ public actor ManagedObjectContext {
             }
             return hexKey
         }
-        #elseif os(Linux)
+#elseif os(Linux)
         let keyring = Keyring(service: "com.amethyst.vein.sqlcipher.\(appID)")
         
         if let key = keyring[fileName] {
@@ -170,7 +170,7 @@ public actor ManagedObjectContext {
             }
             return hexKey
         }
-        #endif
+#endif
         return nil
     }
 }

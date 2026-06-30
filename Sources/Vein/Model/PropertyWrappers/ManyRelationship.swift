@@ -11,7 +11,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
     public var isLazy: Bool { false }
     private let lock = NSLock()
     @_spi(VeinTesting) public var idStore = [ULID]()
-    private let _inverseKey = Atomic<String?>(nil)
+    private let _inverseKey = Mutex<String?>(nil)
     public var inverseKey: String? {
         get {
             _inverseKey.value

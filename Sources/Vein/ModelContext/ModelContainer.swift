@@ -12,9 +12,9 @@ public final class ModelContainer: @unchecked Sendable {
     public private(set) var context: ManagedObjectContext!
     public let versionedSchema: VersionedSchema.Type
     
-    private var identifierCache = Atomic([ObjectIdentifier: any PersistentModel.Type]())
+    private var identifierCache = Mutex([ObjectIdentifier: any PersistentModel.Type]())
     
-    private var currentMigration = Atomic((any VersionedSchema.Type, any VersionedSchema.Type)?.none)
+    private var currentMigration = Mutex((any VersionedSchema.Type, any VersionedSchema.Type)?.none)
     
     public let appID: String
     
