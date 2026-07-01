@@ -86,7 +86,11 @@ public actor ManagedObjectContext {
                     ) else {
                     fatalError("Vein: Failed to retrieve/save key to encrypt Database.")
                 }
+                let timeStart = DispatchTime.now()
                 try self.connection.key(key)
+                let timeEnd = DispatchTime.now()
+                let timeElapsed = Double(timeEnd.uptimeNanoseconds - timeStart.uptimeNanoseconds) / 1_000_000
+                print("Vein: Database key set in \(timeElapsed)ms")
             }
 #endif
             

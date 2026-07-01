@@ -199,6 +199,7 @@ struct QueryTests {
             migration: Migration.self,
             at: nil,
             appID: "de.amethystsoft.vein.swiftui.query",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption,
             logConfiguration: logConfiguration
         )
         

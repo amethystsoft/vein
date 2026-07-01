@@ -43,6 +43,8 @@ extension ModelContainer {
             migration: migration,
             at: path,
             appID: appID,
+            encryptionEnabled: encryptionEnabled,
+            logConfiguration: logConfiguration,
             _notifyBeforeChange: false
         )
     }
@@ -89,6 +91,8 @@ extension ModelContainer {
             migration: migration,
             connection: connection,
             appID: appID,
+            encryptionEnabled: encryptionEnabled,
+            logConfiguration: logConfiguration,
             _notifyBeforeChange: false
         )
     }

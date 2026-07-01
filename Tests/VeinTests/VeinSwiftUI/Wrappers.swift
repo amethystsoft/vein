@@ -22,7 +22,8 @@ struct VeinSwiftUITests {
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
-            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model"
+            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         let model = V0_0_1.Test(someValue: "test")
         try container.context.insert(model)
@@ -59,7 +60,8 @@ struct VeinSwiftUITests {
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
-            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model"
+            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         let model = V0_0_1.Test(someValue: "test")
         try container.context.insert(model)
@@ -96,7 +98,8 @@ struct VeinSwiftUITests {
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
-            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model"
+            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         let model = V0_0_1.Child()
         try container.context.insert(model)
@@ -118,7 +121,8 @@ struct VeinSwiftUITests {
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
-            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model"
+            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         let model = V0_0_1.Test(someValue: "test")
         try container.context.insert(model)
@@ -140,7 +144,8 @@ struct VeinSwiftUITests {
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
-            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model"
+            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         let model = V0_0_1.Test(someValue: "test")
         let child = V0_0_1.Child()
@@ -164,7 +169,8 @@ struct VeinSwiftUITests {
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
-            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model"
+            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         let model = V0_0_1.Test(someValue: "test")
         let child = V0_0_1.Child()
@@ -188,7 +194,8 @@ struct VeinSwiftUITests {
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
-            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model"
+            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         let model = V0_0_1.Test(someValue: "test")
         let child = V0_0_1.Child()
@@ -212,7 +219,8 @@ struct VeinSwiftUITests {
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
-            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model"
+            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         let model = V0_0_1.Test(someValue: "test")
         let child = V0_0_1.Child()
@@ -237,7 +245,8 @@ struct VeinSwiftUITests {
             V0_0_1.self,
             migration: Migration.self,
             connection: connection,
-            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model"
+            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         guard let child = try container.context.fetchAll(V0_0_1.Child.self).first else {
             Issue.record("Unexpectedly no child found.")
@@ -265,7 +274,8 @@ struct VeinSwiftUITests {
                 V0_0_1.self,
                 migration: Migration.self,
                 at: nil,
-                appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model"
+                appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model",
+                encryptionEnabled: ProcessInfo.shouldEnableEncryption
             )
             let model = V0_0_1.Test(someValue: "test")
             let child = V0_0_1.Child()
@@ -285,7 +295,8 @@ struct VeinSwiftUITests {
             V0_0_1.self,
             migration: Migration.self,
             connection: connection,
-            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model"
+            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         guard let child = try container.context.fetchAll(V0_0_1.Child.self).first else {
             Issue.record("Unexpectedly no child found.")
@@ -313,7 +324,8 @@ struct VeinSwiftUITests {
                 V0_0_1.self,
                 migration: Migration.self,
                 at: nil,
-                appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model"
+                appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model",
+                encryptionEnabled: ProcessInfo.shouldEnableEncryption
             )
             let model = V0_0_1.Test(someValue: "test")
             let child = V0_0_1.Child()
@@ -333,7 +345,8 @@ struct VeinSwiftUITests {
             V0_0_1.self,
             migration: Migration.self,
             connection: connection,
-            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model"
+            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         guard let child = try container.context.fetchAll(V0_0_1.Child.self).first else {
             Issue.record("Unexpectedly no child found.")
@@ -361,7 +374,8 @@ struct VeinSwiftUITests {
                 V0_0_1.self,
                 migration: Migration.self,
                 at: nil,
-                appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model"
+                appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model",
+                encryptionEnabled: ProcessInfo.shouldEnableEncryption
             )
             let model = V0_0_1.Test(someValue: "test")
             let child = V0_0_1.Child()
@@ -381,7 +395,8 @@ struct VeinSwiftUITests {
             V0_0_1.self,
             migration: Migration.self,
             connection: connection,
-            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model"
+            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         guard let child = try container.context.fetchAll(V0_0_1.Child.self).first else {
             Issue.record("Unexpectedly no child found.")
@@ -409,7 +424,8 @@ struct VeinSwiftUITests {
                 V0_0_1.self,
                 migration: Migration.self,
                 at: nil,
-                appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model"
+                appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model",
+                encryptionEnabled: ProcessInfo.shouldEnableEncryption
             )
             let model = V0_0_1.Test(someValue: "test")
             let child = V0_0_1.Child()
@@ -428,7 +444,8 @@ struct VeinSwiftUITests {
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
-            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model"
+            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         let model = V0_0_1.Test(someValue: "test")
         let child = V0_0_1.Child()
@@ -452,7 +469,8 @@ struct VeinSwiftUITests {
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
-            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model"
+            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         let model = V0_0_1.Test(someValue: "test")
         let child = V0_0_1.Child()
@@ -476,7 +494,8 @@ struct VeinSwiftUITests {
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
-            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model"
+            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         let model = V0_0_1.Test(someValue: "test")
         let child = V0_0_1.Child()
@@ -500,7 +519,8 @@ struct VeinSwiftUITests {
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
-            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model"
+            appID: "de.amethystsoft.vein.tests.veinswiftui.fields-update-model",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         let model = V0_0_1.Test(someValue: "test")
         let child = V0_0_1.Child()

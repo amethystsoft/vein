@@ -17,7 +17,8 @@ extension PersistableTests {
             V0_0_1.self,
             migration: Migration.self,
             connection: connection,
-            appID: "de.amethystsoft.vein.tests.persistable"
+            appID: "de.amethystsoft.vein.tests.persistable",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         
         guard
@@ -45,7 +46,8 @@ extension PersistableTests {
             V0_0_1.self,
             migration: Migration.self,
             connection: connection,
-            appID: "de.amethystsoft.vein.tests.persistable"
+            appID: "de.amethystsoft.vein.tests.persistable",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         
         guard
@@ -67,7 +69,8 @@ extension PersistableTests {
                 V0_0_1.self,
                 migration: Migration.self,
                 connection: connection,
-                appID: "de.amethystsoft.vein.tests.persistable"
+                appID: "de.amethystsoft.vein.tests.persistable",
+                encryptionEnabled: ProcessInfo.shouldEnableEncryption
             )
             
             guard
@@ -101,7 +104,8 @@ extension PersistableTests {
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
-            appID: "de.amethystsoft.vein.tests.persistable"
+            appID: "de.amethystsoft.vein.tests.persistable",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         
         let metadata = V0_0_1.Account.Metadata(createdAt: date, createdInCity: "Berlin")

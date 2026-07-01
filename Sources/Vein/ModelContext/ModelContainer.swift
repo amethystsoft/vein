@@ -59,8 +59,8 @@ public final class ModelContainer: @unchecked Sendable {
         migration: SchemaMigrationPlan.Type,
         at path: String?,
         appID: String,
-        encryptionEnabled: Bool = true,
-        logConfiguration: LogConfiguration? = nil,
+        encryptionEnabled: Bool,
+        logConfiguration: LogConfiguration?,
         _notifyBeforeChange: Bool
     ) throws(ManagedObjectContextError) {
         ManagedObjectContext.callBeforeChange.store(_notifyBeforeChange, ordering: .relaxed)
@@ -157,8 +157,8 @@ public final class ModelContainer: @unchecked Sendable {
         migration: SchemaMigrationPlan.Type,
         connection: Connection,
         appID: String,
-        encryptionEnabled: Bool = true,
-        logConfiguration: LogConfiguration? = nil,
+        encryptionEnabled: Bool,
+        logConfiguration: LogConfiguration?,
         _notifyBeforeChange: Bool
     ) throws(ManagedObjectContextError) {
         ManagedObjectContext.callBeforeChange.store(_notifyBeforeChange, ordering: .relaxed)
