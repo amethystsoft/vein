@@ -10,13 +10,11 @@ import KeychainAccess
 @_exported import KeyringAccess
 #endif
 
-@_spi(VeinSurface)
-@_spi(VeinTesting)
 public typealias Connection = SQLiteDB.Connection
 
 public actor ManagedObjectContext {
     @_spi(VeinSurface)
-    public static nonisolated let callBeforeChange = ManagedAtomic<Bool>(false)
+    public static nonisolated let callBeforeChange = ManagedAtomic<UInt8>(3)
     public static let logger = Logger(label: "ManagedObjectContext")
     package nonisolated let connection: SQLiteDB.Connection
     public nonisolated unowned let modelContainer: ModelContainer

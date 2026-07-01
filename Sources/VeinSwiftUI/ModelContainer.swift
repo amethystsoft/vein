@@ -78,7 +78,7 @@ extension ModelContainer {
     ///     }
     /// #endif
     /// ```
-    convenience init(
+    public convenience init(
         _ versionedSchema: VersionedSchema.Type,
         migration: SchemaMigrationPlan.Type,
         connection: Connection,

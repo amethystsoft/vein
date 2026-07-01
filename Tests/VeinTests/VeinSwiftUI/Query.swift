@@ -44,7 +44,7 @@ struct FilteredQueryTestView: SwiftUI.View {
     }
 }
 
-@Suite(.disabled({ProcessInfo.isRunningHeadless}))
+@Suite(.disabled(if: ProcessInfo.isRunningHeadless))
 @MainActor
 struct QueryTests {
     @Test(.timeLimit(.minutes(1)))

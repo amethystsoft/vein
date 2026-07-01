@@ -63,7 +63,9 @@ public final class ModelContainer: @unchecked Sendable {
         logConfiguration: LogConfiguration?,
         _notifyBeforeChange: Bool
     ) throws(ManagedObjectContextError) {
-        ManagedObjectContext.callBeforeChange.store(_notifyBeforeChange, ordering: .relaxed)
+        if ManagedObjectContext.callBeforeChange.load(ordering: .relaxed) == 3 {
+            ManagedObjectContext.callBeforeChange.store(_notifyBeforeChange ? 1: 0, ordering: .relaxed)
+        }
         if let logConfiguration {
             self.logConfiguration = logConfiguration
         } else {
@@ -161,7 +163,9 @@ public final class ModelContainer: @unchecked Sendable {
         logConfiguration: LogConfiguration?,
         _notifyBeforeChange: Bool
     ) throws(ManagedObjectContextError) {
-        ManagedObjectContext.callBeforeChange.store(_notifyBeforeChange, ordering: .relaxed)
+        if ManagedObjectContext.callBeforeChange.load(ordering: .relaxed) == 3 {
+            ManagedObjectContext.callBeforeChange.store(_notifyBeforeChange ? 1: 0, ordering: .relaxed)
+        }
         if let logConfiguration {
             self.logConfiguration = logConfiguration
         } else {
