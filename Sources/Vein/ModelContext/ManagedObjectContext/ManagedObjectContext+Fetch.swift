@@ -31,33 +31,44 @@ extension ManagedObjectContext {
                 currentlyDeleted = deleted[T.typeIdentifier] ?? [:]
             }
             
-            let results = try connection.prepare(select)
+            var results: AnySequence<Row>? = nil
+            do {
+                results = try connection.prepare(select)
+            } catch let error as SQLiteDB.Result {
+                switch error.parse() {
+                    case .noSuchTable:
+                        break
+                    default: throw error
+                }
+            }
             var resultIDs = Set<ULID>()
             
-            identityMap.batched { getTracked, startTracking in
-                for row in results {
-                    let id = ULID(ulidString: row[SQLExpression<String>("id")])!
-                    
-                    if currentlyDeleted[id] != nil { continue }
-                    
-                    if let alreadyTrackedModel = getTracked(T.self, id) {
-                        if predicate.runtimeFilter(alreadyTrackedModel) {
-                            models.append(alreadyTrackedModel)
-                            resultIDs.insert(alreadyTrackedModel.id)
+            if let results {
+                identityMap.batched { getTracked, startTracking in
+                    for row in results {
+                        let id = ULID(ulidString: row[SQLExpression<String>("id")])!
+                        
+                        if currentlyDeleted[id] != nil { continue }
+                        
+                        if let alreadyTrackedModel = getTracked(T.self, id) {
+                            if predicate.runtimeFilter(alreadyTrackedModel) {
+                                models.append(alreadyTrackedModel)
+                                resultIDs.insert(alreadyTrackedModel.id)
+                            }
+                            continue
                         }
-                        continue
+                        var fields = [String: SQLiteValue]()
+                        
+                        for field in eagerLoadedFields {
+                            fields[field.key] = SQLiteValue(typeName: field.typeName, key: field.key, row: row)
+                        }
+                        
+                        let model = T(id: id, fields: fields)
+                        model.context = self
+                        models.append(model)
+                        resultIDs.insert(model.id)
+                        startTracking(model)
                     }
-                    var fields = [String: SQLiteValue]()
-                    
-                    for field in eagerLoadedFields {
-                        fields[field.key] = SQLiteValue(typeName: field.typeName, key: field.key, row: row)
-                    }
-                    
-                    let model = T(id: id, fields: fields)
-                    model.context = self
-                    models.append(model)
-                    resultIDs.insert(model.id)
-                    startTracking(model)
                 }
             }
             
@@ -66,7 +77,9 @@ extension ManagedObjectContext {
                     !resultIDs.contains(insert.id),
                     let model = insert as? T,
                     predicate.runtimeFilter(model)
-                { models.append(model) }
+                {
+                    models.append(model)
+                }
             }
             
             for (_, touch) in currentlyTouched {

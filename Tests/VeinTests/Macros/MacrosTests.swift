@@ -56,7 +56,7 @@ struct MacrosTests {
                     _setupFields()
                 }
             
-                let _observers = Vein.Atomic(Vein.ReferenceCountedObservers())
+                let _observers = Vein.Mutex(Vein.ReferenceCountedObservers())
             
                 /// Sets required properties for @Field values.
                 /// Gets generated automatically by @Model.
@@ -72,7 +72,7 @@ struct MacrosTests {
                     self._id.model = self
                 }
             
-                let _context = Vein.Atomic<Vein.ManagedObjectContext?>(nil)
+                let _context = Vein.Mutex<Vein.ManagedObjectContext?>(nil)
             
                 /// Whether a model is prepared to be deleted.
                 ///
@@ -177,7 +177,7 @@ struct MacrosTests {
                     _setupFields()
                 }
             
-                let _observers = Vein.Atomic(Vein.ReferenceCountedObservers())
+                let _observers = Vein.Mutex(Vein.ReferenceCountedObservers())
             
                 /// Sets required properties for @Field values.
                 /// Gets generated automatically by @Model.
@@ -193,7 +193,7 @@ struct MacrosTests {
                     self._id.model = self
                 }
             
-                let _context = Vein.Atomic<Vein.ManagedObjectContext?>(nil)
+                let _context = Vein.Mutex<Vein.ManagedObjectContext?>(nil)
             
                 /// Whether a model is prepared to be deleted.
                 ///
@@ -311,7 +311,7 @@ struct MacrosTests {
                     _setupFields()
                 }
             
-                let _observers = Vein.Atomic(Vein.ReferenceCountedObservers())
+                let _observers = Vein.Mutex(Vein.ReferenceCountedObservers())
             
                 /// Sets required properties for @Field values.
                 /// Gets generated automatically by @Model.
@@ -327,7 +327,7 @@ struct MacrosTests {
                     self._id.model = self
                 }
             
-                let _context = Vein.Atomic<Vein.ManagedObjectContext?>(nil)
+                let _context = Vein.Mutex<Vein.ManagedObjectContext?>(nil)
             
                 /// Whether a model is prepared to be deleted.
                 ///
@@ -431,7 +431,7 @@ struct MacrosTests {
                     _setupFields()
                 }
             
-                let _observers = Vein.Atomic(Vein.ReferenceCountedObservers())
+                let _observers = Vein.Mutex(Vein.ReferenceCountedObservers())
             
                 /// Sets required properties for @Field values.
                 /// Gets generated automatically by @Model.
@@ -447,7 +447,7 @@ struct MacrosTests {
                     self._id.model = self
                 }
             
-                let _context = Vein.Atomic<Vein.ManagedObjectContext?>(nil)
+                let _context = Vein.Mutex<Vein.ManagedObjectContext?>(nil)
             
                 /// Whether a model is prepared to be deleted.
                 ///

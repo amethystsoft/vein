@@ -245,7 +245,7 @@ extension ManagedObjectContext {
         }
         
         guard
-            let observers = registeredQueries.value[ObjectIdentifier(M.self)],
+            let observers = registeredQueries.value[M.typeIdentifier],
             !observers.isEmpty
         else { return }
         

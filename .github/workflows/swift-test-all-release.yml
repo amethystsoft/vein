@@ -16,7 +16,7 @@ jobs:
       - name: Test VeinCore
         run: ./Scripts/tsan-test-release.sh
       - name: Test VeinSwiftUI
-        run: TEST_SWIFTUI=1 ./Scripts/tsan-test-release.sh
+        run: IS_RUNNING_HEADLESS=1 TEST_SWIFTUI=1 ./Scripts/tsan-test-release.sh
   linux:
     runs-on: blacksmith-8vcpu-ubuntu-2404-arm
     container:

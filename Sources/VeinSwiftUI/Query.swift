@@ -1,7 +1,6 @@
 #if canImport(SwiftUI)
 import SwiftUI
 import Combine
-import Vein
 import Logging
 
 @MainActor
@@ -93,14 +92,14 @@ package final class QueryObserver<M: PersistentModel>: ObservableObject, @unchec
     
     @MainActor
     package func append(_ models: [M]) {
-        results?.append(contentsOf: models.filter {
-            return predicate.runtimeFilter($0)
-        })
         // there is only one Query instance kept in the context for the same filter.
         // this triggers view updates on any other Query oberservers using the registered
         // Query as their source
         publishToEnclosingObserver?()
         objectWillChange.send()
+        results?.append(contentsOf: models.filter {
+            return predicate.runtimeFilter($0)
+        })
     }
     
     @MainActor
@@ -115,7 +114,11 @@ package final class QueryObserver<M: PersistentModel>: ObservableObject, @unchec
     
     @MainActor
     package func handleUpdate(_ model: any PersistentModel, matchedBeforeChange: Bool) {
-        guard let model = model as? ModelType else { return }
+        guard let model = model as? ModelType else {
+            return
+        }
+        publishToEnclosingObserver?()
+        objectWillChange.send()
         if predicate.runtimeFilter(model) {
             if !matchedBeforeChange {
                 results?.append(model)
@@ -123,8 +126,6 @@ package final class QueryObserver<M: PersistentModel>: ObservableObject, @unchec
         } else if matchedBeforeChange {
             results?.removeAll(where: { $0.id == model.id })
         }
-        publishToEnclosingObserver?()
-        objectWillChange.send()
     }
     
     @MainActor
@@ -136,9 +137,9 @@ package final class QueryObserver<M: PersistentModel>: ObservableObject, @unchec
     @MainActor
     package func remove(_ model: any PersistentModel) {
         guard let model = model as? ModelType else { return }
-        results?.removeAll(where: { $0.id == model.id })
         publishToEnclosingObserver?()
         objectWillChange.send()
+        results?.removeAll(where: { $0.id == model.id })
     }
 }
 

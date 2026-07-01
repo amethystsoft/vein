@@ -1,5 +1,5 @@
 import Foundation
-import Vein
+import VeinCore
 
 @MainActor
 public struct MigrationTester {

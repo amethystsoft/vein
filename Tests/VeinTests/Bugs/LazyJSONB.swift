@@ -25,7 +25,8 @@ extension BugTests {
                 V0_0_1.self,
                 migration: Migration.self,
                 at: nil,
-                appID: "de.amethystsoft.vein.BugTests"
+                appID: "de.amethystsoft.vein.BugTests",
+                encryptionEnabled: ProcessInfo.shouldEnableEncryption
             )
             
             let user = V0_0_1.User()
@@ -42,7 +43,8 @@ extension BugTests {
                 V0_0_1.self,
                 migration: Migration.self,
                 connection: connection,
-                appID: "de.amethystsoft.vein.BugTests"
+                appID: "de.amethystsoft.vein.BugTests",
+                encryptionEnabled: ProcessInfo.shouldEnableEncryption
             )
             
             let user = try container.context.fetchAll(V0_0_1.User.self).first
@@ -59,7 +61,8 @@ extension BugTests {
                 V0_0_1.self,
                 migration: Migration.self,
                 connection: connection,
-                appID: "de.amethystsoft.vein.BugTests"
+                appID: "de.amethystsoft.vein.BugTests",
+                encryptionEnabled: ProcessInfo.shouldEnableEncryption
             )
             
             let user = try container.context.fetchAll(V0_0_1.User.self).first

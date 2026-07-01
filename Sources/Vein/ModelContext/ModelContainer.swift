@@ -12,9 +12,9 @@ public final class ModelContainer: @unchecked Sendable {
     public private(set) var context: ManagedObjectContext!
     public let versionedSchema: VersionedSchema.Type
     
-    private var identifierCache = Atomic([ObjectIdentifier: any PersistentModel.Type]())
+    private var identifierCache = Mutex([ObjectIdentifier: any PersistentModel.Type]())
     
-    private var currentMigration = Atomic((any VersionedSchema.Type, any VersionedSchema.Type)?.none)
+    private var currentMigration = Mutex((any VersionedSchema.Type, any VersionedSchema.Type)?.none)
     
     public let appID: String
     
@@ -52,14 +52,20 @@ public final class ModelContainer: @unchecked Sendable {
     ///     }
     /// #endif
     /// ```
-    public init(
+    ///
+    /// Do not set `_notifyBeforeChange` yourself, you might break UI updates and/or animations doing so.
+    @_spi(VeinSurface) public init(
         _ versionedSchema: VersionedSchema.Type,
         migration: SchemaMigrationPlan.Type,
         at path: String?,
         appID: String,
-        encryptionEnabled: Bool = true,
-        logConfiguration: LogConfiguration? = nil
+        encryptionEnabled: Bool,
+        logConfiguration: LogConfiguration?,
+        _notifyBeforeChange: Bool
     ) throws(ManagedObjectContextError) {
+        if ManagedObjectContext.callBeforeChange.load(ordering: .acquiring) == 3 {
+            ManagedObjectContext.callBeforeChange.store(_notifyBeforeChange ? 1: 0, ordering: .releasing)
+        }
         if let logConfiguration {
             self.logConfiguration = logConfiguration
         } else {
@@ -146,14 +152,20 @@ public final class ModelContainer: @unchecked Sendable {
     ///     }
     /// #endif
     /// ```
-    init(
+    ///
+    /// Do not set `_notifyBeforeChange` yourself, you might break UI updates and/or animations doing so.
+    @_spi(VeinSurface) public init(
         _ versionedSchema: VersionedSchema.Type,
         migration: SchemaMigrationPlan.Type,
         connection: Connection,
         appID: String,
-        encryptionEnabled: Bool = true,
-        logConfiguration: LogConfiguration? = nil
+        encryptionEnabled: Bool,
+        logConfiguration: LogConfiguration?,
+        _notifyBeforeChange: Bool
     ) throws(ManagedObjectContextError) {
+        if ManagedObjectContext.callBeforeChange.load(ordering: .acquiring) == 3 {
+            ManagedObjectContext.callBeforeChange.store(_notifyBeforeChange ? 1: 0, ordering: .releasing)
+        }
         if let logConfiguration {
             self.logConfiguration = logConfiguration
         } else {

@@ -45,7 +45,8 @@ struct ReferenceCountedObserversTest {
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
-            appID: "de.amethystsoft.vein.tests.observers"
+            appID: "de.amethystsoft.vein.tests.observers",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         
         let parent = V0_0_1.Test()
@@ -93,7 +94,8 @@ struct ReferenceCountedObserversTest {
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
-            appID: "de.amethystsoft.vein.tests.observers"
+            appID: "de.amethystsoft.vein.tests.observers",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         
         let parent = V0_0_1.Test()

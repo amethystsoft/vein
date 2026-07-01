@@ -1,6 +1,5 @@
 import Foundation
 import Testing
-@testable import VeinTesting
 @testable import Vein
 #if TEST_SWIFTUI
 @testable import VeinSwiftUI

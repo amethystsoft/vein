@@ -32,7 +32,8 @@ var veinDependencies: [Target.Dependency] = [
         name: "KeyringAccess",
         package: "KeyringAccess",
         condition: .when(platforms: [.linux])
-    )
+    ),
+    .product(name: "Atomics", package: "swift-atomics")
 ]
 
 let package = Package(
@@ -77,6 +78,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-log.git", .upToNextMajor(from: "1.9.1")),
         .package(url: "https://github.com/kishikawakatsumi/keychainaccess", .upToNextMajor(from: "4.2.2")),
         .package(url: "https://github.com/amethystsoft/KeyringAccess", .upToNextMajor(from: "1.0.0")),
+        .package(url: "https://github.com/apple/swift-atomics.git", .upToNextMajor(from: "1.3.1")),
     ],
     targets: [
         .target(
@@ -100,7 +102,7 @@ let package = Package(
         .target(
             name: "VeinTesting",
             dependencies: [
-                "Vein"
+                "VeinCore"
             ]
         ),
         .macro(

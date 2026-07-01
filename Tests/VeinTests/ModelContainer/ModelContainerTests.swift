@@ -15,7 +15,8 @@ struct ModelContainerTests {
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
-            appID: "de.amethystsoft.vein.ModelContainerTests"
+            appID: "de.amethystsoft.vein.ModelContainerTests",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         return container
     }

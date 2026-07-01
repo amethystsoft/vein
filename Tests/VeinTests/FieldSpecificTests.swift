@@ -10,7 +10,7 @@ import Testing
 @Suite
 struct FieldSpecificTests {
     @Test
-    func testLazyFieldRetursStoreWithoutContext() async throws {
+    func testLazyFieldReturnsStoreWithoutContext() async throws {
         let field = LazyField(wrappedValue: "Test")
         #expect(field.wrappedValue == "Test")
     }
@@ -23,7 +23,8 @@ struct FieldSpecificTests {
             V0_0_1.self,
             migration: Migration.self,
             connection: connection,
-            appID: "de.amethystsoft.vein.tests.fieldSpecific"
+            appID: "de.amethystsoft.vein.tests.fieldSpecific",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         
         guard let model = try container.context.fetchAll(V0_0_1.Test.self).first else {
@@ -42,7 +43,8 @@ struct FieldSpecificTests {
                 V0_0_1.self,
                 migration: Migration.self,
                 at: nil,
-                appID: "de.amethystsoft.vein.tests.fieldSpecific"
+                appID: "de.amethystsoft.vein.tests.fieldSpecific",
+                encryptionEnabled: ProcessInfo.shouldEnableEncryption
             )
             let model = V0_0_1.Test(someValue: "Test")
             model.text = expectedText

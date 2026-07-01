@@ -18,7 +18,8 @@ struct BugTests {
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
-            appID: "de.amethystsoft.vein.BugTests"
+            appID: "de.amethystsoft.vein.BugTests",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         
         let model1 = V0_0_1.User(name: "Test")
@@ -34,7 +35,8 @@ struct BugTests {
             V0_0_1.self,
             migration: Migration.self,
             connection: connection,
-            appID: "de.amethystsoft.vein.BugTests"
+            appID: "de.amethystsoft.vein.BugTests",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
             
         let result = try newContainer.context.getModel(id: model1.id, type: V0_0_1.User.self)

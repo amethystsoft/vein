@@ -1,6 +1,6 @@
 import Foundation
 import Logging
-
+// swiftling:disable multiple_closures_with_trailing_closure
 @propertyWrapper
 public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unchecked Sendable {
     static var logger: Logger { .init(label: "Vein.OneRelationship") }
@@ -11,7 +11,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
     
     private let lock = NSLock()
     private var idStore: ULID?
-    private let _inverseKey = Atomic<String?>(nil)
+    private let _inverseKey = Mutex<String?>(nil)
     public var inverseKey: String? {
         get {
             _inverseKey.value
@@ -123,25 +123,25 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         let newID = newValue?.id
         var previousID: ULID?
         
-        lock.withLock {
-            previousID = idStore
-            idStore = newID
-        }
-        
-        let isDifferent = previousID != newID
-        
         VeinNotificationGuard.$isProcessing.withValue(true) {
-            if isDifferent {
-                // Disconnect from the old relation first while wrappedValue points to it.
-                updateOtherSide(isRemoving: true, id: previousID)
+            withObservationNotification( { model?.notifyOfChanges() }) {
+                lock.withLock {
+                    previousID = idStore
+                    idStore = newID
+                }
+                
+                let isDifferent = previousID != newID
+                
+                if isDifferent {
+                    // Disconnect from the old relation first while wrappedValue points to it.
+                    updateOtherSide(isRemoving: true, id: previousID)
+                }
+                
+                if isDifferent {
+                    // Connect to the new relation now that wrappedValue points to it.
+                    updateOtherSide(isRemoving: false, id: newID)
+                }
             }
-            
-            if isDifferent {
-                // Connect to the new relation now that wrappedValue points to it.
-                updateOtherSide(isRemoving: false, id: newID)
-            }
-            
-            model?.notifyOfChanges()
         }
         
         wasTouched = true
@@ -172,23 +172,22 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         
         let matchingField = target._fields.first { $0.key == inverseKey }
         
-        defer {
-            target.notifyOfChanges()
-        }
-        
-        if var manyField = matchingField as? (any ManyRelationship) {
-            if isRemoving {
-                manyField.persistableValue.removeAll { $0 == model.id }
-            } else if !manyField.persistableValue.contains(model.id) {
-                manyField.persistableValue.append(model.id)
+        withObservationNotification({ target.notifyOfChanges()}) {
+            
+            if var manyField = matchingField as? (any ManyRelationship) {
+                if isRemoving {
+                    manyField.persistableValue.removeAll { $0 == model.id }
+                } else if !manyField.persistableValue.contains(model.id) {
+                    manyField.persistableValue.append(model.id)
+                }
+                manyField.wasTouched = true
+            } else if var oneField = matchingField as? (any OneRelationship) {
+                oneField.persistableValue = isRemoving ? nil : model.id
+                oneField.wasTouched = true
             }
-            manyField.wasTouched = true
-        } else if var oneField = matchingField as? (any OneRelationship) {
-            oneField.persistableValue = isRemoving ? nil : model.id
-            oneField.wasTouched = true
+            
+            context._markTouched(target, previouslyMatching: predicateMatches)
         }
-        
-        context._markTouched(target, previouslyMatching: predicateMatches)
     }
     
     private func setObservers(on target: T?, id: ULID) {
@@ -266,34 +265,33 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
             let target = wrappedValue
         else { return }
         
-        defer {
-            target.notifyOfChanges()
-        }
-        
-        switch deleteRule {
-            case .nullify:
-                let predicateMatches = context._prepareForChange(of: target)
-                
-                let inverse = target._fields.first { $0.key == inverseKey }
-                
-                if var manyField = inverse as? (any ManyRelationship) {
-                    manyField.persistableValue.removeAll(where: { $0 == model.id })
-                    manyField.wasTouched = true
-                } else if var oneField = inverse as? (any OneRelationship) {
-                    oneField.persistableValue = nil
-                    oneField.wasTouched = true
-                }
-                
-                context._markTouched(target, previouslyMatching: predicateMatches)
-            case .cascade:
-                guard !target._isPreparedForDeletion else { return }
-                do {
-                    try context.delete(target)
-                } catch {
-                    if context.modelContainer.logConfiguration.errorWhileCascadeDeletion {
-                        Self.logger.error("An error occurred while cascading deletion: \(error)")
+        withObservationNotification({ target.notifyOfChanges() }) {
+            
+            switch deleteRule {
+                case .nullify:
+                    let predicateMatches = context._prepareForChange(of: target)
+                    
+                    let inverse = target._fields.first { $0.key == inverseKey }
+                    
+                    if var manyField = inverse as? (any ManyRelationship) {
+                        manyField.persistableValue.removeAll(where: { $0 == model.id })
+                        manyField.wasTouched = true
+                    } else if var oneField = inverse as? (any OneRelationship) {
+                        oneField.persistableValue = nil
+                        oneField.wasTouched = true
                     }
-                }
+                    
+                    context._markTouched(target, previouslyMatching: predicateMatches)
+                case .cascade:
+                    guard !target._isPreparedForDeletion else { return }
+                    do {
+                        try context.delete(target)
+                    } catch {
+                        if context.modelContainer.logConfiguration.errorWhileCascadeDeletion {
+                            Self.logger.error("An error occurred while cascading deletion: \(error)")
+                        }
+                    }
+            }
         }
     }
     

@@ -24,7 +24,7 @@ public protocol PersistentModel: AnyObject, Sendable {
     
     static var version: ModelVersion { get }
     
-    nonisolated var _observers: Atomic<ReferenceCountedObservers> { get }
+    nonisolated var _observers: Mutex<ReferenceCountedObservers> { get }
     
     static var _inverseFields: [ObjectIdentifier: [String: String]] { get }
     
@@ -39,7 +39,7 @@ public protocol PersistentModel: AnyObject, Sendable {
     
     var _isDeleted: Bool? { get set }
     
-    var _context: Vein.Atomic<Vein.ManagedObjectContext?> { get }
+    var _context: Mutex<Vein.ManagedObjectContext?> { get }
     
     init(id: ULID, fields: [String: SQLiteValue])
 }
