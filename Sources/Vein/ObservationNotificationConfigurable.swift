@@ -3,7 +3,7 @@ public protocol ObservationNotificationConfigurable {}
 
 extension ObservationNotificationConfigurable {
     public var callBeforeChange: Bool {
-        ManagedObjectContext.callBeforeChange.load(ordering: .relaxed) == 1
+        ManagedObjectContext.callBeforeChange.load(ordering: .acquiring) == 1
     }
 }
 
