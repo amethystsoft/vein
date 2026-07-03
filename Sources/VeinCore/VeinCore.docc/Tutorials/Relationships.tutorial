@@ -1,0 +1,56 @@
+@Tutorial(time: 3) {
+    @Intro(title: "Relationships") {
+        Use relationships with VeinCore.
+    }
+    
+    @Section(title: "Adding a relationship to our model") {
+        @ContentAndMedia {
+            Sometimes it can make sense to move part of your model to a child.
+            
+            In the following steps we will move the `attachment` property to a separate model.
+        }
+        
+        @Steps {
+            @Step {
+                Create a new Model `Attachment`.
+                
+                @Code(name: "Post.swift", file: relationships-1)
+            }
+            
+            @Step {
+                To connect them, we add the @Relationship macro to both sides.
+                One side specifies an inverse parameter, now both know the opposing side's corresponding field name. 
+                We also want attachments to get deleted when a post gets deleted,
+                that's defined through the cascade deleteRule.
+                
+                @Code(name: "Post.swift", file: relationships-2)
+            }
+        }
+    }
+        
+    @Section(title: "Persisting & fetching a relationship") {
+        @ContentAndMedia {
+            Like any other field, relationships work by setting or getting the parameter they are defined on.
+        }
+        
+        @Steps {
+            @Step {
+                Create instances of `Post` and `Attachment`.
+                
+                @Code(name: "Post.swift", file: relationship-use-1)
+            }
+            
+            @Step {
+                Insert one post into context, then add the attachment. 
+                
+                @Code(name: "Post.swift", file: relationship-use-2)
+            }
+            
+            @Step {
+                To read them, just access the property and do whatever you need.
+                
+                @Code(name: "Post.swift", file: relationship-use-3)
+            }
+        }
+    }
+}

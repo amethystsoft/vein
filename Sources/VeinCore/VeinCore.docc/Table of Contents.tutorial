@@ -8,4 +8,8 @@
         
         @TutorialReference(tutorial: "doc:Quick-start-Xcode")
     }
+    
+    @Chapter(name: "Relationships") {
+        @TutorialReference(tutorial: "doc:Relationships")
+    }
 }

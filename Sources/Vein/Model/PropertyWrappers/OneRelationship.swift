@@ -266,7 +266,6 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         else { return }
         
         withObservationNotification({ target.notifyOfChanges() }) {
-            
             switch deleteRule {
                 case .nullify:
                     let predicateMatches = context._prepareForChange(of: target)

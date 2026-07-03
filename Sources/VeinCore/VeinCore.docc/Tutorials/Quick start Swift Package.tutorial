@@ -51,7 +51,7 @@
             }
             
             @Step {
-                If you don't want data to be loaded on fetch, but only when its needed, which can make sense for larger data, you can apply `@LazyField` to it.
+                If you don't want data to be loaded on fetch, but only when its needed, which can make sense for larger data, you can apply `@LazyField` to it. LazyFields are always optional.
                 
                 @Code(name: "Post.swift", file: quickstart-model-3)
             }
