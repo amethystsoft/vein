@@ -1,3 +1,4 @@
+import Foundation
 import VeinCore
 
 enum V0_0_1: VersionedSchema {
