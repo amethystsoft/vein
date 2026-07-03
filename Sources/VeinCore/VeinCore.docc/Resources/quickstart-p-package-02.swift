@@ -12,7 +12,7 @@ let package = Package(
         .executableTarget(
             name: "YourApp",
             dependencies: [
-                .product(name: "Vein", package: "amethyst-vein")
+                .product(name: "VeinCore", package: "amethyst-vein")
             ]
         )
     ]

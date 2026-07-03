@@ -17,7 +17,7 @@
             }
             
             @Step {
-                Add VeinCore as dependency to your App.
+                Add VeinCore or VeinSwiftUI as dependency to your App.
                 @Image(source: quickstart-x-2, alt: "The xcode add-package modal with version.")
             }
         }

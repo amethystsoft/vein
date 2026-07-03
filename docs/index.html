@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vein Documentation Hub</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #000000;
+            color: #eee;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 40px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        h2 {
+            font-size: 30px;
+        }
+        p.subtitle {
+            font-size: 19px;
+            color: #86868b;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: #000;
+            border-radius: 12px;
+            padding: 24px;
+            text-decoration: none;
+            color: inherit;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid #d2d2d7;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            border-color: #DE69FF;
+        }
+        .card h2 {
+            margin: 0 0 10px 0;
+            font-size: 21px;
+            color: #eee;
+        }
+        .card p {
+            margin: 0;
+            font-size: 15px;
+            color: #515154;
+            line-height: 1.4;
+        }
+        .font-purple {
+            color: #DE69FF;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1><span class="font-purple">Amethyst Vein</span> Documentation Hub</h1>
+    <p class="subtitle">Select a framework target below to view its API reference.</p>
+    
+    <h2>Targets</h2>
+    <div class="grid">
+        <a href="/documentation/vein" class="card">
+            <h2>Vein</h2>
+            <p>Shared core framework with the majority of API surface</p>
+        </a>
+        
+        <a href="/documentation/veincore" class="card">
+            <h2>VeinCore</h2>
+            <p>Vein without UI bindings</p>
+        </a>
+        
+        <a href="/documentation/veinswiftui" class="card">
+            <h2>VeinSwiftUI</h2>
+            <p>Vein with @Query and automatic UI updates for SwiftUI</p>
+        </a>
+        
+        <a href="/documentation/ulid" class="card">
+            <h2>ULID</h2>
+            <p>Universally Unique Lexicographically Sortable Identifier.</p>
+        </a>
+    </div>
+    <h2>Tutorials</h2>
+    <div class="grid">
+        <a href="/tutorials/table-of-contents" class="card">
+            <h2>Meet Vein</h2>
+            <p>Shared UI independent docs. Relevant to everyone</p>
+        </a>
+        <!--Placeholder-->
+        <a href="/" class="card">
+            <h2>VeinSwiftUI</h2>
+            <p>SwiftUI specific tutorials regarding use in Views</p>
+        </a>
+    </div>
+</div>
+
+</body>
+</html>

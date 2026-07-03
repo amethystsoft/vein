@@ -16,7 +16,7 @@
             }
             
             @Step {
-                Add VeinCore as dependency to your App.
+                Add VeinCore or VeinSwiftUI as dependency to your App.
                 @Code(name: "Package.swift", file: quickstart-p-package-02.swift)
             }
         }

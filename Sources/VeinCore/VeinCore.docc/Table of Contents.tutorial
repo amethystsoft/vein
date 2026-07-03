@@ -1,4 +1,4 @@
-@Tutorials(name: "VeinCore") {
+@Tutorials(name: "Vein") {
     @Intro(title: "Meet Vein") {
         Database for apps made easy.
     }

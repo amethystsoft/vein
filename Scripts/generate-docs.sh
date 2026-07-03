@@ -24,3 +24,9 @@ swift package \
   --transform-for-static-hosting
 
 echo "Documentation generated at: $OUTPUT_DIR"
+
+echo "Replacing root index.html with a custom documentation hub..."
+
+cp "$REPO_ROOT/docs/index.html" "$OUTPUT_DIR/index.html"
+
+echo "Done! Custom dashboard successfully written to $OUTPUT_DIR/index.html"
