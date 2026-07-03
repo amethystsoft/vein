@@ -1,0 +1,40 @@
+@Tutorial(time: 5) {
+    @Intro(title: "Simple Database Migrations") {
+        Effortlessly & safely evolve your database schema using stage-by-stage migrations & Vein helper functions.
+    }
+    
+    @Section(title: "Migrating Schemas") {
+        @ContentAndMedia {
+            As your app grows, you will inevitably need to change your data models. 
+            Vein handles this through explicit, compile-time typesafe migrations.
+            
+            In this guide, we will migrate from V0_0_1 to V0_0_2. During this change:
+            - `Post` remains unchanged.
+            - `Attachment` receives a new optional `rating` field.
+            - A legacy class `Unused` is completely deleted.
+        }
+        
+        @Steps {
+            @Step {
+                Define your next schema version. In `V0_0_2`, we declare our updated models.
+                Note that the new property `rating` must be an optional value.
+                
+                @Code(name: "Schemas.swift", file: migration-schemas)
+            }
+            
+            @Step {
+                Now, create your `SchemaMigrationPlan`. 
+                You list your supported schemas in chronological order and define the transitions in the `stages` array.
+                
+                @Code(name: "Migration.swift", file: migration-stages-1)
+            }
+            
+            @Step {
+                Inside the `willMigrate` phase, utilize Vein's migration helpers.
+                Use `unchangedMigration` to keep a table intact, `deleteMigration` to drop a table, and `fieldsAddedMigration` to safely append the new optional column.
+                
+                @Code(name: "Migration.swift", file: migration-stages-2)
+            }
+        }
+    }
+}

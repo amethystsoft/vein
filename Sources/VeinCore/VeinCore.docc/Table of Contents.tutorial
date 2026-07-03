@@ -12,4 +12,12 @@
     @Chapter(name: "Relationships") {
         @TutorialReference(tutorial: "doc:Relationships")
     }
+    
+    @Chapter(name: "Simple Migrations") {
+        @TutorialReference(tutorial: "doc:SimpleMigrations")
+    }
+    
+    @Chapter(name: "Complex Migrations") {
+        @TutorialReference(tutorial: "doc:ComplexMigrations")
+    }
 }

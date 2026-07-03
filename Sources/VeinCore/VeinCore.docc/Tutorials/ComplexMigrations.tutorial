@@ -1,0 +1,35 @@
+@Tutorial(time: 7) {
+    @Intro(title: "Complex Migrations") {
+        Handle structural database transformations by fetching existing models and inserting new ones.
+    }
+    
+    @Section(title: "Writing Custom Migration Logic") {
+        @ContentAndMedia {
+            Simple migration helpers are great for adding fields or dropping tables. However, when you rename fields, merge schemas, or modify non-optional data types (like mapping an `Int` to a formatted `String`), you need a custom migration.
+            
+            In this tutorial, we will migrate from `V0_0_1` to `V0_0_2` where we:
+            - Map an old model's field `randomValue` (Int) into a formatted `securityCode` (String).
+            - Apply processing rules during the transfer (clamping negative numbers to zero).
+        }
+        
+        @Steps {
+            @Step {
+                Define the baseline and destination schemas. Notice that `V0_0_2.Test` now requires a non-optional `securityCode` instead of `randomValue`, meaning simple column additions won't work.
+                
+                @Code(name: "Schemas.swift", file: complex-migration-schemas)
+            }
+            
+            @Step {
+                Set up your `SchemaMigrationPlan` block, preparing a `.complex` transition stage from version 1 to version 2.
+                
+                @Code(name: "Migration.swift", file: complex-migration-stages-1)
+            }
+            
+            @Step {
+                Implement the migration logic. Fetch the baseline records, execute your custom business rules, and save the mapped models back to the new schema inside the transition step.
+                
+                @Code(name: "Migration.swift", file: complex-migration-stages-2)
+            }
+        }
+    }
+}
