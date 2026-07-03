@@ -1,3 +1,4 @@
+import Foundation
 import VeinCore
 
 func tryRelationships(context: ManagedObjectContext) throws {
