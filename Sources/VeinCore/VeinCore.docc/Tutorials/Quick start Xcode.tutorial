@@ -1,0 +1,133 @@
+@Tutorial(time: 5) {
+    @Intro(title: "Quick start Xcode") {
+        Install VeinCore and create your first model.
+    }
+    
+    @Section(title: "Setup") {
+        @ContentAndMedia {
+            Get started by installing needed dependencies.
+        }
+        
+        @Steps {
+            @Step {
+                Add `github.com/amethystsoft/vein` as dependency to your project.
+                Choose the latest available version.
+                
+                @Image(source: quickstart-x-1, alt: "The xcode add-package modal.")
+            }
+            
+            @Step {
+                Add VeinCore or VeinSwiftUI as dependency to your App.
+                @Image(source: quickstart-x-2, alt: "The xcode add-package modal with version.")
+            }
+        }
+    }
+        
+    @Section(title: "Create your first Model") {
+        @ContentAndMedia {
+            Now, let's build your data model using VeinCore.
+        }
+            
+        @Steps {
+            @Step {
+                To version models, you wrap them in a VersionedSchema.
+                
+                @Code(name: "Post.swift", file: quickstart-model-0)
+            }
+            
+            @Step {
+                Inside the VersionedSchema, create a new class and add the `@Model` macro to it.
+                
+                You also need to add it to the schemas `models` variable.
+                
+                For easier access you can set a typealias outside of the VersionedSchema.
+                
+                @Code(name: "Post.swift", file: quickstart-model-1)
+            }
+            
+            @Step {
+                Now you start adding your properties.
+                
+                Vein interprets plain, non-static vars as eager loaded fields automatically.
+                
+                @Code(name: "Post.swift", file: quickstart-model-2)
+            }
+            
+            @Step {
+                If you don't want data to be loaded on fetch, but only when its needed, which can make sense for larger data, you can apply `@LazyField` to it. LazyFields are always optional.
+                
+                @Code(name: "Post.swift", file: quickstart-model-3)
+            }
+            
+            @Step {
+                Last, add an initializer you want to use to create a new instance of your model.
+                
+                For easier access to it you can create a typealias outside of the `VersionedSchema`.
+                
+                @Code(name: "Post.swift", file: quickstart-model-4)
+            }
+            
+            @Step {
+                Vein requires a `SchemaMigrationPlan`, but don't worry, you don't have to migrate anything right now.
+                
+                Just add your VersionedSchema to the schemas array.
+                
+                @Code(name: "Post.swift", file: quickstart-model-5)
+            }
+        }
+    }
+        
+    @Section(title: "ModelContainer & ManagedObjectContext") {
+        @ContentAndMedia {
+            How to use the Model?
+        }
+        
+        @Steps {
+            @Step {
+                First you need to create a model container.
+                Vein encrypts on the DB level by default.
+                If you don't want that, you can disable it via the encryptionEnabled parameter.
+                
+                @Code(name: "VeinExample.swift", file: quickstart-use-1)
+            }
+            
+            @Step {
+                Tell the container to migrate to the current schema if needed.
+                
+                @Code(name: "VeinExample.swift", file: quickstart-use-2)
+            }
+            
+            @Step {
+                Create a post and add it to the context.
+                
+                @Code(name: "VeinExample.swift", file: quickstart-use-3)
+            }
+            
+            @Step {
+                To update a field, just set it to something new via the swift property.
+                
+                @Code(name: "VeinExample.swift", file: quickstart-use-4)
+            }
+            
+            @Step {
+                To persist changes, you need to call `save()` on the context.
+                
+                Until then all changes are only tracked in memory.
+                
+                @Code(name: "VeinExample.swift", file: quickstart-use-5)
+            }
+            
+            @Step {
+                To retrieve models from the context, persisted and unpersisted, you can use fetchAll on the context and filter using a Predicate.
+                
+                @Code(name: "VeinExample.swift", file: quickstart-use-6)
+            }
+            
+            @Step {
+                Last but not least, to delete a model, just call `context.delete()` with it.
+                
+                @Code(name: "VeinExample.swift", file: quickstart-use-7)
+            }
+        }
+    }
+}

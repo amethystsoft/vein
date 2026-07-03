@@ -1,0 +1,23 @@
+@Tutorials(name: "Vein") {
+    @Intro(title: "Meet Vein") {
+        Database for apps made easy.
+    }
+    
+    @Chapter(name: "Quick start") {
+        @TutorialReference(tutorial: "doc:Quick-start-Swift-Package")
+        
+        @TutorialReference(tutorial: "doc:Quick-start-Xcode")
+    }
+    
+    @Chapter(name: "Relationships") {
+        @TutorialReference(tutorial: "doc:Relationships")
+    }
+    
+    @Chapter(name: "Simple Migrations") {
+        @TutorialReference(tutorial: "doc:SimpleMigrations")
+    }
+    
+    @Chapter(name: "Complex Migrations") {
+        @TutorialReference(tutorial: "doc:ComplexMigrations")
+    }
+}
