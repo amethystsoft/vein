@@ -1,0 +1,11 @@
+@Tutorials(name: "VeinCore") {
+    @Intro(title: "Meet Vein") {
+        Database for apps made easy.
+    }
+    
+    @Chapter(name: "Quick start") {
+        @TutorialReference(tutorial: "doc:Quick-start-Swift-Package")
+        
+        @TutorialReference(tutorial: "doc:Quick-start-Xcode")
+    }
+}

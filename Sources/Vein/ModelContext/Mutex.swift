@@ -10,17 +10,13 @@ public final class Mutex<Value>: @unchecked Sendable {
 
     /// Use `set` only for blind overwrited
     /// Changing arrays or dictionaries based on their
-    /// current value must be done in ``Atomic/mutate(_)``
+    /// current value must be done in ``Mutex/mutate(_:)``
     public var value: Value {
         get { lock.withLock { _value } }
         set { lock.withLock { _value = newValue } }
     }
     
-    /// Mutate the content in a thread-safe way
-    public func mutate<R>(_ body: (inout Value) -> R) -> R {
-        lock.withLock { body(&_value) }
-    }
-    
+    /// Mutate the content in a thread-safe way    
     public func mutate<R>(_ body: (inout Value) throws -> R) rethrows -> R {
         try lock.withLock{ try body(&_value) }
     }
