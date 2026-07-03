@@ -1,7 +1,11 @@
 #!/bin/bash
 set -eo pipefail
 
-OUTPUT_DIR="../VeinDocs"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+OUTPUT_DIR="$REPO_ROOT/../VeinDocs"
+
+cd "$REPO_ROOT"
 
 echo "Clearing old output..."
 rm -rf "$OUTPUT_DIR"

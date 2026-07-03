@@ -8,6 +8,6 @@ func tryRelationships(context: ManagedObjectContext) throws {
     let attachment = Attachment(
         name: "ExampleFile",
         fileType: .swift,
-        data: Data(bytes: [UInt8](repeating: 0, 1024 * 1024)) // very real swift file
+        data: Data(bytes: [UInt8](repeating: 0, count: 1024 * 1024)) // very real swift file
     )
 }

@@ -35,7 +35,7 @@
             }
             
             @Step {
-                Inside the VersionedSchema, create a new class and add the ``Model()`` macro to it.
+                Inside the VersionedSchema, create a new class and add the ``@Model`` macro to it.
                 
                 You also need to add it to the schemas `models` variable.
                 
