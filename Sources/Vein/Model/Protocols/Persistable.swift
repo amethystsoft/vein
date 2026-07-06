@@ -377,42 +377,21 @@ extension Data: Persistable, ColumnType {
     }
 }
 
-extension Date: Persistable, ColumnType {
-    public var sqliteTypeRepresentation: String { ISO8601Format(Date.sqliteFormatStyle) }
+extension Date: Persistable {
+    public var sqliteTypeRepresentation: Double { self.timeIntervalSince1970 }
     
-    public typealias SQLiteType = String
+    public typealias SQLiteType = Double
     
-    public typealias PersistentRepresentation = Self
+    public typealias PersistentRepresentation = Double
     
-    public var asPersistentRepresentation: Self { self }
+    public var asPersistentRepresentation: Double { self.timeIntervalSince1970 }
     
     public init?(fromPersistent representation: PersistentRepresentation) {
-        self = representation
-    }
-    
-    public static var sqliteFormatStyle: ISO8601FormatStyle {
-        .iso8601(timeZone: .gmt, includingFractionalSeconds: true, dateTimeSeparator: .space)
+        self = Date(timeIntervalSince1970: representation)
     }
     
     public static var sqliteTypeName: SQLiteTypeName {
-        .text
-    }
-    
-    public var sqliteValue: SQLiteValue {
-        .text(self.ISO8601Format(Date.sqliteFormatStyle))
-    }
-    
-    public static func decode(sqliteValue: SQLiteValue) throws(MOCError) -> Date {
-        switch sqliteValue {
-            case .text(let string):
-                do {
-                    return try sqliteFormatStyle.parse(string)
-                } catch {
-                    throw MOCError.propertyDecode(message: "recieved data couldn't be converted to 'Date'")
-                }
-            default:
-                throw MOCError.propertyDecode(message: "\(Self.self)")
-        }
+        .real
     }
 }
 

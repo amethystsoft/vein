@@ -317,9 +317,9 @@ fileprivate enum SimpleSchemaV0_0_2: VersionedSchema {
     @Model
     final class Test: Identifiable {
         @Field
-        var date: String
+        var date: Double
         
-        init(date: String) {
+        init(date: Double) {
             self.date = date
         }
     }
@@ -400,8 +400,7 @@ fileprivate enum SimpleMigrationSuccess: SchemaMigrationPlan {
             let models = try context.fetchAll(SimpleSchemaV0_0_2.Test.self)
             
             for model in models {
-                let date = try Date.sqliteFormatStyle.parse(model.date)
-                let newModel = SimpleSchemaV0_0_3.Test(date: Int(date.timeIntervalSince1970))
+                let newModel = SimpleSchemaV0_0_3.Test(date: Int(model.date))
                 try context.insert(newModel)
                 try context.delete(model)
             }
