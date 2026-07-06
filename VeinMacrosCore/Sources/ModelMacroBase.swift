@@ -49,8 +49,8 @@ public struct ModelMacroBase {
         for name in allFieldNames.sorted(by: { $0 < $1 }) {
             // This is not needed in every case, but its handy for internal ones
             // not using the wrappedValue.
-            fieldBodys.append("self._\(name).model = self")
-            fieldBodys.append("self._\(name).key = \"\(name)\"")
+            fieldBodys.append("self._\(name)._model = self")
+            fieldBodys.append("self._\(name)._key = \"\(name)\"")
             fieldAccessorBodies.append("self._\(name)")
         }
         
@@ -118,7 +118,7 @@ public struct ModelMacroBase {
         let eagerVarInit = eagerFields.initEagerRows()
         let relationshipInit = relationshipFields.initRelationshipRows()
         
-        fieldBodys.append("self._id.model = self")
+        fieldBodys.append("self._id._model = self")
         let fieldSetup = fieldBodys.joined(separator: "\n    ")
         let fieldAccessorSetup = fieldAccessorBodies.joined(separator: ",\n        ")
         
@@ -146,7 +146,7 @@ required init(id: Vein.ULID, fields: [String: Vein.SQLiteValue]) {
     _setupFields()
 }
 
-let _observers = Vein.Mutex(Vein.ReferenceCountedObservers())
+let _observers = Vein.Mutex(Vein._ReferenceCountedObservers())
 
 /// Sets required properties for @Field values.
 /// Gets generated automatically by @Model.
@@ -356,7 +356,7 @@ extension Dictionary where Key == String, Value == String {
         self.map { key, value in
             let idType = value.isCollection ? "[ULID]": "ULID?"
             return """
-                self._\(key).persistableValue = try! \(idType).init(
+                self._\(key)._persistableValue = try! \(idType).init(
                         fromPersistent: \(idType).PersistentRepresentation.decode(
                             sqliteValue: fields[\"\(key)\"]!
                         )

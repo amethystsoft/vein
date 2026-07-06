@@ -1,6 +1,6 @@
 import SQLiteDB
 
-public struct TableBuilder {
+struct TableBuilder {
     private let context: ManagedObjectContext
     private let schemaName: String
     private var schema: (SQLiteDB.TableBuilder) -> Void
@@ -12,7 +12,7 @@ public struct TableBuilder {
     }
     
     @discardableResult
-    public func id() -> Self {
+    func id() -> Self {
         var copy = self
         copy.schema = { t in
             t.column(SQLExpression<String>("id"), primaryKey: true)
@@ -21,7 +21,7 @@ public struct TableBuilder {
     }
     
     @discardableResult
-    public func field(
+    func field(
         _ key: String,
         type: UnderlayingFieldType,
         unique: Bool = false
@@ -36,7 +36,7 @@ public struct TableBuilder {
         return copy
     }
     
-    public func run() throws(ManagedObjectContextError) {
+    func run() throws(ManagedObjectContextError) {
         try context.run(Table(schemaName).create (ifNotExists: true) { t in
             schema(t)
         })

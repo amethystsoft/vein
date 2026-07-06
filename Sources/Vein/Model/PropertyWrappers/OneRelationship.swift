@@ -11,13 +11,13 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
     
     private let lock = NSLock()
     private var idStore: ULID?
-    private let _inverseKey = Mutex<String?>(nil)
-    public var inverseKey: String? {
+    private let inverseKeyStore = Mutex<String?>(nil)
+    public var _inverseKey: String? {
         get {
-            _inverseKey.value
+            inverseKeyStore.value
         }
         set {
-            _inverseKey.value = newValue
+            inverseKeyStore.value = newValue
         }
     }
     public let deleteRule: DeleteRule
@@ -25,11 +25,11 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
     /// ONLY LET MACRO SET
     /// It is not protected from other threads,
     /// because proper use cannot change it to something wrong
-    public var key: String?
+    public var _key: String?
     /// ONLY LET MACRO SET
     /// It is not protected from other threads,
     /// because proper use cannot change it to something wrong
-    public weak var model: (any PersistentModel)?
+    public weak var _model: (any PersistentModel)?
     
     private var _wasTouched: Bool = false
     public var wasTouched: Bool {
@@ -91,7 +91,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         inverse: String? = nil,
         deleteRule: DeleteRule = .nullify
     ) {
-        self._inverseKey.value = inverse
+        self.inverseKeyStore.value = inverse
         self.deleteRule = deleteRule
     }
     
@@ -124,7 +124,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         var previousID: ULID?
         
         VeinNotificationGuard.$isProcessing.withValue(true) {
-            withObservationNotification( { model?.notifyOfChanges() }) {
+            _withObservationNotification( { model?.notifyOfChanges() }) {
                 lock.withLock {
                     previousID = idStore
                     idStore = newID
@@ -151,17 +151,17 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         guard let model, let context = model.context else { return }
         
         lock.withLock {
-            if inverseKey == nil {
-                inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
+            if _inverseKey == nil {
+                _inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
             }
         }
         
         guard let target = get(for: id) else { return }
         target._observers.value.removeObserver(id: model.id, key: instanceKey)
         
-        guard let inverseKey else { return }
+        guard let _inverseKey else { return }
         if isRemoving {
-            model._observers.value.removeObserver(id: target.id, key: inverseKey)
+            model._observers.value.removeObserver(id: target.id, key: _inverseKey)
         } else {
             setObservers(on: target, id: target.id)
         }
@@ -170,19 +170,19 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         
         let predicateMatches = context._prepareForChange(of: target)
         
-        let matchingField = target._fields.first { $0.key == inverseKey }
+        let matchingField = target._fields.first { $0.key == _inverseKey }
         
-        withObservationNotification({ target.notifyOfChanges()}) {
+        _withObservationNotification({ target.notifyOfChanges()}) {
             
             if var manyField = matchingField as? (any ManyRelationship) {
                 if isRemoving {
-                    manyField.persistableValue.removeAll { $0 == model.id }
-                } else if !manyField.persistableValue.contains(model.id) {
-                    manyField.persistableValue.append(model.id)
+                    manyField._persistableValue.removeAll { $0 == model.id }
+                } else if !manyField._persistableValue.contains(model.id) {
+                    manyField._persistableValue.append(model.id)
                 }
                 manyField.wasTouched = true
             } else if var oneField = matchingField as? (any OneRelationship) {
-                oneField.persistableValue = isRemoving ? nil : model.id
+                oneField._persistableValue = isRemoving ? nil : model.id
                 oneField.wasTouched = true
             }
             
@@ -193,8 +193,8 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
     private func setObservers(on target: T?, id: ULID) {
         guard let model else { return }
         lock.withLock {
-            if inverseKey == nil {
-                inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
+            if _inverseKey == nil {
+                _inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
             }
         }
         
@@ -205,8 +205,8 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
             }
         })
         
-        if let inverseKey {
-            model._observers.value.addObserver(id: id, key: inverseKey, observer: { [weak target] in
+        if let _inverseKey {
+            model._observers.value.addObserver(id: id, key: _inverseKey, observer: { [weak target] in
                 guard !VeinNotificationGuard.isProcessing else { return }
                 VeinNotificationGuard.$isProcessing.withValue(true) {
                     target?.notifyOfChanges()
@@ -215,7 +215,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         }
     }
     
-    public func setStoreToCapturedState(_ state: Any) {
+    public func _setStoreToCapturedState(_ state: Any) {
         lock.withLock {
             guard let value = state as? ULID? else {
                 fatalError(
@@ -232,7 +232,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         }
     }
     
-    public var persistableValue: ULID? {
+    public var _persistableValue: ULID? {
         get {
             lock.withLock {
                 idStore
@@ -255,28 +255,28 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         else { return }
         
         lock.withLock {
-            if inverseKey == nil {
-                inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
+            if _inverseKey == nil {
+                _inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
             }
         }
         
         guard
-            let inverseKey,
+            let _inverseKey,
             let target = wrappedValue
         else { return }
         
-        withObservationNotification({ target.notifyOfChanges() }) {
+        _withObservationNotification({ target.notifyOfChanges() }) {
             switch deleteRule {
                 case .nullify:
                     let predicateMatches = context._prepareForChange(of: target)
                     
-                    let inverse = target._fields.first { $0.key == inverseKey }
+                    let inverse = target._fields.first { $0.key == _inverseKey }
                     
                     if var manyField = inverse as? (any ManyRelationship) {
-                        manyField.persistableValue.removeAll(where: { $0 == model.id })
+                        manyField._persistableValue.removeAll(where: { $0 == model.id })
                         manyField.wasTouched = true
                     } else if var oneField = inverse as? (any OneRelationship) {
-                        oneField.persistableValue = nil
+                        oneField._persistableValue = nil
                         oneField.wasTouched = true
                     }
                     
@@ -301,7 +301,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         storage storageKeyPath: ReferenceWritableKeyPath<OuterSelf, _OneRelationship<T>>
     ) -> T? {
         get {
-            let storage = observed[keyPath: storageKeyPath]
+            var storage = observed[keyPath: storageKeyPath]
             storage.lock.withLock {
                 if storage.model == nil {
                     storage.model = observed
@@ -310,7 +310,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
             return storage.wrappedValue
         }
         set {
-            let storage = observed[keyPath: storageKeyPath]
+            var storage = observed[keyPath: storageKeyPath]
             storage.lock.withLock {
                 if storage.model == nil {
                     storage.model = observed

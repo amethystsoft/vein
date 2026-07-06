@@ -1,3 +1,3 @@
-public struct PrimitiveState {
-    public let values: [String: Any]
+struct PrimitiveState {
+    let values: [String: Any]
 }

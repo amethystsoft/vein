@@ -56,20 +56,20 @@ struct MacrosTests {
                     _setupFields()
                 }
             
-                let _observers = Vein.Mutex(Vein.ReferenceCountedObservers())
+                let _observers = Vein.Mutex(Vein._ReferenceCountedObservers())
             
                 /// Sets required properties for @Field values.
                 /// Gets generated automatically by @Model.
                 public func _setupFields() {
-                    self.__clientID.model = self
-                    self.__clientID.key = "_clientID"
-                    self.__isDeleted.model = self
-                    self.__isDeleted.key = "_isDeleted"
-                    self.__updatedAt.model = self
-                    self.__updatedAt.key = "_updatedAt"
-                    self._test.model = self
-                    self._test.key = "test"
-                    self._id.model = self
+                    self.__clientID._model = self
+                    self.__clientID._key = "_clientID"
+                    self.__isDeleted._model = self
+                    self.__isDeleted._key = "_isDeleted"
+                    self.__updatedAt._model = self
+                    self.__updatedAt._key = "_updatedAt"
+                    self._test._model = self
+                    self._test._key = "test"
+                    self._id._model = self
                 }
             
                 let _context = Vein.Mutex<Vein.ManagedObjectContext?>(nil)
@@ -177,20 +177,20 @@ struct MacrosTests {
                     _setupFields()
                 }
             
-                let _observers = Vein.Mutex(Vein.ReferenceCountedObservers())
+                let _observers = Vein.Mutex(Vein._ReferenceCountedObservers())
             
                 /// Sets required properties for @Field values.
                 /// Gets generated automatically by @Model.
                 public func _setupFields() {
-                    self.__clientID.model = self
-                    self.__clientID.key = "_clientID"
-                    self.__isDeleted.model = self
-                    self.__isDeleted.key = "_isDeleted"
-                    self.__updatedAt.model = self
-                    self.__updatedAt.key = "_updatedAt"
-                    self._test.model = self
-                    self._test.key = "test"
-                    self._id.model = self
+                    self.__clientID._model = self
+                    self.__clientID._key = "_clientID"
+                    self.__isDeleted._model = self
+                    self.__isDeleted._key = "_isDeleted"
+                    self.__updatedAt._model = self
+                    self.__updatedAt._key = "_updatedAt"
+                    self._test._model = self
+                    self._test._key = "test"
+                    self._id._model = self
                 }
             
                 let _context = Vein.Mutex<Vein.ManagedObjectContext?>(nil)
@@ -311,20 +311,20 @@ struct MacrosTests {
                     _setupFields()
                 }
             
-                let _observers = Vein.Mutex(Vein.ReferenceCountedObservers())
+                let _observers = Vein.Mutex(Vein._ReferenceCountedObservers())
             
                 /// Sets required properties for @Field values.
                 /// Gets generated automatically by @Model.
                 public func _setupFields() {
-                    self.__clientID.model = self
-                    self.__clientID.key = "_clientID"
-                    self.__isDeleted.model = self
-                    self.__isDeleted.key = "_isDeleted"
-                    self.__updatedAt.model = self
-                    self.__updatedAt.key = "_updatedAt"
-                    self._test.model = self
-                    self._test.key = "test"
-                    self._id.model = self
+                    self.__clientID._model = self
+                    self.__clientID._key = "_clientID"
+                    self.__isDeleted._model = self
+                    self.__isDeleted._key = "_isDeleted"
+                    self.__updatedAt._model = self
+                    self.__updatedAt._key = "_updatedAt"
+                    self._test._model = self
+                    self._test._key = "test"
+                    self._id._model = self
                 }
             
                 let _context = Vein.Mutex<Vein.ManagedObjectContext?>(nil)
@@ -431,20 +431,20 @@ struct MacrosTests {
                     _setupFields()
                 }
             
-                let _observers = Vein.Mutex(Vein.ReferenceCountedObservers())
+                let _observers = Vein.Mutex(Vein._ReferenceCountedObservers())
             
                 /// Sets required properties for @Field values.
                 /// Gets generated automatically by @Model.
                 public func _setupFields() {
-                    self.__clientID.model = self
-                    self.__clientID.key = "_clientID"
-                    self.__isDeleted.model = self
-                    self.__isDeleted.key = "_isDeleted"
-                    self.__updatedAt.model = self
-                    self.__updatedAt.key = "_updatedAt"
-                    self._test.model = self
-                    self._test.key = "test"
-                    self._id.model = self
+                    self.__clientID._model = self
+                    self.__clientID._key = "_clientID"
+                    self.__isDeleted._model = self
+                    self.__isDeleted._key = "_isDeleted"
+                    self.__updatedAt._model = self
+                    self.__updatedAt._key = "_updatedAt"
+                    self._test._model = self
+                    self._test._key = "test"
+                    self._id._model = self
                 }
             
                 let _context = Vein.Mutex<Vein.ManagedObjectContext?>(nil)

@@ -10,7 +10,7 @@ import Testing
 struct ReferenceCountedObserversTest {
     @Test("Observer is retained until all registered keys are removed")
     mutating func observerRetaining() {
-        var tracker = ReferenceCountedObservers()
+        var tracker = _ReferenceCountedObservers()
         let targetID = ULID()
         var notificationCount = 0
         let observer = { notificationCount += 1 }

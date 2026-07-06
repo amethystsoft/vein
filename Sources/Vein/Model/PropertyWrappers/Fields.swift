@@ -12,9 +12,9 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
     private var readFromStore = false
     
     /// ONLY LET MACRO SET
-    public var key: String?
+    public var _key: String?
     /// ONLY LET MACRO SET
-    public weak var model: (any PersistentModel)?
+    public weak var _model: (any PersistentModel)?
     
     @_spi(VeinTesting) public let suppressUIUpdates: Bool
     
@@ -82,13 +82,12 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
     }
     
     public init(wrappedValue: T? = nil, suppressUIUpdates: Bool = false) {
-        self.key = nil
         self.store = wrappedValue
         self.suppressUIUpdates = suppressUIUpdates
     }
     
     private func setAndNotify(_ newValue: WrappedType) {
-        withObservationNotification {
+        _withObservationNotification {
             if !suppressUIUpdates {
                 model?.notifyOfChanges()
             }
@@ -100,7 +99,7 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
         }
     }
     
-    public func setStoreToCapturedState(_ state: Any) {
+    public func _setStoreToCapturedState(_ state: Any) {
         lock.withLock {
             guard let value = state as? WrappedType else {
                 fatalError(ManagedObjectContextError.capturedStateApplicationFailed(WrappedType.self, instanceKey).localizedDescription)
@@ -111,7 +110,7 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
         }
     }
     
-    public var persistableValue: T? {
+    public var _persistableValue: T? {
         get { wrappedValue }
         set { wrappedValue = newValue }
     }
@@ -123,7 +122,7 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
         storage storageKeyPath: ReferenceWritableKeyPath<OuterSelf, LazyField<T>>
     ) -> T? {
         get {
-            let storage = observed[keyPath: storageKeyPath]
+            var storage = observed[keyPath: storageKeyPath]
             storage.lock.withLock {
                 if storage.model == nil {
                     storage.model = observed
@@ -132,7 +131,7 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
             return storage.wrappedValue
         }
         set {
-            let storage = observed[keyPath: storageKeyPath]
+            var storage = observed[keyPath: storageKeyPath]
             storage.lock.withLock {
                 if storage.model == nil {
                     storage.model = observed
@@ -147,8 +146,8 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
 public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
     public typealias WrappedType = T
     
-    public var key: String?
-    public weak var model: (any PersistentModel)?
+    public var _key: String?
+    public weak var _model: (any PersistentModel)?
     private let lock = NSLock()
     
     package var store: T
@@ -192,20 +191,19 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
     
     public init(wrappedValue: T) {
         self.store = wrappedValue
-        self.key = nil
     }
     
     // Notifies before or after the locked store mutation depending on `callBeforeChange`;
     // notification always runs outside the lock to avoid callback deadlocks.
     private func setAndNotify(_ newValue: WrappedType) {
-        withObservationNotification({ model?.notifyOfChanges() }) {
+        _withObservationNotification({ model?.notifyOfChanges() }) {
             lock.withLock {
                 store = newValue
             }
         }
     }
     
-    public func setStoreToCapturedState(_ state: Any) {
+    public func _setStoreToCapturedState(_ state: Any) {
         lock.withLock {
             guard let value = state as? WrappedType else {
                 fatalError(ManagedObjectContextError.capturedStateApplicationFailed(WrappedType.self, instanceKey).localizedDescription)
@@ -215,7 +213,7 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
         }
     }
     
-    public var persistableValue: T {
+    public var _persistableValue: T {
         get { wrappedValue }
         set { wrappedValue = newValue }
     }
@@ -227,7 +225,7 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
         storage storageKeyPath: ReferenceWritableKeyPath<OuterSelf, Field<T>>
     ) -> T {
         get {
-            let storage = observed[keyPath: storageKeyPath]
+            var storage = observed[keyPath: storageKeyPath]
             storage.lock.withLock {
                 if storage.model == nil {
                     storage.model = observed
@@ -236,7 +234,7 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
             return storage.wrappedValue
         }
         set {
-            let storage = observed[keyPath: storageKeyPath]
+            var storage = observed[keyPath: storageKeyPath]
             storage.lock.withLock {
                 if storage.model == nil {
                     storage.model = observed

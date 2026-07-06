@@ -4,17 +4,45 @@ import SQLiteDB
 public protocol FieldBase {
     associatedtype WrappedType: Persistable
     static var sqliteTypeName: SQLiteTypeName { get }
-    var key: String? { get }
-    var model: (any PersistentModel)? { get }
-    func setStoreToCapturedState(_ state: Any)
+    var _key: String? { get set }
+    var _model: (any PersistentModel)? { get set }
+    func _setStoreToCapturedState(_ state: Any)
     var isLazy: Bool { get }
     var wasTouched: Bool { get }
     
-    var persistableValue: WrappedType { get set }
+    var _persistableValue: WrappedType { get set }
 }
 
 extension FieldBase {
-    public var instanceKey: String {
+    var key: String? {
+        get {
+            _key
+        }
+        
+        set {
+            _key = newValue
+        }
+    }
+    
+    weak var model: (any PersistentModel)? {
+        get {
+            _model
+        }
+        set {
+            _model = newValue
+        }
+    }
+    
+    var persistableValue: WrappedType {
+        get {
+            _persistableValue
+        }
+        set {
+            _persistableValue = newValue
+        }
+    }
+    
+    var instanceKey: String {
         guard let key else {
             fatalError(MOCError.keyMissing(message: "raised by Field property of Type '\(WrappedType.self)'").localizedDescription)
         }
@@ -26,24 +54,24 @@ extension FieldBase {
     }
     
     var instanceObjectID: ObjectIdentifier {
-        guard let model else {
+        guard let _model else {
             fatalError(MOCError.modelReference(message: "raised by Field property of Type '\(WrappedType.self)'").localizedDescription)
         }
-        return model.typeIdentifier
+        return _model.typeIdentifier
     }
     
     var instanceSchema: String {
-        guard let model else {
+        guard let _model else {
             fatalError(MOCError.modelReference(message: "raised by Field property of Type '\(WrappedType.self)'").localizedDescription)
         }
-        return model._getSchema()
+        return _model._getSchema()
     }
     
     var instanceID: ULID {
-        guard let model else {
+        guard let _model else {
             fatalError(MOCError.modelReference(message: "raised by Field property of Type '\(WrappedType.self)'").localizedDescription)
         }
-        return model.id
+        return _model.id
     }
     
     /// This expressible should only be used for fetching.
@@ -75,7 +103,7 @@ extension FieldBase {
         }
     }
     
-    public func decode(_ row: SQLiteDB.Row) -> WrappedType.PersistentRepresentation {
+    func decode(_ row: SQLiteDB.Row) -> WrappedType.PersistentRepresentation {
         do {
             let typeName = WrappedType.sqliteTypeName
             
@@ -136,7 +164,7 @@ extension FieldBase {
         }
     }
     
-    public func asDTO() -> PersistedFieldDTO {
+    func asDTO() -> PersistedFieldDTO {
         PersistedFieldDTO(
             key: instanceKey,
             id: instanceID,
@@ -146,7 +174,7 @@ extension FieldBase {
         )
     }
     
-    public func migrate(on builder: inout Vein.TableBuilder) {
+    func migrate(on builder: inout Vein.TableBuilder) {
         let required = !WrappedType.sqliteTypeName.isNull
         
         builder = switch SQLiteTypeName.notNull(WrappedType.sqliteTypeName) {

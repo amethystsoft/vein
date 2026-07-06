@@ -464,7 +464,7 @@ package final class WriteCache: Sendable {
     
     private nonisolated let lock = NSLock()
     
-    package nonisolated func mutate<R>(
+    nonisolated func mutate<R>(
         _ block: (
             _ inserts: inout WriteCacheDictionary,
             _ touches: inout WriteCacheDictionary,
