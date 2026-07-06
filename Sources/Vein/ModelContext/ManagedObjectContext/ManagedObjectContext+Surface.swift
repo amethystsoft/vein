@@ -93,7 +93,7 @@ extension ManagedObjectContext {
         scheduleNotification(model)
     }
     
-    public nonisolated func _prepareForChange(of model: any PersistentModel) -> [Int] {
+    nonisolated func _prepareForChange(of model: any PersistentModel) -> [Int] {
         writeCache.mutate { _,_,_, states in
             if states[model.typeIdentifier, default: [:]][model.id] == nil {
                 states[
@@ -117,7 +117,7 @@ extension ManagedObjectContext {
     
     /// Registers the change on the context and updates Queries if necessary
     /// Only intended to be called by Fields
-    public nonisolated func _markTouched(
+    nonisolated func _markTouched(
         _ model: any PersistentModel,
         previouslyMatching predicateHashes: [Int]
     ) {

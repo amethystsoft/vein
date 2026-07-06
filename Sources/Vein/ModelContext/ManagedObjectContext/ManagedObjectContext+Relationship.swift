@@ -3,7 +3,7 @@ import SQLiteDB
 import Foundation
 
 extension ManagedObjectContext {
-    public nonisolated func getModel<T: PersistentModel>(id: ULID, type: T.Type) throws(MOCError) -> T? {
+    nonisolated func getModel<T: PersistentModel>(id: ULID, type: T.Type) throws(MOCError) -> T? {
         if let model = identityMap.getTracked(type, id: id) {
             return model
         }
@@ -15,7 +15,7 @@ extension ManagedObjectContext {
         ).first
     }
     
-    public nonisolated func getModels<T: PersistentModel>(
+    nonisolated func getModels<T: PersistentModel>(
         ids: [ULID],
         type: T.Type,
         requestingModel: any PersistentModel,
