@@ -24,12 +24,9 @@ public protocol PersistentModel: AnyObject, Sendable {
     
     static var version: ModelVersion { get }
     
-    nonisolated var _observers: Mutex<ReferenceCountedObservers> { get }
+    nonisolated var _observers: Mutex<_ReferenceCountedObservers> { get }
     
     static var _inverseFields: [ObjectIdentifier: [String: String]] { get }
-    
-    func extractPrimitiveState() -> PrimitiveState
-    func applyPrimitiveState(_ state: PrimitiveState)
     
     static func _predicateInformation(for keyPath: PartialKeyPath<Self>) -> FieldInformation?
     
@@ -58,19 +55,19 @@ extension PersistentModel {
         }
     }
     
-    public func extractPrimitiveState() -> PrimitiveState {
+    func extractPrimitiveState() -> PrimitiveState {
         var data = [String: Any]()
         
         for field in _fields {
-            data[field.instanceKey] = field.persistableValue
+            data[field.instanceKey] = field._persistableValue
         }
         
         return PrimitiveState(values: data)
     }
     
-    public func applyPrimitiveState(_ state: PrimitiveState) {
+    func applyPrimitiveState(_ state: PrimitiveState) {
         for field in _fields {
-            field.setStoreToCapturedState(state.values[field.instanceKey]!)
+            field._setStoreToCapturedState(state.values[field.instanceKey]!)
         }
     }
     

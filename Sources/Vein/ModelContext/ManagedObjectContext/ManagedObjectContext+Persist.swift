@@ -7,7 +7,7 @@ extension ManagedObjectContext {
             let table = Table(model._getSchema())
             let values = model._fields.map {
                 return $0
-                    .persistableValue
+                    ._persistableValue
                     .asPersistentRepresentation
                     .sqliteSetter(key: $0.instanceKey)
             }
@@ -48,7 +48,7 @@ extension ManagedObjectContext {
                     model._fields
                         .filter { $0.wasTouched }
                         .map {
-                            $0.persistableValue
+                            $0._persistableValue
                                 .asPersistentRepresentation
                                 .sqliteSetter(key: $0.instanceKey)
                         }

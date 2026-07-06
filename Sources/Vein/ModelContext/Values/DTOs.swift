@@ -1,14 +1,14 @@
 import Foundation
 import SQLiteDB
 
-public struct PersistedFieldDTO: Sendable {
+struct PersistedFieldDTO: Sendable {
     let key: String
     let id: ULID
     let schema: String
     let sqliteType: SQLiteTypeName
     let enclosingObjectID: ObjectIdentifier
     
-    public init(key: String, id: ULID, schema: String, sqliteType: SQLiteTypeName, enclosingObjectID: ObjectIdentifier) {
+    init(key: String, id: ULID, schema: String, sqliteType: SQLiteTypeName, enclosingObjectID: ObjectIdentifier) {
         self.key = key
         self.id = id
         self.schema = schema

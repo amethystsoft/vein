@@ -7,7 +7,12 @@ public class PrimaryKey: PersistedField, @unchecked Sendable {
     static let logger = Logger(label: "Vein PrimaryKey")
     public typealias WrappedType = ULID
     
-    public let key: String? = "id"
+    public var _key: String? {
+        get {
+            "id"
+        }
+        set {}
+    }
     
     private let lock = NSLock()
     
@@ -47,22 +52,16 @@ public class PrimaryKey: PersistedField, @unchecked Sendable {
         UUID.sqliteTypeName
     }
     
-    public weak var model: (any PersistentModel)?
-    
-    public var projectedValue: PersistanceChecker {
-        PersistanceChecker {
-            self.model?.context != nil
-        }
-    }
+    public weak var _model: (any PersistentModel)?
     
     public init(wrappedValue: ULID = ULID()) {
         self.store = wrappedValue
     }
     
     /// No-op: Primary key is immutable after insertion and doesn't participate in rollback.
-    public func setStoreToCapturedState(_ state: Any) {}
+    public func _setStoreToCapturedState(_ state: Any) {}
     
-    public var persistableValue: ULID {
+    public var _persistableValue: ULID {
         get { self.wrappedValue }
         set { self.wrappedValue = newValue }
     }
@@ -74,7 +73,7 @@ public class PrimaryKey: PersistedField, @unchecked Sendable {
         storage storageKeyPath: ReferenceWritableKeyPath<OuterSelf, PrimaryKey>
     ) -> ULID {
         get {
-            let storage = observed[keyPath: storageKeyPath]
+            var storage = observed[keyPath: storageKeyPath]
             storage.lock.withLock {
                 if storage.model == nil {
                     storage.model = observed
@@ -83,7 +82,7 @@ public class PrimaryKey: PersistedField, @unchecked Sendable {
             return storage.wrappedValue
         }
         set {
-            let storage = observed[keyPath: storageKeyPath]
+            var storage = observed[keyPath: storageKeyPath]
             storage.lock.withLock {
                 if storage.model == nil {
                     storage.model = observed
@@ -91,16 +90,5 @@ public class PrimaryKey: PersistedField, @unchecked Sendable {
             }
             storage.wrappedValue = newValue
         }
-    }
-}
-
-
-public struct PersistanceChecker {
-    private let getPersistanceState: () -> Bool
-    package init(getPersistanceState: @escaping () -> Bool) {
-        self.getPersistanceState = getPersistanceState
-    }
-    public var isPersisted: Bool {
-        getPersistanceState()
     }
 }

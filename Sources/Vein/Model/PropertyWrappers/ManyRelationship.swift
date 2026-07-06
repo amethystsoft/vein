@@ -11,13 +11,13 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
     public var isLazy: Bool { false }
     private let lock = NSLock()
     @_spi(VeinTesting) public var idStore = [ULID]()
-    private let _inverseKey = Mutex<String?>(nil)
-    public var inverseKey: String? {
+    private let inverseKeyStore = Mutex<String?>(nil)
+    public var _inverseKey: String? {
         get {
-            _inverseKey.value
+            inverseKeyStore.value
         }
         set {
-            _inverseKey.value = newValue
+            inverseKeyStore.value = newValue
         }
     }
     public let deleteRule: DeleteRule
@@ -25,11 +25,11 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
     /// ONLY LET MACRO SET
     /// it is not protected from other threads,
     /// because proper use cannot change it to something wrong
-    public var key: String?
+    public var _key: String?
     /// ONLY LET MACRO SET
     /// it is not protected from other threads,
     /// because proper use cannot change it to something wrong
-    public weak var model: (any PersistentModel)?
+    public weak var _model: (any PersistentModel)?
     
     private var _wasTouched: Bool = false
     public var wasTouched: Bool {
@@ -72,7 +72,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
         inverse: String? = nil,
         deleteRule: DeleteRule = .nullify
     ) {
-        self._inverseKey.value = inverse
+        self.inverseKeyStore.value = inverse
         self.deleteRule = deleteRule
     }
     
@@ -80,12 +80,12 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
         guard let model, let context = model.context else { return [] }
         guard !ids.isEmpty else { return [] }
         
-        if inverseKey.isNil {
-            inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
+        if _inverseKey.isNil {
+            _inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
         }
         
         do {
-            let result = try context.getModels(ids: ids, type: T.self, requestingModel: model, fieldKey: instanceKey, inverseKey: inverseKey)
+            let result = try context.getModels(ids: ids, type: T.self, requestingModel: model, fieldKey: instanceKey, inverseKey: _inverseKey)
             return result
         } catch {
             if case .noSuchTable = error {
@@ -106,7 +106,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
         var oldIDs = [ULID]()
         let newIDs = newValue.map(\.id)
         
-        withObservationNotification {
+        _withObservationNotification {
             if !VeinNotificationGuard.isProcessing {
                 VeinNotificationGuard.$isProcessing.withValue(true) {
                     model?.notifyOfChanges()
@@ -132,30 +132,30 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
     private func updateOtherSide(removed: [T], added: [T]) {
         guard let model, let context = model.context else { return }
         
-        if inverseKey.isNil {
-            inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
+        if _inverseKey.isNil {
+            _inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
         }
         
         for target in removed {
             target._observers.value.removeObserver(id: model.id, key: instanceKey)
 
-            guard let inverseKey else {
+            guard let _inverseKey else {
                 continue
             }
-            model._observers.value.removeObserver(id: target.id, key: inverseKey)
+            model._observers.value.removeObserver(id: target.id, key: _inverseKey)
             
             target._setupFields()
             let predicateMatches = context._prepareForChange(of: target)
             
-            let matchingField = target._fields.first { $0.key == inverseKey }
+            let matchingField = target._fields.first { $0.key == _inverseKey }
             
-            withObservationNotification({ matchingField?.model?.notifyOfChanges() }) {
+            _withObservationNotification({ matchingField?.model?.notifyOfChanges() }) {
                 if var manyField = matchingField as? (any ManyRelationship) {
-                    manyField.persistableValue.removeAll { $0 == model.id }
+                    manyField._persistableValue.removeAll { $0 == model.id }
                     manyField.wasTouched = true
                 } else if var oneField = matchingField as? (any OneRelationship) {
-                    if oneField.persistableValue == model.id {
-                        oneField.persistableValue = nil
+                    if oneField._persistableValue == model.id {
+                        oneField._persistableValue = nil
                     }
                     oneField.wasTouched = true
                 }
@@ -167,16 +167,16 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
         for target in added {
             setObservers(on: target, id: target.id)
             
-            guard let inverseKey else {
+            guard let _inverseKey else {
                 continue
             }
             
             target._setupFields()
             let predicateMatches = context._prepareForChange(of: target)
             
-            let matchingField = target._fields.first { $0.key == inverseKey }
+            let matchingField = target._fields.first { $0.key == _inverseKey }
             
-            withObservationNotification {
+            _withObservationNotification {
                 if !VeinNotificationGuard.isProcessing {
                     VeinNotificationGuard.$isProcessing.withValue(true) {
                         target.notifyOfChanges()
@@ -197,12 +197,12 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                 }
                 
                 if var manyField = matchingField as? (any ManyRelationship) {
-                    if !manyField.persistableValue.contains(model.id) {
-                        manyField.persistableValue.append(model.id)
+                    if !manyField._persistableValue.contains(model.id) {
+                        manyField._persistableValue.append(model.id)
                     }
                     manyField.wasTouched = true
                 } else if var oneField = matchingField as? (any OneRelationship) {
-                    oneField.persistableValue = model.id
+                    oneField._persistableValue = model.id
                     oneField.wasTouched = true
                 }
                 
@@ -214,8 +214,8 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
     private func setObservers(on target: T?, id: ULID) {
         guard let model else { return }
         lock.withLock {
-            if inverseKey == nil {
-                inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
+            if _inverseKey == nil {
+                _inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
             }
         }
         
@@ -226,8 +226,8 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
             }
         })
         
-        if let inverseKey {
-            model._observers.value.addObserver(id: id, key: inverseKey, observer: { [weak target] in
+        if let _inverseKey {
+            model._observers.value.addObserver(id: id, key: _inverseKey, observer: { [weak target] in
                 guard !VeinNotificationGuard.isProcessing else { return }
                 VeinNotificationGuard.$isProcessing.withValue(true) {
                     target?.notifyOfChanges()
@@ -236,7 +236,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
         }
     }
     
-    public func setStoreToCapturedState(_ state: Any) {
+    public func _setStoreToCapturedState(_ state: Any) {
         lock.withLock {
             guard let value = state as? [ULID] else {
                 fatalError(
@@ -253,7 +253,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
         }
     }
     
-    public var persistableValue: PersistableRepresentation {
+    public var _persistableValue: PersistableRepresentation {
         get {
             lock.withLock {
                 idStore
@@ -273,22 +273,22 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
         guard
             let model,
             let context = model.context,
-            let inverseKey
+            let _inverseKey
         else { return }
         
         for target in wrappedValue {
-            withObservationNotification({ target.notifyOfChanges() }) {
+            _withObservationNotification({ target.notifyOfChanges() }) {
                 switch deleteRule {
                     case .nullify:
                         let predicateMatches = context._prepareForChange(of: target)
                         
-                        let inverse = target._fields.first { $0.key == inverseKey }
+                        let inverse = target._fields.first { $0.key == _inverseKey }
                         
                         if var manyField = inverse as? (any ManyRelationship) {
-                            manyField.persistableValue.removeAll(where: { $0 == model.id })
+                            manyField._persistableValue.removeAll(where: { $0 == model.id })
                             manyField.wasTouched = true
                         } else if var oneField = inverse as? (any OneRelationship) {
-                            oneField.persistableValue = nil
+                            oneField._persistableValue = nil
                             oneField.wasTouched = true
                         }
                         
@@ -314,7 +314,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
         storage storageKeyPath: ReferenceWritableKeyPath<OuterSelf, _ManyRelationship<T>>
     ) -> [T] {
         get {
-            let storage = observed[keyPath: storageKeyPath]
+            var storage = observed[keyPath: storageKeyPath]
             storage.lock.withLock {
                 if storage.model == nil {
                     storage.model = observed
@@ -323,7 +323,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
             return storage.wrappedValue
         }
         set {
-            let storage = observed[keyPath: storageKeyPath]
+            var storage = observed[keyPath: storageKeyPath]
             storage.lock.withLock {
                 if storage.model == nil {
                     storage.model = observed

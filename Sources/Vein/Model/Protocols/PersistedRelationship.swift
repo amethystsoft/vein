@@ -8,10 +8,10 @@ public protocol PersistedRelationship: FieldBase {
 }
 
 public protocol ManyRelationship: PersistedRelationship {
-    var persistableValue: [ULID] { get set }
+    var _persistableValue: [ULID] { get set }
 }
 public protocol OneRelationship: PersistedRelationship {
-    var persistableValue: ULID? { get set }
+    var _persistableValue: ULID? { get set }
 }
 
 public enum DeleteRule {

@@ -14,7 +14,7 @@ extension _ManyRelationship: ObservationNotificationConfigurable {}
 extension ManagedObjectContext: ObservationNotificationConfigurable {}
 
 extension ObservationNotificationConfigurable {
-    func withObservationNotification<R>(
+    func _withObservationNotification<R>(
         _ notification: () -> Void,
         block: () -> R
     ) -> R {

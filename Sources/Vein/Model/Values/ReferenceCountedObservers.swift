@@ -1,7 +1,7 @@
 import Foundation
 import ULID
 
-public struct ReferenceCountedObservers: @unchecked Sendable {
+public struct _ReferenceCountedObservers: @unchecked Sendable {
     @_spi(VeinTesting) public var references = [ULID: Set<String>]()
     @_spi(VeinTesting) public var observers = [ULID: () -> Void]()
     

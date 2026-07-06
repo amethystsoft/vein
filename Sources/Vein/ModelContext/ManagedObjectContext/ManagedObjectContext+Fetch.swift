@@ -4,7 +4,7 @@ import Foundation
 
 extension ManagedObjectContext {
     /// Returns all models matching the predicate.
-    public nonisolated func _fetchAll<T: PersistentModel>(_ predicate: ModelPredicate<T>) throws(MOCError) -> [T] {
+    nonisolated func _fetchAll<T: PersistentModel>(_ predicate: ModelPredicate<T>) throws(MOCError) -> [T] {
         do {
             let table = Table(T.schema).filter(predicate.sql)
             let eagerLoadedFields = T._fieldInformation.eagerLoaded
@@ -99,7 +99,7 @@ extension ManagedObjectContext {
         }
     }
     
-    public nonisolated func _fetchSingleProperty<Field: PersistedField>(field: Field) throws(MOCError) -> Field.WrappedType.PersistentRepresentation {
+    nonisolated func _fetchSingleProperty<Field: PersistedField>(field: Field) throws(MOCError) -> Field.WrappedType.PersistentRepresentation {
         typealias T = Field.WrappedType
         guard let key = field.key else {
             if let model = field.model {
@@ -132,7 +132,7 @@ extension ManagedObjectContext {
         }
     }
     
-    public nonisolated func getAllStoredSchemas() throws -> [String] {
+    nonisolated func getAllStoredSchemas() throws -> [String] {
         let tables = try connection.schema.objectDefinitions(type: .table)
         return tables.map { $0.name }.filter {
             [
@@ -142,7 +142,7 @@ extension ManagedObjectContext {
         }
     }
     
-    public nonisolated func getNonEmptySchemas() throws -> [String] {
+    nonisolated func getNonEmptySchemas() throws -> [String] {
         let tables = try connection.schema.objectDefinitions(type: .table)
         let filtered = tables.map { $0.name }.filter {
             [
