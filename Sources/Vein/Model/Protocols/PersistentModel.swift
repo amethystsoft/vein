@@ -106,7 +106,8 @@ extension PersistentModel {
     /// This method renames the table.
     /// - Throws: `ManagedObjectContextError.notInsideMigration` if called outside an active migration,
     ///   `.baseNotOlderThanDestination` if the destination model isn't newer, or
-    ///   `.fieldMismatch` if the field sets differ.
+    ///   `.fieldMismatch` if the field sets differ, or any other error propagated while
+    ///   renaming the schema or registering the migration.
     @MainActor
     public static func unchangedMigration(
         to newModel: any PersistentModel.Type,
