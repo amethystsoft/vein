@@ -158,8 +158,11 @@ extension PersistentModel {
     /// Performs an automatic migration for scenarios where only optional fields were added.
     ///
     /// This method renames the table and injects new columns into the existing SQLite schema.
-    /// - Throws: `ManagedObjectContextError.automaticMigrationRequiresOnlyOptionalFieldsAdded`
-    ///   if any of the new fields are non-optional.
+    /// - Throws: `ManagedObjectContextError.notInsideMigration` if called outside an active migration,
+    ///   `.baseNotOlderThanDestination` if the destination model isn't newer,
+    ///   `.destinationMustHaveOnlyAddedFields` if fields were removed or changed rather than only added,
+    ///   `.automaticMigrationRequiresOnlyOptionalFieldsAdded` if any of the new fields are non-optional,
+    ///   or any other error propagated while renaming the schema, adding columns, or registering the migration.
     @MainActor
     public static func fieldsAddedMigration(
         to newModel: any PersistentModel.Type,
