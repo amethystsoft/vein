@@ -1,3 +1,4 @@
+/// The semantic version of a model.
 public struct ModelVersion: Comparable, Hashable, Equatable, Sendable {
     let major: UInt32
     let minor: UInt32

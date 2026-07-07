@@ -1,6 +1,7 @@
 import Foundation
 import SQLiteDB
 
+/// This is mostly an implementation detail, currently making your own fields is not supported.
 public protocol FieldBase {
     associatedtype WrappedType: Persistable
     static var sqliteTypeName: SQLiteTypeName { get }

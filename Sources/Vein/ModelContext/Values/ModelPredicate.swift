@@ -2,6 +2,9 @@
 import ULID
 import Foundation
 
+/// A predicate for fetching models.
+///
+/// Can either be created by using a FoundationMacros.Predicate or by providing your own SQL Query and runtime filter.
 public struct ModelPredicate<T: PersistentModel>: Sendable, Hashable, AnyPredicateBuilder {
     public let runtimeFilter: @Sendable (T) -> Bool
     public let sql: SQLExpression<Bool>

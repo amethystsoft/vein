@@ -1,4 +1,5 @@
 extension ManagedObjectContext {
+    /// This is an implementation detail to support compatibility with arbitrary UI frameworks like SwiftUI or SwiftCrossUI with `@Query`.
     @MainActor
     public func getOrCreateQueryObserver(for identifier: ObjectIdentifier, _ key: Int, createWith block: @escaping () -> AnyQueryObserver) -> AnyQueryObserver {
         if let observer = registeredQueries.value[identifier]?[key]?.query {

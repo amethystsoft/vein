@@ -1,6 +1,7 @@
 import Foundation
 import SQLiteDB
 
+/// An Error that occured while converting a Predicate to an SQL query.
 public enum PredicateConversionError: Error {
     case incompatiblePredicate
     case unexpectedComparisonOperator(PredicateExpressions.ComparisonOperator)
@@ -62,6 +63,9 @@ extension Predicate {
     }
 }
 
+/// The protocol used to convert parts of a Predicate to SQL.
+///
+/// You can add conformances yourself, but I would ask to contribute them back to improve the Predicate experience for everyone.
 public protocol SQLiteExpressibleBuilder: PredicateExpression {
     associatedtype Representation: ColumnType
     func asSQLiteExpression() throws(PredicateConversionError) -> SQLExpression<Representation.SQLiteType>

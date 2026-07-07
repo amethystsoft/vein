@@ -3,6 +3,7 @@ import SQLiteDB
 
 public typealias MOCError = ManagedObjectContextError
 
+/// An error thrown by ManagedObjectContext.
 public enum ManagedObjectContextError: Error {
     case connect(message: String)
     case writeInReadonly(message: String)

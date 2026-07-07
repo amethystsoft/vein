@@ -1,5 +1,9 @@
 import Foundation
 // swiftlint:disable multiple_closures_with_trailing_closure
+
+/// A lazy loaded field of a ``PersistentModel``.
+///
+/// Fetches the data on first use, then holds it. Good for bigger data like images or long strings.
 @propertyWrapper
 public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendable {
     public typealias WrappedType = T?
@@ -142,6 +146,10 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
     }
 }
 
+/// An eager loaded field of a ``PersistentModel``.
+///
+/// Gets automatically applied by the `@Model` macro to all stored vars without a different Field.
+/// You can also apply it yourself for explicitness.
 @propertyWrapper
 public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
     public typealias WrappedType = T

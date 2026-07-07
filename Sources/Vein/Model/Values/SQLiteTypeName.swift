@@ -1,8 +1,10 @@
 import Foundation
 import SQLiteDB
 
+/// Represents the supported SQLite storage classes, including specialized types like `jsonb`.
 public enum SQLiteTypeName: Sendable, Hashable {
     case integer, real, text, blob, jsonb
+    /// Represents a nullable version of the base type.
     indirect case null(SQLiteTypeName)
     
     var isNull: Bool {
@@ -36,6 +38,7 @@ public enum SQLiteTypeName: Sendable, Hashable {
     }
 }
 
+/// A container for values transported to and from the SQLite database driver.
 public enum SQLiteValue: Sendable, Hashable {
     case integer(Int64)
     case real(Double)

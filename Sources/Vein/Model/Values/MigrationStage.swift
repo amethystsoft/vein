@@ -1,3 +1,4 @@
+/// Describes a migration between two versions of the same schema.
 @MainActor
 public enum MigrationStage {
     case complex(

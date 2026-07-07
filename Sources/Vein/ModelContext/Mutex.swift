@@ -1,5 +1,11 @@
 import Foundation
 
+/// A custom Mutex currently only intended for internal use.
+///
+/// It's based on NSLock.
+///
+/// Why not Serialization.Mutex?: I have the goal of expanding the compatibility of vein in the future \
+/// potentially including Swift versions not supported by Synchronization's Mutex.
 public final class Mutex<Value>: @unchecked Sendable {
     private let lock = NSLock()
     private var _value: Value

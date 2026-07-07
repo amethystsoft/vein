@@ -1,3 +1,4 @@
+/// A configuration for ``ModelContainer`` to configure the amount of information you want to be logged.
 public struct LogConfiguration: Sendable {
     /// Whether to log every sql query.
     public var sqlQueries: Bool
@@ -14,6 +15,7 @@ public struct LogConfiguration: Sendable {
     /// Whether to log ``ManagedObjectContext`` errors.
     public var modelContextErrors: Bool
     
+    /// Create a new ``LogConfiguration``.
     public init(
         sqlQueries: Bool,
         potentialDataCorruption: Bool,
@@ -32,6 +34,7 @@ public struct LogConfiguration: Sendable {
         self.modelContextErrors = modelContextErrors
     }
     
+    /// A LogConfiguration recommended for debug builds.
     public static var debug: Self {
         LogConfiguration(
             sqlQueries: false,
@@ -43,6 +46,8 @@ public struct LogConfiguration: Sendable {
             modelContextErrors: true
         )
     }
+    
+    /// A LogConfiguration recommended for release builds.
     public static var release: Self {
         LogConfiguration(
             sqlQueries: false,

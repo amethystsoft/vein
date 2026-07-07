@@ -11,7 +11,7 @@ extension ManagedObjectContext {
     }
     
     /// Returns all models matching the predicate.
-    /// Returns [] if table doesn't exist
+    /// Non existent tables are treated as empty state and therefore return [].
     public nonisolated func fetchAll<T: PersistentModel>(_ predicate: Predicate<T>) throws(MOCError) -> [T] {
         do {
             guard
@@ -28,6 +28,8 @@ extension ManagedObjectContext {
         } catch { throw .other(message: error.localizedDescription)}
     }
     
+    /// Returns all models matching the ``ModelPredicate``.
+    /// Non existent tables are treated as empty state and therefore return [].
     public nonisolated func fetchAll<T: PersistentModel>(_ modelPredicate: ModelPredicate<T>) throws(MOCError) -> [T] {
         do {
             guard
@@ -43,12 +45,16 @@ extension ManagedObjectContext {
         } catch { throw .other(message: error.localizedDescription)}
     }
     
-    /// Returns all models matching the predicate.
-    /// Returns [] if table doesn't exist
+    /// Returns all models of a model type.
+    /// Non existent tables are treated as empty state and therefore return [].
     public nonisolated func fetchAll<T: PersistentModel>(_ modelType: T.Type) throws(MOCError) -> [T] {
         try fetchAll(#Predicate<T>{ _ in true })
     }
     
+    /// Inserts an unmanaged model into the context.
+    ///
+    /// It gets saved in the in memory write cache until persisted by calling ``save()``.
+    /// Once inserted it will be included in fetches.
     public nonisolated func insert<M: PersistentModel>(_ model: M) throws(ManagedObjectContextError) {
         _updateModelMetadata(on: model)
         guard model.context == nil else {
@@ -203,6 +209,7 @@ extension ManagedObjectContext {
         }
     }
     
+    /// Delete a batch of models.
     public nonisolated func batchDelete<M: PersistentModel>(_ models: [M]) throws(ManagedObjectContextError) {
         let managedModels = models.compactMap { $0.context != nil ? $0: nil }
         
@@ -271,6 +278,10 @@ extension ManagedObjectContext {
         }
     }
     
+    /// Writes changes to the db.
+    ///
+    /// Other threads calling ``save()`` while a save is running will be blocked until completion.
+    /// If saving fails, it will revert changes to the db, throw an error and keep the models in the write cache.
     public nonisolated func save() throws {
         // Copies and clears the main storages
         // to enable background threads to keep making changes
