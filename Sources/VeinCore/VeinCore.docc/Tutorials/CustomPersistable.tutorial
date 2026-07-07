@@ -1,0 +1,52 @@
+@Tutorial(time: 5) {
+    @Intro(title: "Custom Persistable") {
+        Make your own types persistable. 
+        
+        > Important:
+        > Please note that `Persistable` implementations should not be changed within one schema version, as it will likely break decoding existing database entries. It's recommended to define any types you will persist namespaced inside the same `VersionedSchema` as the models consuming it.
+    }
+    
+    @Section(title: "RawRepresentable") {
+        @ContentAndMedia {
+            `RawRepresentable` types you can make `Persistable` by conforming them to `RawRepresentablePersistable`. For that to work `RawRepresentable.RawValue` needs to be `Persistable`. It will be stored in the DB the same way `RawRepresentable.RawValue` would be.
+        }
+        
+        @Steps {
+            @Step {
+                Define your `RawRepresentable` type, specify it's `RawValue` and add `RawRepresentablePersistable`.
+                
+                @Code(name: "Schemas.swift", file: custom-persistable-raw-representable)
+            }
+        }
+    }
+    
+    @Section(title: "Codable") {
+        @ContentAndMedia {
+            `Codable` types you can make `Persistable` by conforming them to `CodablePersistable`. You do not need to specify `Codable` separately as it is a protocol requirement. It will be stored as JSONB in the database.
+        }
+        
+        @Steps {
+            @Step {
+                Define your `CodablePersistable` type.
+                
+                @Code(name: "AccountMetadata.swift", file: custom-persistable-codable)
+            }
+        }
+    }
+        
+    @Section(title: "Manual Persistable") {
+        @ContentAndMedia {
+            Of course you can also just implement `Persistable` yourself. The following is an example from Vein's integrated conformances.
+            
+            `PersistentRepresentation` needs to be conform to `ColumnType`. `Int64`, `Double`, `Bool`, `String`, `Data`, `SQLiteJSONB` or `Optional where Wrapped: Persistable` for example already implement ColumnType and are ready to be used .
+        }
+        
+        @Steps {
+            @Step {
+                Extend your type with `Persistable`.
+                
+                @Code(name: "Persistable.swift", file: custom-persistable-conformance)
+            }
+        }
+    }
+}

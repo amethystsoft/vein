@@ -20,4 +20,8 @@
     @Chapter(name: "Complex Migrations") {
         @TutorialReference(tutorial: "doc:ComplexMigrations")
     }
+    
+    @Chapter(name: "Custom Persistable") {
+        @TutorialReference(tutorial: "doc:CustomPersistable")
+    }
 }
