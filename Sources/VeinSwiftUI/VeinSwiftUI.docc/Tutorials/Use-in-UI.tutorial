@@ -1,0 +1,60 @@
+@Tutorial(time: 5) {
+    @Intro(title: "Use VeinSwiftUI in your app") {
+        Get started using Vein in your Views.
+    }
+    
+    @Section(title: "Entrypoint") {
+        @ContentAndMedia {
+            To use Vein in your SwiftUI app, you need to wrap the Views using a `ModelContainer` in ``VeinContainer``. This can be the root of your app or something down the viewgraph.
+        }
+        
+        @Steps {
+            @Step {
+                Create your app and initialize the container. Refer to the common tutorials on the homepage for how to initialize a container.
+                
+                @Code(name: "VeinExampleApp.swift", file: use-app-1)
+            }
+            
+            @Step {
+                Wrap the `ContentView` in a ``VeinContainer``.
+                
+                @Code(name: "VeinExampleApp.swift", file: use-app-2)
+            }
+            
+            @Step {
+                Tell ``VeinContainer`` to use your `ModelContainer`.
+                
+                @Code(name: "VeinExampleApp.swift", file: use-app-3)
+            }
+        }
+    }
+        
+    @Section(title: "Use in Views") {
+        @ContentAndMedia {
+            To use Vein in your views, utilize the ``Query`` property wrapper and `PersistentModel`'s `ObservableObject` conformance.
+            
+            > Tip: Because `PersistentModel` instances conform to `ObservableObject`, you can safely pass them into subviews and decorate them with the `@ObservedObject` property wrapper to manage UI updates.
+        }
+        
+        @Steps {
+            @Step {
+                To fetch all models use the ``Query`` property wrapper.
+                It will update your UI automatically
+                
+                @Code(name: "ContentView.swift", file: use-cv-1)
+            }
+            
+            @Step {
+                If you need to filter your models, pass a `Predicate` to the ``Query``.
+                
+                @Code(name: "ContentView.swift", file: use-cv-2)
+            }
+            
+            @Step {
+                To add new models, pull `modelContext` from the environment.
+                
+                @Code(name: "ContentView.swift", file: use-cv-3)
+            }
+        }
+    }
+}

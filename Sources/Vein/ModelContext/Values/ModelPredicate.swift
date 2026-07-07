@@ -33,4 +33,8 @@ public struct ModelPredicate<T: PersistentModel>: Sendable, Hashable, AnyPredica
     public static func == (lhs: borrowing ModelPredicate<T>, rhs: borrowing ModelPredicate<T>) -> Bool {
         lhs.id == rhs.id
     }
+    
+    public static var all: Self {
+        ModelPredicate(runtimeFilter: { _ in true }, sql: SQLExpression(value: true))
+    }
 }

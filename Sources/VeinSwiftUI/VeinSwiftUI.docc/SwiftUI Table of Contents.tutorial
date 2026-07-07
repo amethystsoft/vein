@@ -1,0 +1,9 @@
+@Tutorials(name: "VeinSwiftUI") {
+    @Intro(title: "Meet Vein for SwiftUI") {
+        Database for apps made easy.
+    }
+    
+    @Chapter(name: "Quick start") {
+        @TutorialReference(tutorial: "doc:Use-in-UI")
+    }
+}

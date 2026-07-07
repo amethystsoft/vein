@@ -1,119 +1,202 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script>
-    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+      window.va =
+        window.va ||
+        function () {
+          (window.vaq = window.vaq || []).push(arguments);
+        };
     </script>
     <script defer src="/_vercel/insights/script.js"></script>
+    <script>
+      class GitHubStar extends HTMLElement {
+        constructor() {
+          super();
+          this.attachShadow({ mode: "open" });
+        }
+
+        connectedCallback() {
+          const owner = this.getAttribute("owner");
+          const repo = this.getAttribute("repo");
+          this.render(owner, repo);
+          this.fetchStars(owner, repo);
+        }
+
+        async fetchStars(owner, repo) {
+          try {
+            const response = await fetch(
+              `https://api.github.com/repos/${owner}/${repo}`,
+            );
+            const data = await response.json();
+            const count = data.stargazers_count;
+            if (count !== undefined) {
+              this.shadowRoot.querySelector(".count").textContent = count;
+              this.shadowRoot.querySelector(".count").style.display =
+                "inline-block";
+            }
+          } catch (error) {
+            console.error("Failed to fetch GitHub stars:", error);
+          }
+        }
+
+        render(owner, repo) {
+          this.shadowRoot.innerHTML = `
+           <style>
+             :host { --primary: #DE69FF; --foreground: white; }
+             .btn {
+               display: inline-flex;
+               align-items: center;
+               gap: 8px;
+               padding: 8px 16px;
+               background: rgba(14, 165, 233, 0.05);
+               color: var(--primary);
+               border: 1px solid rgba(14, 165, 233, 0.5);
+               border-radius: 6px;
+               font-family: system-ui, sans-serif;
+               font-size: 14px;
+               font-weight: 500;
+               text-decoration: none;
+               transition: all 0.2s;
+             }
+             .btn:hover {
+               background: rgba(14, 165, 233, 0.2);
+               border-color: var(--primary);
+             }
+             .count {
+               display: none;
+               background: #DE69FF80;
+               color: var(--foreground);
+               padding: 2px 8px;
+               border-radius: 99px;
+               font-size: 12px;
+             }
+             svg { width: 16px; height: 16px; fill: currentColor; }
+           </style>
+           <a href="https://github.com/${owner}/${repo}" target="_blank" rel="noopener noreferrer" class="btn">
+             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+             </svg>
+             <span style="color: #eee;">Star on GitHub</span>
+             <span class="count"></span>
+           </a>
+         `;
+        }
+      }
+
+      customElements.define("github-star", GitHubStar);
+    </script>
     <title>Vein Documentation Hub</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #000000;
-            color: #eee;
-            margin: 0;
-            padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .container {
-            max-width: 800px;
-            width: 100%;
-        }
-        h1 {
-            font-size: 40px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-        h2 {
-            font-size: 30px;
-        }
-        p.subtitle {
-            font-size: 19px;
-            color: #86868b;
-            text-align: center;
-            margin-bottom: 40px;
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 20px;
-        }
-        .card {
-            background: #000;
-            border-radius: 12px;
-            padding: 24px;
-            text-decoration: none;
-            color: inherit;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 1px solid #d2d2d7;
-        }
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-            border-color: #DE69FF;
-        }
-        .card h2 {
-            margin: 0 0 10px 0;
-            font-size: 21px;
-            color: #eee;
-        }
-        .card p {
-            margin: 0;
-            font-size: 15px;
-            color: #515154;
-            line-height: 1.4;
-        }
-        .font-purple {
-            color: #DE69FF;
-        }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        background-color: #000000;
+        color: #eee;
+        margin: 0;
+        padding: 40px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .container {
+        max-width: 800px;
+        width: 100%;
+      }
+      h1 {
+        font-size: 40px;
+        font-weight: 700;
+        margin-bottom: 10px;
+        text-align: center;
+      }
+      h2 {
+        font-size: 30px;
+      }
+      p.subtitle {
+        font-size: 19px;
+        color: #86868b;
+        text-align: center;
+        margin-bottom: 40px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 20px;
+      }
+      .card {
+        background: #000;
+        border-radius: 12px;
+        padding: 24px;
+        text-decoration: none;
+        color: inherit;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+        border: 1px solid #d2d2d7;
+      }
+      .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        border-color: #DE69FF;
+      }
+      .card h2 {
+        margin: 0 0 10px 0;
+        font-size: 21px;
+        color: #eee;
+      }
+      .card p {
+        margin: 0;
+        font-size: 15px;
+        color: #515154;
+        line-height: 1.4;
+      }
+      .font-purple {
+        color: #DE69FF;
+      }
     </style>
-</head>
-<body>
-
-<div class="container">
-    <h1><span class="font-purple">Amethyst Vein</span> Documentation Hub</h1>
-    <p class="subtitle">Select a framework target below to view its API reference.</p>
-    
-    <h2>Targets</h2>
-    <div class="grid">
+  </head>
+  <body>
+    <div class="container">
+      <h1><span class="font-purple">Amethyst Vein</span> Documentation Hub</h1>
+      <p class="subtitle">
+        Select a framework target below to view its API reference.
+      </p>
+      <div style="display: flex; justify-content: center">
+        <github-star owner="amethystsoft" repo="vein"></github-star>
+      </div>
+      <h2>Targets</h2>
+      <div class="grid">
         <a href="/documentation/vein" class="card">
-            <h2>Vein</h2>
-            <p>Shared core framework with the majority of API surface</p>
+          <h2>Vein</h2>
+          <p>Shared core framework with the majority of API surface</p>
         </a>
-        
         <a href="/documentation/veincore" class="card">
-            <h2>VeinCore</h2>
-            <p>Vein without UI bindings</p>
+          <h2>VeinCore</h2>
+          <p>Vein without UI bindings</p>
         </a>
-        
         <a href="/documentation/veinswiftui" class="card">
-            <h2>VeinSwiftUI</h2>
-            <p>Vein with @Query and automatic UI updates for SwiftUI</p>
+          <h2>VeinSwiftUI</h2>
+          <p>Vein with @Query and automatic UI updates for SwiftUI</p>
         </a>
-        
         <a href="/documentation/ulid" class="card">
-            <h2>ULID</h2>
-            <p>Universally Unique Lexicographically Sortable Identifier.</p>
+          <h2>ULID</h2>
+          <p>Universally Unique Lexicographically Sortable Identifier.</p>
         </a>
-    </div>
-    <h2>Tutorials</h2>
-    <div class="grid">
+      </div>
+      <h2>Tutorials</h2>
+      <div class="grid">
         <a href="/tutorials/table-of-contents" class="card">
-            <h2>Meet Vein</h2>
-            <p>Shared UI independent docs. Relevant to everyone</p>
+          <h2>Meet Vein</h2>
+          <p>Shared UI independent docs. Relevant to everyone</p>
         </a>
-        <!--Placeholder-->
-        <a href="/" class="card">
-            <h2>VeinSwiftUI</h2>
-            <p>SwiftUI specific tutorials regarding use in Views</p>
+        <a href="/tutorials/swiftui-table-of-contents/" class="card">
+          <h2>VeinSwiftUI</h2>
+          <p>SwiftUI specific tutorials regarding use in Views</p>
         </a>
+      </div>
     </div>
-</div>
-</body>
+  </body>
 </html>

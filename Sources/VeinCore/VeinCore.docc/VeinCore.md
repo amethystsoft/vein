@@ -1,7 +1,6 @@
-
 # ``VeinCore``
 
-The complete data engine and primitives wrapper for the Vein ecosystem.
+Vein for use without a supported UI framework.
 
 ## Overview
 
@@ -13,7 +12,7 @@ import VeinCore
 
 ## Core Infrastructure
 
-This package automatically re-exports and exposes the core algorithmic engines and identifier formats. Refer to the modules below for deep-dive API specifications.
+This package automatically re-exports and exposes the core algorithmic engines and identifier formats. Refer to the Vein documentation for deep-dive API specifications.
 
 ### Tutorials
 - <doc:Table-of-Contents>

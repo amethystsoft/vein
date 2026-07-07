@@ -21,7 +21,7 @@ public struct Query<M: PersistentModel>: DynamicProperty {
         return (queryObserver.primaryObserver?.results ?? queryObserver.results ?? []).sorted(by: { $0.id < $1.id })
     }
     
-    public init(_ predicate: ModelPredicate<M>) {
+    public init(_ predicate: ModelPredicate<M> = ModelPredicate<M>.all) {
         self._queryObserver = StateObject(wrappedValue: QueryObserver<M>(predicate))
     }
     
