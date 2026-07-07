@@ -1,8 +1,9 @@
 import Atomics
-public protocol ObservationNotificationConfigurable {}
+
+protocol ObservationNotificationConfigurable {}
 
 extension ObservationNotificationConfigurable {
-    public var callBeforeChange: Bool {
+    var callBeforeChange: Bool {
         ManagedObjectContext.callBeforeChange.load(ordering: .acquiring) == 1
     }
 }

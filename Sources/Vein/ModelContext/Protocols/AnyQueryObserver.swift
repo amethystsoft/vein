@@ -1,3 +1,4 @@
+/// A type arased QueryObserver. Just an implementation detail.
 @MainActor
 public protocol AnyQueryObserver: AnyObject {
     func appendAny(_ models: [AnyObject])
@@ -6,7 +7,7 @@ public protocol AnyQueryObserver: AnyObject {
     func remove(_ model: any PersistentModel) -> Void
     nonisolated var usedPredicate: AnyPredicateBuilder { get }
 }
-
+/// A type erased PredicateBuilder, an implementation detail.
 public protocol AnyPredicateBuilder {
     var hashValue: Int { get }
 }

@@ -1,7 +1,7 @@
 import SQLiteDB
 import Foundation
 
-public enum UnderlayingFieldType {
+enum UnderlayingFieldType {
     case uuid(required: Bool = false)
     case string(required: Bool = false)
     case int(required: Bool = false)

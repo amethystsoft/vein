@@ -2,27 +2,34 @@ import Foundation
 import SQLiteDB
 @_exported import ULID
 
+/// A protocol that defines the structure and behavior of a class as a persistable entity.
+///
+/// It's recommended to not conform to this yourself, the `@Model` macro will generate conformance.
 public protocol PersistentModel: AnyObject, Sendable {
-    var notifyOfChanges: () -> Void { get }
-    
+    /// The name of the SQLite table associated with this model.
     static var schema: String { get }
-    /// The primary ID of the object.
-    /// Gets  used to reference models in relationships.
-    /// Immutable after insertion into the context.
+    
+    /// The unique 128-bit identifier for this instance.
+    ///
+    /// - Important: This ID is used to resolve relationships and is immutable
+    /// once the object is inserted into a context.
     var id: ULID { get set }
     
-    /// Whether a model is prepared to be deleted.
-    ///
-    /// Reading this variable is safe, but it should never be set outside of Vein.
+    /// The current schema version of this model.
+    /// Used by the migration system to determine if the database matches the code.
+    static var version: ModelVersion { get }
+    
+    /// Internal flag used by the context during the deletion lifecycle.
     var _isPreparedForDeletion: Bool { get set }
+    
+    /// A closure invoked whenever a field value changes, used to trigger UI updates.
+    var notifyOfChanges: () -> Void { get }
     
     var _fields: [any FieldBase] { get }
     var _relationships: [any PersistedRelationship] { get }
     static var _fieldInformation: [FieldInformation] { get }
     
     func _setupFields() -> Void
-    
-    static var version: ModelVersion { get }
     
     nonisolated var _observers: Mutex<_ReferenceCountedObservers> { get }
     
@@ -42,10 +49,13 @@ public protocol PersistentModel: AnyObject, Sendable {
 }
 
 extension PersistentModel {
+    /// Convenience access to the ObjectIdentifier of the model's type.
     public static var typeIdentifier: ObjectIdentifier { ObjectIdentifier(Self.self) }
+    /// Convenience access to the ObjectIdentifier of the model's type.
     public var typeIdentifier: ObjectIdentifier { ObjectIdentifier(Self.self) }
     public func _getSchema() -> String { Self.schema }
     
+    /// The context the model instance is managed by.
     public var context: ManagedObjectContext? {
         get {
             _context.value
@@ -91,6 +101,13 @@ extension PersistentModel {
         
     }
     
+    /// Performs an automatic migration for scenarios where nothing changed on this model.
+    ///
+    /// This method renames the table.
+    /// - Throws: `ManagedObjectContextError.notInsideMigration` if called outside an active migration,
+    ///   `.baseNotOlderThanDestination` if the destination model isn't newer, or
+    ///   `.fieldMismatch` if the field sets differ, or any other error propagated while
+    ///   renaming the schema or registering the migration.
     @MainActor
     public static func unchangedMigration(
         to newModel: any PersistentModel.Type,
@@ -122,6 +139,10 @@ extension PersistentModel {
         }
     }
     
+    /// Performs a drop of the table without replacement. Use when a model is no longer required.
+    ///
+    /// - Throws: `ManagedObjectContextError.notInsideMigration` if called outside an active migration,
+    ///   or any error propagated from deleting the table.
     @MainActor
     public static func deleteMigration(
         on context: ManagedObjectContext
@@ -134,6 +155,14 @@ extension PersistentModel {
         try context.deleteTable(schema)
     }
     
+    /// Performs an automatic migration for scenarios where only optional fields were added.
+    ///
+    /// This method renames the table and injects new columns into the existing SQLite schema.
+    /// - Throws: `ManagedObjectContextError.notInsideMigration` if called outside an active migration,
+    ///   `.baseNotOlderThanDestination` if the destination model isn't newer,
+    ///   `.destinationMustHaveOnlyAddedFields` if fields were removed or changed rather than only added,
+    ///   `.automaticMigrationRequiresOnlyOptionalFieldsAdded` if any of the new fields are non-optional,
+    ///   or any other error propagated while renaming the schema, adding columns, or registering the migration.
     @MainActor
     public static func fieldsAddedMigration(
         to newModel: any PersistentModel.Type,
@@ -208,20 +237,21 @@ struct AnyPersistentModelType: Hashable {
     }
 }
 
-public protocol ModelSchemaMigration: Sendable {
-    nonisolated func prepare(in context: ManagedObjectContext) async throws -> Void
-    init()
-}
-
+/// An interface for describing a specific version of a schema, including the models it contains.
 public protocol VersionedSchema: Sendable {
+    /// The version identifier for this specific schema snapshot.
     static var version: ModelVersion { get }
     
+    /// The list of models included in this version.
     static var models: [any PersistentModel.Type] { get }
 }
 
+/// An interface for describing the evolution of a schema and how to migrate between specific versions.
 public protocol SchemaMigrationPlan: Sendable {
+    /// The migration stages, ordered chronologically from oldest to newest schema version.
     @MainActor
     static var stages: [MigrationStage] { get }
     
+    /// The historical schemas, ordered chronologically from oldest to newest version.
     static var schemas: [VersionedSchema.Type] { get }
 }

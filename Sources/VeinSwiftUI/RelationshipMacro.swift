@@ -1,5 +1,6 @@
 import Vein
 
+/// A marker macro used by ``Model()`` to identify relationships.
 @attached(peer)
 public macro Relationship(
     inverse: AnyKeyPath? = nil,

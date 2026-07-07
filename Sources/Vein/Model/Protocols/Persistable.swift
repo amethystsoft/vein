@@ -28,6 +28,7 @@ public struct SQLiteJSONB: ColumnType, Persistable {
     public init?(fromPersistent representation: Self) { self = representation }
 }
 
+/// To make your types persistable, conform to ``Persistable``!
 public nonisolated protocol Persistable: Sendable {
     associatedtype PersistentRepresentation: ColumnType
     var asPersistentRepresentation: PersistentRepresentation { get }

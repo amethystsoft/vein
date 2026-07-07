@@ -3,6 +3,7 @@ import SwiftUI
 import Combine
 import Logging
 
+/// Fetches all instances of the attached model type matching the provided Predicate.
 @MainActor
 @propertyWrapper
 public struct Query<M: PersistentModel>: DynamicProperty {

@@ -12,6 +12,14 @@ import KeychainAccess
 
 public typealias Connection = SQLiteDB.Connection
 
+/// The central object for managing the persistence lifecycle of your models.
+///
+/// `ManagedObjectContext` provides a thread-safe interface for fetching, inserting,
+/// and deleting data. It coordinates between the in-memory identity map,
+/// write-through caches, and the underlying SQLite storage.
+///
+/// Although declared as an actor, the API is designed for high-concurrency
+/// access through internal synchronization.
 public actor ManagedObjectContext {
     @_spi(VeinSurface)
     public static nonisolated let callBeforeChange = ManagedAtomic<UInt8>(3)
@@ -118,10 +126,15 @@ public actor ManagedObjectContext {
         self.connection = connection
     }
     
-    /// Retrieve the key encrypting the database, if applicable.
+    /// Retrieves the hex-encoded encryption key used to secure the database.
     ///
-    /// Do not keep the key in memory or on screen for extended periods of time in production apps.
-    /// It should only be displayed as long as absolutely needed.
+    /// Use this method to provide users with a manual backup of their encryption
+    /// key or to facilitate database migration/recovery scenarios.
+    ///
+    /// - Important: The key is sensitive information. Ensure it is only displayed
+    ///   briefly in a secure UI and never logged or stored in insecure locations.
+    /// - Returns: The hex-encoded 256-bit encryption key, or `nil` if encryption
+    ///   is disabled or the key cannot be retrieved.
     public nonisolated func getDatabaseKey() -> String? {
         guard
             let path = modelContainer.path,
@@ -136,6 +149,22 @@ public actor ManagedObjectContext {
         )
     }
     
+    /// Accesses the encryption key for a specific database file without requiring an active database connection.
+    ///
+    /// This static method allows you to retrieve or generate encryption keys by providing the file path
+    /// and application identifier. While the instance method `getDatabaseKey()` is preferred for
+    /// active contexts, this method is useful for utility tasks or pre-initialization checks.
+    ///
+    /// - Parameters:
+    ///   - path: The absolute file path to the database. The filename is used as the key identifier in the secure store.
+    ///   - appID: The unique application identifier used to namespace the Keychain or Keyring service.
+    ///   - createIfMissing: If `true`, a new 256-bit AES key will be generated and persisted if one
+    ///     does not already exist. Set this to `false` if you only want to verify the existence of a key.
+    ///
+    /// - Note: On Apple platforms, this utilizes the System Keychain. On Linux, it utilizes the
+    ///   system Keyring.
+    ///
+    /// - Returns: A hex-encoded 256-bit key string if found or successfully created; otherwise, `nil`.
     public static func getKeyForDatabase(at path: String, appID: String, createIfMissing: Bool = true) -> String? {
         let url = URL(fileURLWithPath: path)
         let fileName = url.lastPathComponent

@@ -1,25 +1,35 @@
 import Foundation
 import SQLiteDB
 
+/// The primary entry point for managing database schema and storage.
+///
+/// `ModelContainer` coordinates the connection between your `VersionedSchema`,
+/// the migration lifecycle, and the underlying `ManagedObjectContext`.
 public final class ModelContainer: @unchecked Sendable {
+    /// The migration plan used to evolve the database schema.
     public let migration: SchemaMigrationPlan.Type
+    
+    /// Physical path to the SQLite database file. Returns `nil` for in-memory stores.
     public let path: String?
     
-    // Only force unwrapped to count as initialized,
-    // so ManagedObjectContex.init can recieve the function
-    //
-    // Do never mutate anywhere else, only safe under the above circumstances
+    /// The internal context used for database operations.
+    /// - Note: This is initialized during container creation and remains available for the container’s lifetime.
     public private(set) var context: ManagedObjectContext!
+    
+    /// The current ``VersionedSchema`` active for this container.
     public let versionedSchema: VersionedSchema.Type
     
     private var identifierCache = Mutex([ObjectIdentifier: any PersistentModel.Type]())
     
     private var currentMigration = Mutex((any VersionedSchema.Type, any VersionedSchema.Type)?.none)
     
+    /// Unique identifier for the database instance, used for keyring service namespacing.
     public let appID: String
     
+    /// Indicates if database-level (SQLCipher) encryption is active.
     public let encryptionEnabled: Bool
     
+    /// The logging verbosity for database operations.
     public let logConfiguration: LogConfiguration
     
     
@@ -200,6 +210,9 @@ public final class ModelContainer: @unchecked Sendable {
         }
     }
     
+    /// Executes the migration logic assigned in the `SchemaMigrationPlan`.
+    ///
+    /// This method must be called from the Main Actor to ensure thread-safe schema evolution.
     @MainActor
     public func migrate() throws {
         defer {
