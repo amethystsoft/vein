@@ -249,7 +249,7 @@ public protocol VersionedSchema: Sendable {
 /// An interface for describing the evolution of a schema and how to migrate between specific versions.
 public protocol SchemaMigrationPlan: Sendable {
     /// The migration stages, ordered chronologically from oldest to newest schema version.
-    `@MainActor`
+    @MainActor
     static var stages: [MigrationStage] { get }
     
     /// The historical schemas, ordered chronologically from oldest to newest version.
