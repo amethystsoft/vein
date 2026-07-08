@@ -39,7 +39,7 @@ extension ManagedObjectContext {
             var currentlyInserted = [ULID: any PersistentModel]()
             var currentlyTouched = [ULID: any PersistentModel]()
 
-            writeCache.mutate { inserted, touched, deleted,_ in
+            writeCache.mutate { inserted, touched, deleted, _ in
                 currentlyInserted = inserted[T.typeIdentifier] ?? [:]
                 currentlyTouched = touched[T.typeIdentifier] ?? [:]
                 currentlyDeleted = deleted[T.typeIdentifier] ?? [:]
@@ -109,8 +109,9 @@ extension ManagedObjectContext {
             }
 
             return models
-        } catch let error as ManagedObjectContextError { throw error }
-        catch let error as SQLiteDB.Result {
+        } catch let error as ManagedObjectContextError {
+            throw error
+        } catch let error as SQLiteDB.Result {
             throw error.parse()
         } catch {
             throw .other(message: error.localizedDescription)
@@ -134,16 +135,19 @@ extension ManagedObjectContext {
         }
         guard let model = field.model
         else {
-            throw MOCError.modelReference(message: "raised by field with property name '\(key)'")}
+            throw MOCError.modelReference(message: "raised by field with property name '\(key)'")
+        }
 
         let table = Table(model._getSchema())
             .filter(SQLExpression<String>("id") == model.id.ulidString)
         let select = table.select(distinct: [field.fetchExpressible]).limit(1)
 
         if modelContainer.logConfiguration.sqlQueries {
+            // swiftlint:disable line_length
             Self.logger.info(
                 "Fetching \(field.instanceKey) of \(model._getSchema()) with \nQuery: '\(select.expression.template)'\nBindings:\(select.expression.bindings)"
             )
+            // swiftlint:enable line_length
         }
 
         do {
@@ -154,8 +158,9 @@ extension ManagedObjectContext {
                 .unexpectedlyEmptyResult(
                     message: "raised by field with property name '\(key)' of Model '\(T.self)' with id \(model.id.ulidString)"
                 )
-        } catch let error as ManagedObjectContextError { throw error }
-        catch let error as SQLiteDB.Result {
+        } catch let error as ManagedObjectContextError {
+            throw error
+        } catch let error as SQLiteDB.Result {
             throw error.parse()
         } catch {
             throw .other(message: error.localizedDescription)

@@ -12,6 +12,8 @@ disabled_rules:
   - force_cast # Required a lot in backend implementations
   - function_body_length
   - function_parameter_count
+  - blanket_disable_command
+  - multiple_closures_with_trailing_closure # Annoying for e.g. _withObservationNotification
 
 line_length: 140
 type_body_length: 400
@@ -21,3 +23,7 @@ included:
   - Examples
 excluded:
   - Examples/.build
+  - Sources/ULID
+  - Tests/ULIDTests
+  - Sources/VeinCore/VeinCore.docc
+  - Sources/VeinSwiftUI/VeinSwiftUI.docc

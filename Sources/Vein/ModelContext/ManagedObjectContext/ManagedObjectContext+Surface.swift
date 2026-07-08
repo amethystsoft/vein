@@ -17,7 +17,7 @@ package typealias WriteCacheDictionary = [ObjectIdentifier: [ULID: any Persisten
 extension ManagedObjectContext {
     /// A Boolean value that indicates whether the context has uncommitted changes.
     public nonisolated var hasChanges: Bool {
-        return writeCache.mutate { inserts, touches, deletes,_ in
+        return writeCache.mutate { inserts, touches, deletes, _ in
             return !inserts.isEmpty || !touches.isEmpty || !deletes.isEmpty
         }
     }
@@ -86,14 +86,14 @@ extension ManagedObjectContext {
                 )
         }
 
-        guard let _ = modelContainer.getSchema(for: model.typeIdentifier) else {
+        guard modelContainer.getSchema(for: model.typeIdentifier) != nil else {
             throw MOCError.inactiveModelType(model)
         }
 
         model._setupFields()
 
         // An insert invalidates existing deletes and touches
-        writeCache.mutate { inserts, touches, deletes,_ in
+        writeCache.mutate { inserts, touches, deletes, _ in
             inserts[
                 model.typeIdentifier,
                 default: [:]
@@ -125,7 +125,7 @@ extension ManagedObjectContext {
     }
 
     nonisolated func _prepareForChange(of model: any PersistentModel) -> [Int] {
-        writeCache.mutate { _,_,_, states in
+        writeCache.mutate { _, _, _, states in
             if states[model.typeIdentifier, default: [:]][model.id] == nil {
                 states[
                     model.typeIdentifier,
@@ -152,7 +152,7 @@ extension ManagedObjectContext {
         _ model: any PersistentModel,
         previouslyMatching predicateHashes: [Int]
     ) {
-        writeCache.mutate { _, touches,_,_ in
+        writeCache.mutate { _, touches, _, _ in
             touches[
                 model.typeIdentifier,
                 default: [:]
@@ -181,7 +181,7 @@ extension ManagedObjectContext {
         ManagedObjectContextError
     ) {
         guard model.context != nil else { return }
-        guard let _ = modelContainer.getSchema(for: model.typeIdentifier) else {
+        guard modelContainer.getSchema(for: model.typeIdentifier) != nil else {
             throw ManagedObjectContextError.inactiveModelType(model)
         }
 
@@ -191,7 +191,7 @@ extension ManagedObjectContext {
         }
 
         // Deletes automatically invalidate a touch or insert
-        writeCache.mutate { inserts, touches, deletes,_ in
+        writeCache.mutate { inserts, touches, deletes, _ in
             deletes[
                 model.typeIdentifier,
                 default: [:]
@@ -243,7 +243,7 @@ extension ManagedObjectContext {
         let managedModels = models.compactMap { $0.context != nil ? $0: nil }
 
         if let first = managedModels.first {
-            guard let _ = modelContainer.getSchema(for: first.typeIdentifier) else {
+            guard modelContainer.getSchema(for: first.typeIdentifier) != nil else {
                 throw ManagedObjectContextError.inactiveModelType(first)
             }
         } else { return }
@@ -256,7 +256,7 @@ extension ManagedObjectContext {
         }
 
         // Deletes automatically invalidate a touch or insert
-        writeCache.mutate { inserts, touches, deletes,_ in
+        writeCache.mutate { inserts, touches, deletes, _ in
             for model in managedModels {
                 deletes[
                     model.typeIdentifier,
@@ -317,7 +317,7 @@ extension ManagedObjectContext {
         var insertsCopy = WriteCacheDictionary()
         var touchesCopy = WriteCacheDictionary()
         var deletesCopy = WriteCacheDictionary()
-        var primitiveStateCopy = [ObjectIdentifier : [ULID : PrimitiveState]]()
+        var primitiveStateCopy = [ObjectIdentifier: [ULID: PrimitiveState]]()
 
         writeCache.mutate { inserts, touches, deletes, primitiveState in
             insertsCopy = inserts
@@ -485,7 +485,7 @@ extension WriteCacheDictionary {
     }
 }
 
-extension [ObjectIdentifier : [ULID : PrimitiveState]] {
+extension [ObjectIdentifier: [ULID: PrimitiveState]] {
     @inline(__always)
     nonisolated func merge(
         into source: inout Self

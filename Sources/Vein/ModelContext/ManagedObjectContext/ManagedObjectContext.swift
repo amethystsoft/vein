@@ -195,7 +195,7 @@ public actor ManagedObjectContext {
                 let keyData = SymmetricKey(size: .bits256).withUnsafeBytes { Data($0) }
                 let hexKey = keyData.map { String(format: "%02hhx", $0) }.joined()
 
-                guard let _ = try? keychain.set(hexKey, key: fileName) else {
+                guard (try? keychain.set(hexKey, key: fileName)) != nil else {
                     return nil
                 }
                 return hexKey
@@ -209,7 +209,7 @@ public actor ManagedObjectContext {
                 let keyData = SymmetricKey(size: .bits256).withUnsafeBytes { Data($0) }
                 let hexKey = keyData.map { String(format: "%02hhx", $0) }.joined()
 
-                guard let _ = try? keyring.set(hexKey, for: fileName) else {
+                guard (try? keyring.set(hexKey, for: fileName)) != nil else {
                     return nil
                 }
                 return hexKey

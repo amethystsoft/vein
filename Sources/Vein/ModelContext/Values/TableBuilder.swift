@@ -49,7 +49,7 @@ struct TableBuilder {
     }
 
     func run() throws(ManagedObjectContextError) {
-        try context.run(Table(schemaName).create (ifNotExists: true) { t in
+        try context.run(Table(schemaName).create(ifNotExists: true) { t in
             schema(t)
         })
     }

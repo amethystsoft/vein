@@ -122,7 +122,7 @@ extension ManagedObjectContext {
             var currentlyInserted = [ULID: any PersistentModel]()
             var currentlyTouched = [ULID: any PersistentModel]()
 
-            writeCache.mutate { inserted, touched, deleted,_ in
+            writeCache.mutate { inserted, touched, deleted, _ in
                 currentlyInserted = inserted[T.typeIdentifier] ?? [:]
                 currentlyTouched = touched[T.typeIdentifier] ?? [:]
                 currentlyDeleted = deleted[T.typeIdentifier] ?? [:]
@@ -183,8 +183,9 @@ extension ManagedObjectContext {
             }
 
             return models
-        } catch let error as ManagedObjectContextError { throw error }
-        catch let error as SQLiteDB.Result {
+        } catch let error as ManagedObjectContextError {
+            throw error
+        } catch let error as SQLiteDB.Result {
             throw error.parse()
         } catch {
             throw .other(message: error.localizedDescription)

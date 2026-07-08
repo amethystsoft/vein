@@ -41,7 +41,7 @@ public protocol PersistentModel: AnyObject, Sendable {
     var _relationships: [any PersistedRelationship] { get }
     static var _fieldInformation: [FieldInformation] { get }
 
-    func _setupFields() -> Void
+    func _setupFields()
 
     nonisolated var _observers: Mutex<_ReferenceCountedObservers> { get }
 

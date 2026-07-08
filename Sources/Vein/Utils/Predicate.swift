@@ -141,8 +141,7 @@ extension PredicateExpressions.Equal: SQLiteExpressibleBuilder where
 
         if right.template == "NULL" {
             return SQLExpression<Bool>("(\(left.template) IS NULL)", left.bindings)
-        }
-        else if left.template == "NULL" {
+        } else if left.template == "NULL" {
             return SQLExpression<Bool>("(\(right.template) IS NULL)", right.bindings)
         }
 
@@ -167,8 +166,7 @@ extension PredicateExpressions.NotEqual: SQLiteExpressibleBuilder where
 
         if right.template == "NULL" {
             return SQLExpression<Bool>("(\(left.template) IS NOT NULL)", left.bindings)
-        }
-        else if left.template == "NULL" {
+        } else if left.template == "NULL" {
             return SQLExpression<Bool>("(\(right.template) IS NOT NULL)", right.bindings)
         }
 

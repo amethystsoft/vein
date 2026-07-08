@@ -17,7 +17,7 @@
 
     extension LazyField {
         public var projectedValue: Binding<WrappedType> {
-            Binding<WrappedType> (
+            Binding<WrappedType>(
                 get: {
                     self.wrappedValue
                 },
@@ -30,7 +30,7 @@
 
     extension Field {
         public var projectedValue: Binding<WrappedType> {
-            Binding<WrappedType> (
+            Binding<WrappedType>(
                 get: {
                     self.wrappedValue
                 },
@@ -43,7 +43,7 @@
 
     extension _OneRelationship {
         public var projectedValue: Binding<Value> {
-            Binding<Value> (
+            Binding<Value>(
                 get: {
                     self.wrappedValue
                 },
@@ -56,7 +56,7 @@
 
     extension _ManyRelationship {
         public var projectedValue: Binding<Value> {
-            Binding<Value> (
+            Binding<Value>(
                 get: {
                     self.wrappedValue
                 },

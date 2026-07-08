@@ -226,8 +226,9 @@ public final class ModelContainer: @unchecked Sendable {
 
         do {
             try context.createMigrationsTable()
-        } catch let error as ManagedObjectContextError { throw error }
-        catch let error as SQLiteDB.Result {
+        } catch let error as ManagedObjectContextError {
+            throw error
+        } catch let error as SQLiteDB.Result {
             throw error.parse()
         } catch {
             throw .other(message: error.localizedDescription)
@@ -321,11 +322,10 @@ public final class ModelContainer: @unchecked Sendable {
 
         var currentSchema: VersionedSchema.Type? = nil
 
-        for versionedSchema in migration.schemas.reversed() {
-            if versionedSchema.version == version {
-                currentSchema = versionedSchema
-                break
-            }
+        for versionedSchema in migration.schemas.reversed()
+            where versionedSchema.version == version
+        {
+            currentSchema = versionedSchema
         }
 
         guard let currentSchema else {
@@ -333,7 +333,7 @@ public final class ModelContainer: @unchecked Sendable {
         }
 
         for stage in migration.stages.reversed() {
-            if case .complex(let schema,_,_,_) = stage, schema.version == currentSchema.version {
+            if case .complex(let schema, _, _, _) = stage, schema.version == currentSchema.version {
                 return stage
             }
         }
@@ -343,7 +343,7 @@ public final class ModelContainer: @unchecked Sendable {
 
     nonisolated func getSchema(for identifier: ObjectIdentifier) -> (any PersistentModel.Type)? {
         if
-            let cached = identifierCache.mutate ({ identifierCache in
+            let cached = identifierCache.mutate({ identifierCache in
                 return identifierCache[identifier]
             })
         {

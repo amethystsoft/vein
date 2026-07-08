@@ -58,7 +58,7 @@ public struct MigrationTester {
         try block(container.context)
     }
 
-    public func testCompleteChain (
+    public func testCompleteChain(
         initialData: (ManagedObjectContext) throws -> Void,
         validations: [ModelVersion: (ManagedObjectContext) throws -> Void]
     ) throws {

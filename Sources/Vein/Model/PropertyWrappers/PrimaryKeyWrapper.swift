@@ -28,7 +28,9 @@ public class PrimaryKey: PersistedField, @unchecked Sendable {
         get {
             "id"
         }
+        // swiftlint:disable unused_setter_value
         set {}
+        // swiftlint:enable unused_setter_value
     }
 
     private let lock = NSLock()

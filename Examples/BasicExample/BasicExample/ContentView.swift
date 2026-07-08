@@ -20,7 +20,7 @@ struct ContentView: View {
     @State var stop = false
     @Environment(\.modelContext) var context
 
-    init(predicate: Predicate<Test> = #Predicate<Test> { _ in true } ) {
+    init(predicate: Predicate<Test> = #Predicate<Test> { _ in true }) {
         self._testItems = Query<Test>(predicate)
     }
 

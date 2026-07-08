@@ -201,7 +201,7 @@
         }
 
         public var body: some View {
-            if let _ = container, isInitialized {
+            if container != nil, isInitialized {
                 content()
             } else if let container = container {
                 Text("An error occurred while migrating database:").font(.title3)
@@ -226,10 +226,12 @@
                             } catch {
                                 self.error = error
                                 if container.logConfiguration.modelContextErrors {
+                                    // swiftlint:disable line_length
                                     Self.logger
                                         .error(
                                             "An error occurred during migration of ModelContainer with version \(container.versionedSchema) and MigrationPlan \(container.migration): \(error.localizedDescription)"
                                         )
+                                    // swiftlint:enable line_length
                                 }
                             }
                         }

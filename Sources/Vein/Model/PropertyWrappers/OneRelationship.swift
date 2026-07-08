@@ -136,7 +136,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         var previousID: ULID?
 
         VeinNotificationGuard.$isProcessing.withValue(true) {
-            _withObservationNotification( { model?.notifyOfChanges() }) {
+            _withObservationNotification({ model?.notifyOfChanges() }) {
                 lock.withLock {
                     previousID = idStore
                     idStore = newID

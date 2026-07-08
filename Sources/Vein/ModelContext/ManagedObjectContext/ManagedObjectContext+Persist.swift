@@ -33,8 +33,9 @@ extension ManagedObjectContext {
             }
 
             try connection.run(insert)
-        } catch let error as ManagedObjectContextError { throw error }
-        catch let error as SQLiteDB.Result {
+        } catch let error as ManagedObjectContextError {
+            throw error
+        } catch let error as SQLiteDB.Result {
             let parsed = error.parse()
             switch parsed {
                 case .noSuchTable:
@@ -76,8 +77,9 @@ extension ManagedObjectContext {
             try connection.run(
                 query
             )
-        } catch let error as ManagedObjectContextError { throw error }
-        catch let error as SQLiteDB.Result {
+        } catch let error as ManagedObjectContextError {
+            throw error
+        } catch let error as SQLiteDB.Result {
             throw error.parse()
         } catch {
             throw .other(message: error.localizedDescription)
