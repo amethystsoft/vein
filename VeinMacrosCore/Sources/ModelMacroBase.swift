@@ -1,3 +1,15 @@
+// ===----------------------------------------------------------------------===
+//
+// This source file is part of the Amethyst Vein open source project
+//
+// Copyright (c) 2026 Mia Koring.
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+//
+// ===----------------------------------------------------------------------===
+
 import SwiftSyntax
 import SwiftSyntaxMacros
 import SwiftSyntaxMacroExpansion
@@ -9,7 +21,7 @@ public struct ModelMacroBase {
     public init(frameworkName: String) {
         self.frameworkName = frameworkName
     }
-    
+
     let frameworkName: String
     public func expansion(
         of node: SwiftSyntax.AttributeSyntax,
@@ -18,7 +30,7 @@ public struct ModelMacroBase {
         in context: some MacroExpansionContext
     ) throws -> [SwiftSyntax.DeclSyntax] {
         let className = classDecl.name.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        
+
         let lazyFieldVariables: [VariableDeclSyntax] = classDecl
             .memberBlock
             .membersWithFieldType(.lazyField, frameworkName: frameworkName)
@@ -28,24 +40,24 @@ public struct ModelMacroBase {
         let relationshipVariables: [VariableDeclSyntax] = classDecl
             .memberBlock
             .membersWithFieldType(.relationship, frameworkName: frameworkName)
-        
+
         let relationshipFields = relationshipVariables.fields()
         var lazyFields = lazyFieldVariables.fields()
         lazyFields["_updatedAt"] = "Foundation.Date?"
         lazyFields["_clientID"] = "String?"
         lazyFields["_isDeleted"] = "Bool?"
-        
+
         let eagerFields = fieldVariables.fields()
-        
+
         // MARK: - Setup Fields & _fields accessor
         var allFieldNames = Array(eagerFields.keys) + Array(relationshipFields.keys)
         allFieldNames.append(contentsOf: lazyFields.keys)
-        
+
         var fieldBodys = [String]()
         var fieldAccessorBodies = [String]()
-        
+
         fieldAccessorBodies.append("self._id")
-        
+
         for name in allFieldNames.sorted(by: { $0 < $1 }) {
             // This is not needed in every case, but its handy for internal ones
             // not using the wrappedValue.
@@ -53,12 +65,12 @@ public struct ModelMacroBase {
             fieldBodys.append("self._\(name)._key = \"\(name)\"")
             fieldAccessorBodies.append("self._\(name)")
         }
-        
+
         // MARK: - _relationship accessor
         let relationshipAccessorSetup = relationshipFields.map { name, _ in
             "self._\(name)"
         }.joined(separator: ",\n        ")
-        
+
         // MARK: - Field information
         var predicateInformation: [String] = []
         var fieldInformation: [String] = []
@@ -79,25 +91,27 @@ public struct ModelMacroBase {
             // currently only ULID or ULID array is supported
             let value = value.isCollection ? "[ULID]": "ULID?"
             let information = "Vein.FieldInformation(\(value).sqliteTypeName, \"\(key)\", true, \(relationshipType))"
-            
+
             fieldInformation.append(information)
             predicateInformation.append("case \\.\(key): \(information)")
         }
-        
+
         let fieldInformationString = fieldInformation.joined(separator: ",\n    ")
         var predicateInformationString: String
-        
-        predicateInformation.append("case \\.id: Vein.FieldInformation(ULID.sqliteTypeName, \"id\", true)")
-        
+
+        predicateInformation
+            .append("case \\.id: Vein.FieldInformation(ULID.sqliteTypeName, \"id\", true)")
+
         if !predicateInformation.isEmpty {
             predicateInformationString = "switch keyPath {\n        "
-            predicateInformationString.append(contentsOf: predicateInformation.joined(separator: "\n        "))
+            predicateInformationString
+                .append(contentsOf: predicateInformation.joined(separator: "\n        "))
             predicateInformationString.append("\n        default: nil")
             predicateInformationString.append("\n    }")
         } else {
             predicateInformationString = "nil"
         }
-        
+
         // MARK: - inverse field data
         let inverseFieldData: String = relationshipVariables.compactMap {
             guard
@@ -105,92 +119,94 @@ public struct ModelMacroBase {
                 let arguments = relationshipAttr.arguments?.as(LabeledExprListSyntax.self),
                 let inverseArg = arguments.first(where: { $0.label?.text == "inverse" }),
                 let (root, last) = inverseArg.expression.extractKeyPathComponents(),
-                let key = $0.bindings.first?.pattern.as(IdentifierPatternSyntax.self)?.identifier.text
+                let key = $0.bindings.first?.pattern.as(IdentifierPatternSyntax.self)?.identifier
+                .text
             else { return nil }
-            
+
             return """
-            map[ObjectIdentifier(\(root).self), default: [:]]["\(last)"] = "\(key)"
-            """
+                map[ObjectIdentifier(\(root).self), default: [:]]["\(last)"] = "\(key)"
+                """
         }.joined(separator: "\n    ")
-        
-        
+
         // MARK: - inits and assembly
         let eagerVarInit = eagerFields.initEagerRows()
         let relationshipInit = relationshipFields.initRelationshipRows()
-        
+
         fieldBodys.append("self._id._model = self")
         let fieldSetup = fieldBodys.joined(separator: "\n    ")
         let fieldAccessorSetup = fieldAccessorBodies.joined(separator: ",\n        ")
-        
+
         let body =
-"""
-/// The primary ID of the object.
-/// Gets  used to reference models in relationships.
-/// Immutable after insertion into the context.
-@Vein.PrimaryKey
-var id: Vein.ULID
+            """
+            /// The primary ID of the object.
+            /// Gets  used to reference models in relationships.
+            /// Immutable after insertion into the context.
+            @Vein.PrimaryKey
+            var id: Vein.ULID
 
-@Vein.LazyField(suppressUIUpdates: true)
-var _updatedAt: Foundation.Date?
+            @Vein.LazyField(suppressUIUpdates: true)
+            var _updatedAt: Foundation.Date?
 
-@Vein.LazyField(suppressUIUpdates: true)
-var _clientID: String?
+            @Vein.LazyField(suppressUIUpdates: true)
+            var _clientID: String?
 
-@Vein.LazyField(suppressUIUpdates: true)
-var _isDeleted: Bool? = false
+            @Vein.LazyField(suppressUIUpdates: true)
+            var _isDeleted: Bool? = false
 
-required init(id: Vein.ULID, fields: [String: Vein.SQLiteValue]) {
-    self.id = id
-    \(eagerVarInit)
-    \(relationshipInit)
-    _setupFields()
-}
+            required init(id: Vein.ULID, fields: [String: Vein.SQLiteValue]) {
+                self.id = id
+                \(eagerVarInit)
+                \(relationshipInit)
+                _setupFields()
+            }
 
-let _observers = Vein.Mutex(Vein._ReferenceCountedObservers())
+            let _observers = Vein.Mutex(Vein._ReferenceCountedObservers())
 
-/// Sets required properties for @Field values.
-/// Gets generated automatically by @Model.
-public func _setupFields() {
-    \(fieldSetup)
-}
+            /// Sets required properties for @Field values.
+            /// Gets generated automatically by @Model.
+            public func _setupFields() {
+                \(fieldSetup)
+            }
 
-let _context = Vein.Mutex<Vein.ManagedObjectContext?>(nil)
+            let _context = Vein.Mutex<Vein.ManagedObjectContext?>(nil)
 
-/// Whether a model is prepared to be deleted.
-///
-/// Reading this variable is safe, but it should never be set outside of Vein.
-var _isPreparedForDeletion = false
+            /// Whether a model is prepared to be deleted.
+            ///
+            /// Reading this variable is safe, but it should never be set outside of Vein.
+            var _isPreparedForDeletion = false
 
-var _fields: [any Vein.FieldBase] {
-    [
-        \(fieldAccessorSetup)
-    ]
-}
+            var _fields: [any Vein.FieldBase] {
+                [
+                    \(fieldAccessorSetup)
+                ]
+            }
 
-var _relationships: [any Vein.PersistedRelationship] {
-    [
-        \(relationshipAccessorSetup)
-    ]
-}
+            var _relationships: [any Vein.PersistedRelationship] {
+                [
+                    \(relationshipAccessorSetup)
+                ]
+            }
 
-static let _inverseFields = {
-    var map = [ObjectIdentifier: [String: String]]()
-    \(inverseFieldData)
-    return map
-}()
+            static let _inverseFields = {
+                var map = [ObjectIdentifier: [String: String]]()
+                \(inverseFieldData)
+                return map
+            }()
 
-static func _predicateInformation(for keyPath: PartialKeyPath<\(className)>) -> Vein.FieldInformation? {
-    \(predicateInformationString)
-}
+            static func _predicateInformation(for keyPath: PartialKeyPath<\(
+                className
+            )>) -> Vein.FieldInformation? {
+                \(predicateInformationString)
+            }
 
-static let _fieldInformation: [Vein.FieldInformation] = [
-    \(fieldInformationString)
-]
-"""
-        
+            static let _fieldInformation: [Vein.FieldInformation] = [
+                \(fieldInformationString)
+            ]
+            """
+
         return [DeclSyntax(stringLiteral: body)]
     }
-    
+
     public func expansion(
         of node: AttributeSyntax,
         attachedTo classDecl: ClassDeclSyntax,
@@ -207,10 +223,10 @@ static let _fieldInformation: [Vein.FieldInformation] = [
             }
             """
         )
-        
+
         return [extensionDecl]
     }
-    
+
     public func expansion(
         of node: AttributeSyntax,
         attachedTo classDecl: ClassDeclSyntax,
@@ -222,50 +238,54 @@ static let _fieldInformation: [Vein.FieldInformation] = [
             guard varDecl.isPlainInstanceField else { return [] }
             if
                 FieldType.field.matches(varDecl, frameworkName: frameworkName),
-                !FieldType.field.matches(varDecl, frameworkName: frameworkName, checkNoFieldAttribute: false)
+                !FieldType.field.matches(
+                    varDecl,
+                    frameworkName: frameworkName,
+                    checkNoFieldAttribute: false
+                )
             {
                 return ["@Vein.Field"]
             }
             return []
         }
-        
+
         // Extract the user-defined arguments (inverse, deleteRule, etc.)
         let arguments = relationshipAttr.arguments?.as(LabeledExprListSyntax.self)
-        
+
         var transformedArguments: [String] = []
-        
+
         if let argumentList = arguments,
            let inverseArg = argumentList.first(where: { $0.label?.text == "inverse" }),
            let (root, last) = inverseArg.expression.extractKeyPathComponents(),
            let typeDecl = varDecl
-                .bindings
-                .first?
-                .typeAnnotation?
-                .type
-                .description
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-                .trimmingCharacters(in: ["?"])
+           .bindings
+           .first?
+           .typeAnnotation?
+           .type
+           .description
+           .trimmingCharacters(in: .whitespacesAndNewlines)
+           .trimmingCharacters(in: ["?"])
         {
             guard
                 typeDecl == root || typeDecl == "[\(root)]" || typeDecl == "Array<\(root)>"
             else {
                 throw MacroError.relationshipKeypathDoesNotMatchTypeDeclaration("""
-                \(root) is not compatible with \(typeDecl)
-                """)
+                    \(root) is not compatible with \(typeDecl)
+                    """)
             }
             transformedArguments.append("inverse: \"\(last)\"")
         }
-        
+
         if let argumentList = arguments,
            let deleteruleArg = argumentList.first(where: { $0.label?.text == "deleteRule" })
         { transformedArguments.append(deleteruleArg.description) }
-        
+
         // Determine if target type is a collection
         let isMany = isCollection(type: varDecl.bindings.first?.typeAnnotation?.type)
         let wrapperName = isMany ? "Vein._ManyRelationship" : "Vein._OneRelationship"
-        
+
         let argumentString = transformedArguments.joined(separator: ", ")
-        
+
         // Generate the matching property wrapper with passed-through arguments
         let attribute: AttributeSyntax = "@\(raw: wrapperName)(\(raw: argumentString))"
         return [attribute]
@@ -285,24 +305,28 @@ public enum FieldType {
 }
 
 extension FieldType {
-    func matches(_ variable: VariableDeclSyntax, frameworkName: String, checkNoFieldAttribute: Bool = true) -> Bool {
+    func matches(
+        _ variable: VariableDeclSyntax,
+        frameworkName: String,
+        checkNoFieldAttribute: Bool = true
+    ) -> Bool {
         let hasExplicitField = variable.hasAttributeOrMacro(named: "Field")
             || variable.hasAttributeOrMacro(named: "\(frameworkName).Field")
-        
+
         return switch self {
             case .field:
                 hasExplicitField || (
                     checkNoFieldAttribute
-                    && variable.isPlainInstanceField
-                    && !FieldType.lazyField.matches(variable, frameworkName: frameworkName)
-                    && !FieldType.relationship.matches(variable, frameworkName: frameworkName)
+                        && variable.isPlainInstanceField
+                        && !FieldType.lazyField.matches(variable, frameworkName: frameworkName)
+                        && !FieldType.relationship.matches(variable, frameworkName: frameworkName)
                 )
             case .lazyField:
                 variable.hasAttributeOrMacro(named: "LazyField")
-                || variable.hasAttributeOrMacro(named: "\(frameworkName).LazyField")
+                    || variable.hasAttributeOrMacro(named: "\(frameworkName).LazyField")
             case .relationship:
                 variable.hasAttributeOrMacro(named: "Relationship")
-                || variable.hasAttributeOrMacro(named: "\(frameworkName).Relationship")
+                    || variable.hasAttributeOrMacro(named: "\(frameworkName).Relationship")
         }
     }
 }
@@ -313,12 +337,12 @@ extension MemberBlockSyntax {
             guard let varDecl = member.decl.as(VariableDeclSyntax.self) else {
                 return nil
             }
-            
+
             let hasFieldAttribute = type.matches(varDecl, frameworkName: frameworkName)
-            
+
             return hasFieldAttribute ? varDecl : nil
         }
-        
+
         return result
     }
 }
@@ -351,7 +375,7 @@ extension Dictionary where Key == String, Value == String {
                 """
         }.joined(separator: "\n    ")
     }
-    
+
     func initRelationshipRows() -> String {
         self.map { key, value in
             let idType = value.isCollection ? "[ULID]": "ULID?"
@@ -369,24 +393,24 @@ extension Dictionary where Key == String, Value == String {
 extension VariableDeclSyntax {
     var isPlainInstanceField: Bool {
         bindingSpecifier.trimmedDescription == "var"
-        && bindings.count == 1
-        && bindings.first?.accessorBlock == nil
-        && !modifiers.contains(where: { $0.name.text == "static" || $0.name.text == "class" })
+            && bindings.count == 1
+            && bindings.first?.accessorBlock == nil
+            && !modifiers.contains(where: { $0.name.text == "static" || $0.name.text == "class" })
     }
-    
+
     func hasAttributeOrMacro(named name: String) -> Bool {
         let parts = name.split(separator: ".")
-        
+
         var expectation: [TokenKind] = []
-        
+
         for (i, identifier) in parts.enumerated() {
             expectation.append(.identifier(String(identifier)))
-            
+
             if i < parts.count - 1 {
                 expectation.append(.period)
             }
         }
-        
+
         for attribute in attributes {
             switch attribute {
                 case .attribute(let attr):
@@ -399,20 +423,20 @@ extension VariableDeclSyntax {
         }
         return false
     }
-    
+
     func attributeOrMacro(matching name: String) -> AttributeSyntax? {
         let parts = name.split(separator: ".")
-        
+
         var expectation: [TokenKind] = []
-        
+
         for (i, identifier) in parts.enumerated() {
             expectation.append(.identifier(String(identifier)))
-            
+
             if i < parts.count - 1 {
                 expectation.append(.period)
             }
         }
-        
+
         for attribute in attributes {
             switch attribute {
                 case .attribute(let attr):
@@ -430,12 +454,12 @@ extension VariableDeclSyntax {
 extension ModelMacroBase {
     func findRelationshipAttribute(in varDecl: VariableDeclSyntax) -> AttributeSyntax? {
         varDecl.attributeOrMacro(matching: "Relationship")
-        ?? varDecl.attributeOrMacro(matching: "\(frameworkName).Relationship")
+            ?? varDecl.attributeOrMacro(matching: "\(frameworkName).Relationship")
     }
-    
+
     func isCollection(type: TypeSyntax?) -> Bool {
         guard let type = type else { return false }
-        
+
         let typeStr = type.trimmedDescription
 
         return typeStr.isCollection
@@ -447,7 +471,7 @@ extension String {
         let modified = self.drop(while: { $0 == " " || $0 == ":" })
         return modified.hasPrefix("[") || modified.hasPrefix("Array<")
     }
-    
+
     var coreRelationshipType: String {
         self
             .replacingOccurrences(of: "[", with: "")
@@ -466,14 +490,15 @@ extension ExprSyntax {
         guard let keyPath = self.as(KeyPathExprSyntax.self) else {
             return nil
         }
-        
+
         // Get the last component (the property name)
         guard
             let rootComponent = keyPath.root,
             let lastComponent = keyPath.components.last,
-            let lastPropertyComponent = lastComponent.component.as(KeyPathPropertyComponentSyntax.self)
+            let lastPropertyComponent = lastComponent.component
+            .as(KeyPathPropertyComponentSyntax.self)
         else { return nil }
-        
+
         return (
             root: rootComponent.trimmedDescription,
             last: lastPropertyComponent.trimmedDescription

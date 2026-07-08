@@ -1,3 +1,15 @@
+// ===----------------------------------------------------------------------===
+//
+// This source file is part of the Amethyst Vein open source project
+//
+// Copyright (c) 2026 Mia Koring.
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+//
+// ===----------------------------------------------------------------------===
+
 import Foundation
 import ULID
 import Logging
@@ -11,20 +23,22 @@ import Logging
 public class PrimaryKey: PersistedField, @unchecked Sendable {
     static let logger = Logger(label: "Vein PrimaryKey")
     public typealias WrappedType = ULID
-    
+
     public var _key: String? {
         get {
             "id"
         }
+        // swiftlint:disable unused_setter_value
         set {}
+        // swiftlint:enable unused_setter_value
     }
-    
+
     private let lock = NSLock()
-    
+
     private var store: ULID
-    
+
     public var wasTouched = false
-    
+
     /// Only set during migrations to preserve old ID
     /// Must be set before inserting new Model into context
     public var wrappedValue: ULID {
@@ -38,9 +52,9 @@ public class PrimaryKey: PersistedField, @unchecked Sendable {
                 if let context = model?.context {
                     if context.modelContainer.logConfiguration.primaryKeyMutation {
                         PrimaryKey.logger.warning("""
-                        Attempted to mutate ID of inserted model with ID: \(store). \
-                        This is not supported.
-                        """)
+                            Attempted to mutate ID of inserted model with ID: \(store). \
+                            This is not supported.
+                            """)
                     }
                 } else {
                     store = newValue
@@ -48,29 +62,29 @@ public class PrimaryKey: PersistedField, @unchecked Sendable {
             }
         }
     }
-    
+
     public var isLazy: Bool {
         false
     }
-    
+
     public static var sqliteTypeName: SQLiteTypeName {
         UUID.sqliteTypeName
     }
-    
+
     public weak var _model: (any PersistentModel)?
-    
+
     public init(wrappedValue: ULID = ULID()) {
         self.store = wrappedValue
     }
-    
+
     /// No-op: Primary key is immutable after insertion and doesn't participate in rollback.
     public func _setStoreToCapturedState(_ state: Any) {}
-    
+
     public var _persistableValue: ULID {
         get { self.wrappedValue }
         set { self.wrappedValue = newValue }
     }
-    
+
     // Connect model instance to wrapper.
     public static subscript<OuterSelf: PersistentModel>(
         _enclosingInstance observed: OuterSelf,

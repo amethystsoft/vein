@@ -1,11 +1,23 @@
+// ===----------------------------------------------------------------------===
+//
+// This source file is part of the Amethyst Vein open source project
+//
+// Copyright (c) 2026 Mia Koring.
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+//
+// ===----------------------------------------------------------------------===
+
 import Foundation
 import Testing
 @testable import VeinTesting
 import Vein
 #if TEST_SWIFTUI
-import VeinSwiftUI
+    import VeinSwiftUI
 #elseif !TEST_SWIFTUI
-import VeinCore
+    import VeinCore
 #endif
 
 @MainActor
@@ -13,67 +25,67 @@ struct StepByStep {
     @Test
     func stepByStepVerification() async throws {
         let tester = try MigrationTester(migrationPlan: MigrationPlan.self)
-        
+
         let username = "miakoring"
         let bio = "Amethyst Vein"
-        
+
         let postContent = "Amethyst Vein Release Notes"
-        
+
         let email = "example@amethystsoft.de"
-        
+
         let postCategory = "blog"
-        
+
         var recordedInternalID: String?
-        
+
         try tester.seed(
             version: Version1.self,
             with: { context in
                 let user = Version1.User(username: username)
                 let profile = Version1.Profile(bio: bio)
-                
+
                 try context.insert(user)
                 try context.insert(profile)
                 try context.save()
             }
         )
-        
+
         try tester.migrateAndCheck(
             version: Version2.self,
             with: { context in
                 let users = try context
                     .fetchAll(Version2.User.self)
                 #expect(users.count == 1)
-                
+
                 if let user = users.first {
                     #expect(user.username == username)
                     #expect(user.email == nil)
-                    
+
                     user.email = email
                 }
-                
+
                 let profiles = try context
                     .fetchAll(Version2.Profile.self)
                 #expect(profiles.count == 1)
-                
+
                 if let profile = profiles.first {
                     #expect(profile.bio == bio)
                 }
-                
+
                 try context.save()
             }
         )
-        
+
         try tester.migrateAndCheck(
             version: Version3.self,
             with: { context in
                 let users = try context
                     .fetchAll(Version3.User.self)
                 #expect(users.count == 1)
-                
+
                 let profiles = try context
                     .fetchAll(Version3.Profile.self)
                 #expect(profiles.count == 1)
-                
+
                 if let profile = profiles.first {
                     #expect(profile.bio == bio)
                     #expect(profile.internalID.hasPrefix("ID-"))
@@ -82,31 +94,31 @@ struct StepByStep {
                     } else {
                         Issue.record("Internal ID should be a number after `ID-` prefix")
                     }
-                    
+
                     recordedInternalID = profile.internalID
                 }
-                
+
                 // create Post to exist going forward
                 let post = Version3.Post(content: postContent)
                 try context.insert(post)
                 try context.save()
             }
         )
-        
+
         try tester.migrateAndCheck(
             version: Version4.self,
             with: { context in
                 let users = try context
                     .fetchAll(Version4.User.self)
                 #expect(users.count == 1)
-                
+
                 let profiles = try context
                     .fetchAll(Version4.Profile.self)
                 #expect(profiles.count == 1)
-                
+
                 let posts = try context.fetchAll(Version4.Post.self)
                 #expect(posts.count == 1)
-                
+
                 if let post = posts.first {
                     #expect(post.content == postContent)
                     #expect(post.category == nil)
@@ -115,32 +127,33 @@ struct StepByStep {
                 try context.save()
             }
         )
-        
+
         try tester.migrateAndCheck(
             version: Version5.self,
             with: { context in
                 let users = try context
                     .fetchAll(Version5.User.self)
                 #expect(users.count == 1)
-                
+
                 if let user = users.first {
-                    #expect(user.displayName == username.trimmingCharacters(in: .whitespacesAndNewlines).uppercased())
+                    #expect(user.displayName == username
+                        .trimmingCharacters(in: .whitespacesAndNewlines).uppercased())
                     #expect(user.email == "example@amethystsoft.de")
                 }
-                
+
                 let profiles = try context
                     .fetchAll(Version5.Profile.self)
                 #expect(profiles.count == 1)
-                
+
                 if let profile = profiles.first {
                     #expect(profile.bio == bio)
                     #expect(profile.internalID == recordedInternalID)
                     #expect(recordedInternalID != nil)
                 }
-                
+
                 let posts = try context.fetchAll(Version5.Post.self)
                 #expect(posts.count == 1)
-                
+
                 if let post = posts.first {
                     #expect(post.content == postContent)
                     #expect(post.category == "blog")
@@ -153,15 +166,16 @@ struct StepByStep {
 fileprivate enum Version1: VersionedSchema {
     static let version = ModelVersion(1, 0, 0)
     static var models: [any Vein.PersistentModel.Type] {[
-        User.self, Profile.self
+        User.self,
+        Profile.self
     ]}
-    
+
     @Model
     final class User {
         @Field var username: String
         init(username: String) { self.username = username }
     }
-    
+
     @Model
     final class Profile {
         @Field var bio: String
@@ -172,9 +186,10 @@ fileprivate enum Version1: VersionedSchema {
 fileprivate enum Version2: VersionedSchema {
     static let version = ModelVersion(1, 1, 0)
     static var models: [any Vein.PersistentModel.Type] {[
-        User.self, Profile.self
+        User.self,
+        Profile.self
     ]}
-    
+
     @Model
     final class User {
         @Field var username: String
@@ -185,7 +200,7 @@ fileprivate enum Version2: VersionedSchema {
             self.email = email
         }
     }
-    
+
     @Model
     final class Profile {
         @Field var bio: String
@@ -196,9 +211,11 @@ fileprivate enum Version2: VersionedSchema {
 fileprivate enum Version3: VersionedSchema {
     static let version = ModelVersion(1, 2, 0)
     static var models: [any Vein.PersistentModel.Type] {[
-        User.self, Profile.self, Post.self
+        User.self,
+        Profile.self,
+        Post.self
     ]}
-    
+
     @Model
     final class User {
         @Field var username: String
@@ -208,7 +225,7 @@ fileprivate enum Version3: VersionedSchema {
             self.email = email
         }
     }
-    
+
     @Model
     final class Profile {
         @Field var bio: String
@@ -219,7 +236,7 @@ fileprivate enum Version3: VersionedSchema {
             self.internalID = internalID
         }
     }
-    
+
     @Model
     final class Post {
         @Field var content: String
@@ -230,9 +247,11 @@ fileprivate enum Version3: VersionedSchema {
 fileprivate enum Version4: VersionedSchema {
     static let version = ModelVersion(1, 3, 0)
     static var models: [any Vein.PersistentModel.Type] {[
-        User.self, Profile.self, Post.self
+        User.self,
+        Profile.self,
+        Post.self
     ]}
-    
+
     @Model
     final class User {
         @Field var username: String
@@ -242,7 +261,7 @@ fileprivate enum Version4: VersionedSchema {
             self.email = email
         }
     }
-    
+
     @Model
     final class Profile {
         @Field var bio: String
@@ -252,14 +271,14 @@ fileprivate enum Version4: VersionedSchema {
             self.internalID = internalID
         }
     }
-    
+
     @Model
     final class Post {
         @Field var content: String
-        
+
         // Added field
         @Field var category: String?
-        
+
         init(content: String, category: String) {
             self.content = content
             self.category = category
@@ -270,9 +289,11 @@ fileprivate enum Version4: VersionedSchema {
 fileprivate enum Version5: VersionedSchema {
     static let version = ModelVersion(2, 0, 0)
     static var models: [any Vein.PersistentModel.Type] {[
-        User.self, Profile.self, Post.self
+        User.self,
+        Profile.self,
+        Post.self
     ]}
-    
+
     @Model
     final class User {
         // Renamed/Transformed from username
@@ -283,7 +304,7 @@ fileprivate enum Version5: VersionedSchema {
             self.email = email
         }
     }
-    
+
     @Model
     final class Profile {
         @Field var bio: String
@@ -293,7 +314,7 @@ fileprivate enum Version5: VersionedSchema {
             self.internalID = internalID
         }
     }
-    
+
     @Model
     final class Post {
         @Field var content: String
@@ -313,11 +334,14 @@ fileprivate enum MigrationPlan: SchemaMigrationPlan {
         Version4.self,
         Version5.self
     ]}
-    
+
     static var stages: [Vein.MigrationStage] {[
-        v1ToV2, v2ToV3, v3ToV4, v4ToV5
+        v1ToV2,
+        v2ToV3,
+        v3ToV4,
+        v4ToV5
     ]}
-    
+
     // V1 -> V2: Simple additions and unchanged
     static let v1ToV2 = Vein.MigrationStage.complex(
         fromVersion: Version1.self,
@@ -328,7 +352,7 @@ fileprivate enum MigrationPlan: SchemaMigrationPlan {
         },
         didMigrate: nil
     )
-    
+
     // V2 -> V3: Logic-based transformation (Fetch and Reinsert)
     static let v2ToV3 = Vein.MigrationStage.complex(
         fromVersion: Version2.self,
@@ -336,7 +360,7 @@ fileprivate enum MigrationPlan: SchemaMigrationPlan {
         willMigrate: { context in
             // Basic migrations
             try Version2.User.unchangedMigration(to: Version3.User.self, on: context)
-            
+
             // Logic migration for Profile
             let oldProfiles = try context.fetchAll(Version2.Profile.self)
             for old in oldProfiles {
@@ -350,7 +374,7 @@ fileprivate enum MigrationPlan: SchemaMigrationPlan {
         },
         didMigrate: nil
     )
-    
+
     // V3 -> V4: Field addition and unchanged
     static let v3ToV4 = Vein.MigrationStage.complex(
         fromVersion: Version3.self,
@@ -362,7 +386,7 @@ fileprivate enum MigrationPlan: SchemaMigrationPlan {
         },
         didMigrate: nil
     )
-    
+
     // V4 -> V5: Data cleaning/transformation (Fetch and Reinsert)
     static let v4ToV5 = Vein.MigrationStage.complex(
         fromVersion: Version4.self,
@@ -370,11 +394,12 @@ fileprivate enum MigrationPlan: SchemaMigrationPlan {
         willMigrate: { context in
             try Version4.Profile.unchangedMigration(to: Version5.Profile.self, on: context)
             try Version4.Post.unchangedMigration(to: Version5.Post.self, on: context)
-            
+
             // Transform User.username to User.displayName with sanitization
             let oldUsers = try context.fetchAll(Version4.User.self)
             for old in oldUsers {
-                let sanitizedName = old.username.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+                let sanitizedName = old.username.trimmingCharacters(in: .whitespacesAndNewlines)
+                    .uppercased()
                 let new = Version5.User(
                     displayName: sanitizedName,
                     email: old.email

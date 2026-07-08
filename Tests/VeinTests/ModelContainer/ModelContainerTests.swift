@@ -1,10 +1,22 @@
+// ===----------------------------------------------------------------------===
+//
+// This source file is part of the Amethyst Vein open source project
+//
+// Copyright (c) 2026 Mia Koring.
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+//
+// ===----------------------------------------------------------------------===
+
 import Foundation
 import Testing
 @testable import Vein
 #if TEST_SWIFTUI
-@testable import VeinSwiftUI
+    @testable import VeinSwiftUI
 #elseif !TEST_SWIFTUI
-@testable import VeinCore
+    @testable import VeinCore
 #endif
 
 @MainActor
@@ -20,7 +32,7 @@ struct ModelContainerTests {
         )
         return container
     }
-    
+
     @Test("DB newer version than container throws")
     func dbNewerThanContainer() throws {
         let container = try ModelContainer(
@@ -33,7 +45,7 @@ struct ModelContainerTests {
         let model = V0_0_2.Test(flag: false, someValue: "xyz", securityCode: "zyx")
         try container.context.insert(model)
         try container.context.save()
-        
+
         let newContainer = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
@@ -41,7 +53,7 @@ struct ModelContainerTests {
             appID: "de.amethystsoft.vein.ModelContainerTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-        
+
         do {
             try newContainer.migrate()
         } catch let error as ManagedObjectContextError{
@@ -64,18 +76,18 @@ struct ModelContainerTests {
 fileprivate enum V0_0_1: VersionedSchema {
     static let version = ModelVersion(0, 0, 1)
     static let models: [any Vein.PersistentModel.Type] = [Test.self]
-    
+
     @Model
     final class Test: Identifiable {
         @Field
         var flag: Bool
-        
+
         @Field
         var someValue: String
-        
+
         @Field
         var randomValue: Int
-        
+
         init(flag: Bool, someValue: String, randomValue: Int) {
             self.flag = flag
             self.someValue = someValue
@@ -87,19 +99,19 @@ fileprivate enum V0_0_1: VersionedSchema {
 fileprivate enum V0_0_2: VersionedSchema {
     static let version = ModelVersion(0, 0, 2)
     static let models: [any Vein.PersistentModel.Type] = [Test.self]
-    
+
     @Model
     final class Test: Identifiable {
         @Field
         var flag: Bool
-        
+
         @Field
         var someValue: String
-        
+
         // Renamed and transformed from randomValue
         @Field
         var securityCode: String
-        
+
         init(flag: Bool, someValue: String, securityCode: String) {
             self.flag = flag
             self.someValue = someValue
@@ -112,25 +124,29 @@ fileprivate enum Migration: SchemaMigrationPlan {
     static var schemas: [any Vein.VersionedSchema.Type] {
         [V0_0_1.self, V0_0_2.self]
     }
-    
+
     static var stages: [MigrationStage] {
         [
             migrateV1toV2
         ]
     }
-    
+
     static let migrateV1toV2 = MigrationStage.complex(
         fromVersion: V0_0_1.self,
         toVersion: V0_0_2.self,
         willMigrate: { context in
             // Fetch V1 models
             let tests = try context.fetchAll(V0_0_1.Test.self)
-            
+
             for test in tests {
                 if test.randomValue < 0 {
                     test.randomValue = 0
                 }
-                let new = V0_0_2.Test(flag: test.flag, someValue: test.someValue, securityCode: "SEC-\(test.randomValue)")
+                let new = V0_0_2.Test(
+                    flag: test.flag,
+                    someValue: test.someValue,
+                    securityCode: "SEC-\(test.randomValue)"
+                )
                 try context.insert(new)
                 try context.delete(test)
             }

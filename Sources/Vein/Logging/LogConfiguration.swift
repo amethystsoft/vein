@@ -14,7 +14,7 @@ public struct LogConfiguration: Sendable {
     public var primaryKeyMutation: Bool
     /// Whether to log ``ManagedObjectContext`` errors.
     public var modelContextErrors: Bool
-    
+
     /// Create a new ``LogConfiguration``.
     public init(
         sqlQueries: Bool,
@@ -33,7 +33,7 @@ public struct LogConfiguration: Sendable {
         self.primaryKeyMutation = primaryKeyMutation
         self.modelContextErrors = modelContextErrors
     }
-    
+
     /// A LogConfiguration recommended for debug builds.
     public static var debug: Self {
         LogConfiguration(
@@ -46,7 +46,7 @@ public struct LogConfiguration: Sendable {
             modelContextErrors: true
         )
     }
-    
+
     /// A LogConfiguration recommended for release builds.
     public static var release: Self {
         LogConfiguration(

@@ -1,3 +1,15 @@
+// ===----------------------------------------------------------------------===
+//
+// This source file is part of the Amethyst Vein open source project
+//
+// Copyright (c) 2026 Mia Koring.
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+//
+// ===----------------------------------------------------------------------===
+
 import Foundation
 import VeinCore
 
@@ -6,7 +18,7 @@ public struct MigrationTester {
     private let migrationPlan: any SchemaMigrationPlan.Type
     private let id = UUID()
     public let containerPath: String
-    
+
     public init(migrationPlan: any SchemaMigrationPlan.Type) throws {
         self.migrationPlan = migrationPlan
         self.containerPath = try Self.prepareContainerLocation(
@@ -14,7 +26,7 @@ public struct MigrationTester {
             id: id
         )
     }
-    
+
     public func seed(
         version: VersionedSchema.Type,
         logConfiguration: LogConfiguration? = nil,
@@ -30,7 +42,7 @@ public struct MigrationTester {
         )
         try block(container.context)
     }
-    
+
     public func migrateAndCheck(
         version: VersionedSchema.Type,
         with block: (ManagedObjectContext) throws -> Void
@@ -45,8 +57,8 @@ public struct MigrationTester {
         try container.migrate()
         try block(container.context)
     }
-    
-    public func testCompleteChain (
+
+    public func testCompleteChain(
         initialData: (ManagedObjectContext) throws -> Void,
         validations: [ModelVersion: (ManagedObjectContext) throws -> Void]
     ) throws {
@@ -55,9 +67,10 @@ public struct MigrationTester {
         guard
             let startingVersion = sortedSchemas.first
         else {
-            throw ManagedObjectContextError.other(message: "\(migrationPlan) doesn't have any schemas")
+            throw ManagedObjectContextError
+                .other(message: "\(migrationPlan) doesn't have any schemas")
         }
-        
+
         let container = try ModelContainer(
             startingVersion,
             migration: migrationPlan,
@@ -65,10 +78,10 @@ public struct MigrationTester {
             appID: "de.amethystsoft.vein.MigrationTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-        
+
         try initialData(container.context)
         try validations[startingVersion.version]?(container.context)
-        
+
         for schema in sortedSchemas.dropFirst() {
             let currentContainer = try ModelContainer(
                 schema,
@@ -77,27 +90,28 @@ public struct MigrationTester {
                 appID: "de.amethystsoft.vein.MigrationTests",
                 encryptionEnabled: ProcessInfo.shouldEnableEncryption
             )
-            
+
             try currentContainer.migrate()
             try validations[schema.version]?(currentContainer.context)
         }
     }
-    
+
     private static func prepareContainerLocation(
         plan: any SchemaMigrationPlan.Type,
         id: UUID
     ) throws -> String {
         let containerPath = FileManager.default.temporaryDirectory
-        
-        let dbDir = containerPath.relativePath.appending("/vein-migrationTests/\(plan)/\(id.uuidString)")
-        
+
+        let dbDir = containerPath.relativePath
+            .appending("/vein-migrationTests/\(plan)/\(id.uuidString)")
+
         let dbPath = dbDir.appending("/db.sqlite3")
-        
+
         try FileManager.default.createDirectory(
             atPath: dbDir,
             withIntermediateDirectories: true
         )
-        
+
         if !FileManager.default.fileExists(atPath: dbPath) {
             guard FileManager.default.createFile(
                 atPath: dbPath,
@@ -108,7 +122,7 @@ public struct MigrationTester {
                 )
             }
         }
-        
+
         return dbPath
     }
 }

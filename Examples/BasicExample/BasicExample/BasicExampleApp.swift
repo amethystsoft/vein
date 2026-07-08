@@ -1,29 +1,41 @@
+// ===----------------------------------------------------------------------===
+//
+// This source file is part of the Amethyst Vein open source project
+//
+// Copyright (c) 2026 Mia Koring.
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+//
+// ===----------------------------------------------------------------------===
+
 import SwiftUI
 import VeinSwiftUI
 
 @main
 struct VeinTestEnvironmentApp: App {
     let modelContainer: ModelContainer
-    
+
     init() {
         do {
             let containerPath = FileManager.default.urls(
                 for: .applicationSupportDirectory,
                 in: .userDomainMask
             ).first!
-            
+
             let dbDirURL = containerPath
                 .appendingPathComponent("VeinSwiftUI")
                 .appendingPathComponent("BasicExample")
                 .appendingPathComponent("InternalData")
-            
+
             let dbURL = dbDirURL.appendingPathComponent("db.sqlite3")
             print(dbDirURL.path)
             try FileManager.default.createDirectory(
                 at: dbDirURL,
                 withIntermediateDirectories: true
             )
-            
+
             self.modelContainer = try ModelContainer(
                 TestSchemaV0_0_1.self,
                 migration: TestMigration.self,
@@ -34,7 +46,7 @@ struct VeinTestEnvironmentApp: App {
             fatalError(error.localizedDescription)
         }
     }
-    
+
     var body: some Scene {
         WindowGroup("VeinTest") {
             VeinContainer {
@@ -46,9 +58,9 @@ struct VeinTestEnvironmentApp: App {
                 HStack {
                     ContentView()
                     #if !canImport(UIKit)
-                    ContentView(predicate: #Predicate<Test> { test in
-                        test.randomValue >= 500 && test.flag == true
-                    })
+                        ContentView(predicate: #Predicate<Test> { test in
+                            test.randomValue >= 500 && test.flag == true
+                        })
                     #endif
                 }
             }

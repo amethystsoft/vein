@@ -1,3 +1,16 @@
+// ===----------------------------------------------------------------------===
+//
+// This source file is part of the Amethyst Vein open source project
+//
+// Copyright (c) 2026 Mia Koring.
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+//
+// ===----------------------------------------------------------------------===
+
+// swiftlint:disable line_length
 import Foundation
 import SQLiteDB
 
@@ -20,7 +33,10 @@ public enum ManagedObjectContextError: Error {
     case fieldMismatch(any PersistentModel.Type, any PersistentModel.Type)
     case notInsideMigration(String)
     case destinationMustHaveOnlyAddedFields(any PersistentModel.Type, any PersistentModel.Type)
-    case automaticMigrationRequiresOnlyOptionalFieldsAdded(any PersistentModel.Type, any PersistentModel.Type)
+    case automaticMigrationRequiresOnlyOptionalFieldsAdded(
+        any PersistentModel.Type,
+        any PersistentModel.Type
+    )
     case modelsUnhandledAfterMigration(any VersionedSchema.Type, any VersionedSchema.Type, [String])
     case noSchemaMatchingVersion(SchemaMigrationPlan.Type, ModelVersion)
     case noMigrationForOutdatedModelVersion(SchemaMigrationPlan.Type, ModelVersion)
@@ -99,7 +115,7 @@ extension ManagedObjectContextError: LocalizedError {
                 return "Unexpected: \(message)"
         }
     }
-    
+
     public var failureReason: String? {
         switch self {
             case .connect:
@@ -152,7 +168,7 @@ extension ManagedObjectContextError: LocalizedError {
                 return nil
         }
     }
-    
+
     public var recoverySuggestion: String? {
         switch self {
             case .connect:

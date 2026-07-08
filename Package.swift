@@ -6,16 +6,16 @@ import CompilerPluginSupport
 import Foundation
 
 #if os(macOS)
-let testSwiftUI = ProcessInfo.processInfo.environment["TEST_SWIFTUI"] != nil
+    let testSwiftUI = ProcessInfo.processInfo.environment["TEST_SWIFTUI"] != nil
 
-let veinAPIToTestDependencies: [Target.Dependency] = testSwiftUI ?
-    ["VeinSwiftUI", "VeinSwiftUIMacros"]:
-    ["VeinCore", "VeinCoreMacros"]
+    let veinAPIToTestDependencies: [Target.Dependency] = testSwiftUI ?
+        ["VeinSwiftUI", "VeinSwiftUIMacros"]:
+        ["VeinCore", "VeinCoreMacros"]
 
-let testSwiftSettings: [SwiftSetting] = testSwiftUI ? [.define("TEST_SWIFTUI")] : []
+    let testSwiftSettings: [SwiftSetting] = testSwiftUI ? [.define("TEST_SWIFTUI")] : []
 #else
-let veinAPIToTestDependencies: [Target.Dependency] = ["VeinCore", "VeinCoreMacros"]
-let testSwiftSettings: [SwiftSetting] = []
+    let veinAPIToTestDependencies: [Target.Dependency] = ["VeinCore", "VeinCoreMacros"]
+    let testSwiftSettings: [SwiftSetting] = []
 #endif
 
 var veinDependencies: [Target.Dependency] = [
@@ -69,15 +69,21 @@ let package = Package(
         .package(path: "./VeinMacrosCore"),
         // SQLite >= 3.45.0 is required to support JSONB.
         // The bundled version of swift-sqlcipher >= 1.9.0 matches that requirement.
-            .package(
-                url: "https://github.com/skiptools/swift-sqlcipher",
-                .upToNextMajor(from: "1.9.0")
-            ),
+        .package(
+            url: "https://github.com/skiptools/swift-sqlcipher",
+            .upToNextMajor(from: "1.9.0")
+        ),
         .package(url: "https://github.com/apple/swift-crypto.git", "1.0.0" ..< "5.0.0"),
         .package(url: "https://github.com/swiftlang/swift-syntax.git", "600.0.0" ..< "610.0.0"),
         .package(url: "https://github.com/apple/swift-log.git", .upToNextMajor(from: "1.9.1")),
-        .package(url: "https://github.com/kishikawakatsumi/keychainaccess", .upToNextMajor(from: "4.2.2")),
-        .package(url: "https://github.com/amethystsoft/KeyringAccess", .upToNextMajor(from: "1.0.0")),
+        .package(
+            url: "https://github.com/kishikawakatsumi/keychainaccess",
+            .upToNextMajor(from: "4.2.2")
+        ),
+        .package(
+            url: "https://github.com/amethystsoft/KeyringAccess",
+            .upToNextMajor(from: "1.0.0")
+        ),
         .package(url: "https://github.com/apple/swift-atomics.git", .upToNextMajor(from: "1.3.1")),
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.1.0"),
         .package(url: "https://github.com/typelift/SwiftCheck", .upToNextMinor(from: "0.12.0")),
@@ -141,7 +147,11 @@ let package = Package(
                 .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxMacroExpansion", package: "swift-syntax"),
-                .product(name: "SwiftCheck", package: "SwiftCheck", condition: .when(platforms: [.macOS, .linux]))
+                .product(
+                    name: "SwiftCheck",
+                    package: "SwiftCheck",
+                    condition: .when(platforms: [.macOS, .linux])
+                )
             ] + veinAPIToTestDependencies,
             swiftSettings: testSwiftSettings
         ),

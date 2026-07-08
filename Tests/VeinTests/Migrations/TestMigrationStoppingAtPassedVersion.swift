@@ -1,11 +1,23 @@
+// ===----------------------------------------------------------------------===
+//
+// This source file is part of the Amethyst Vein open source project
+//
+// Copyright (c) 2026 Mia Koring.
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+//
+// ===----------------------------------------------------------------------===
+
 import Foundation
 import Testing
 import Logging
 @testable import Vein
 #if TEST_SWIFTUI
-@testable import VeinSwiftUI
+    @testable import VeinSwiftUI
 #elseif !TEST_SWIFTUI
-@testable import VeinCore
+    @testable import VeinCore
 #endif
 
 extension MigrationTests {
@@ -18,18 +30,18 @@ extension MigrationTests {
             appID: "de.amethystsoft.vein.MigrationTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-        
+
         let initial = Version0_0_1.BasicModel(field: "how did we get here")
         try container.context.insert(initial)
         try container.context.save()
-        
+
         let schemas = try container.context.getAllStoredSchemas()
-        
+
         #expect(schemas == [Version0_0_1.BasicModel.schema])
-        
+
         let version = try container.context.getLatestMigrationVersion()
         #expect(version == Version0_0_1.version)
-        
+
         let newContainer = try ModelContainer(
             Version0_0_2.self,
             migration: MigrationPlan.self,
@@ -37,12 +49,12 @@ extension MigrationTests {
             appID: "de.amethystsoft.vein.MigrationTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-        
+
         try newContainer.migrate()
-        
+
         let newSchemas = try newContainer.context.getAllStoredSchemas()
         #expect(newSchemas == [Version0_0_2.BasicModel.schema])
-        
+
         let newVersion = try newContainer.context.getLatestMigrationVersion()
         #expect(newVersion == Version0_0_2.version)
     }
@@ -50,17 +62,16 @@ extension MigrationTests {
 
 fileprivate enum Version0_0_1: VersionedSchema {
     static let version = ModelVersion(0, 0, 1)
-    
+
     static var models: [any Vein.PersistentModel.Type] {[
         BasicModel.self
     ]}
-    
-    
+
     @Model
     final class BasicModel {
         @Field
         var field: String
-        
+
         init(field: String) {
             self.field = field
         }
@@ -69,17 +80,16 @@ fileprivate enum Version0_0_1: VersionedSchema {
 
 fileprivate enum Version0_0_2: VersionedSchema {
     static let version = ModelVersion(0, 0, 2)
-    
+
     static var models: [any Vein.PersistentModel.Type] {[
         BasicModel.self
     ]}
-    
-    
+
     @Model
     final class BasicModel {
         @Field
         var field: String
-        
+
         init(field: String) {
             self.field = field
         }
@@ -88,23 +98,21 @@ fileprivate enum Version0_0_2: VersionedSchema {
 
 fileprivate enum Version0_0_3: VersionedSchema {
     static let version = ModelVersion(0, 0, 3)
-    
+
     static var models: [any Vein.PersistentModel.Type] {[
         BasicModel.self
     ]}
-    
-    
+
     @Model
     final class BasicModel {
         @Field
         var field: String
-        
+
         init(field: String) {
             self.field = field
         }
     }
 }
-
 
 fileprivate enum MigrationPlan: SchemaMigrationPlan {
     static var schemas: [any Vein.VersionedSchema.Type] {
@@ -114,12 +122,12 @@ fileprivate enum MigrationPlan: SchemaMigrationPlan {
             Version0_0_3.self
         ]
     }
-    
+
     static var stages: [Vein.MigrationStage] { [
         v1ToV2,
         v2ToV3
     ] }
-    
+
     static let v1ToV2 = MigrationStage.complex(
         fromVersion: Version0_0_1.self,
         toVersion: Version0_0_2.self,
@@ -132,7 +140,7 @@ fileprivate enum MigrationPlan: SchemaMigrationPlan {
         },
         didMigrate: nil
     )
-    
+
     static let v2ToV3 = MigrationStage.complex(
         fromVersion: Version0_0_2.self,
         toVersion: Version0_0_3.self,
@@ -146,4 +154,3 @@ fileprivate enum MigrationPlan: SchemaMigrationPlan {
         didMigrate: nil
     )
 }
-

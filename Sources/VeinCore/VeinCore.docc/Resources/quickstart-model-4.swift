@@ -6,15 +6,15 @@ enum V0_0_1: VersionedSchema {
     static let models: [any PersistentModel.Type] = [
         Post.self
     ]
-    
+
     @Model
     final class Post {
         var title: String
         var content: String
-        
+
         @LazyField
         var attachment: Data?
-        
+
         init(title: String, content: String) {
             self.title = title
             self.content = content
