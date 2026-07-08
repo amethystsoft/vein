@@ -80,6 +80,7 @@ let package = Package(
         .package(url: "https://github.com/amethystsoft/KeyringAccess", .upToNextMajor(from: "1.0.0")),
         .package(url: "https://github.com/apple/swift-atomics.git", .upToNextMajor(from: "1.3.1")),
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.1.0"),
+        .package(url: "https://github.com/typelift/SwiftCheck", .upToNextMinor(from: "0.12.0")),
     ],
     targets: [
         .target(
@@ -139,7 +140,8 @@ let package = Package(
                 .product(name: "SQLiteDB", package: "swift-sqlcipher"),
                 .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
-                .product(name: "SwiftSyntaxMacroExpansion", package: "swift-syntax")
+                .product(name: "SwiftSyntaxMacroExpansion", package: "swift-syntax"),
+                .product(name: "SwiftCheck", package: "SwiftCheck", condition: .when(platforms: [.macOS, .linux]))
             ] + veinAPIToTestDependencies,
             swiftSettings: testSwiftSettings
         ),
