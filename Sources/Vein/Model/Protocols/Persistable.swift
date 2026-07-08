@@ -460,10 +460,12 @@ extension Optional: Persistable, ColumnType where Wrapped: Persistable {
     public static func decode(sqliteValue: SQLiteValue) throws(MOCError) -> Wrapped? {
         if case .null = sqliteValue {
             return .none
-        } else if let representation = try? Wrapped.PersistentRepresentation
-            .decode(sqliteValue: sqliteValue)
+        } else if
+            let representation = try? Wrapped.PersistentRepresentation
+                .decode(sqliteValue: sqliteValue),
+            let wrapped = Wrapped(fromPersistent: representation)
         {
-            return Wrapped(fromPersistent: representation)
+            return wrapped
         } else {
             throw MOCError.propertyDecode(message: "\(Self.self)")
         }
