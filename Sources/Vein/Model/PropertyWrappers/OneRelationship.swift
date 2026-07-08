@@ -12,7 +12,7 @@
 
 import Foundation
 import Logging
-// swiftling:disable multiple_closures_with_trailing_closure
+
 @propertyWrapper
 public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unchecked Sendable {
     static var logger: Logger { .init(label: "Vein.OneRelationship") }

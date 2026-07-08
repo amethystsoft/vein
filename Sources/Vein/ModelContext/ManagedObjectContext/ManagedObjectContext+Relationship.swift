@@ -131,13 +131,9 @@ extension ManagedObjectContext {
             let results = try connection.prepare(select)
             var resultIDs = Set<ULID>()
 
-            try identityMap.batched { getTracked, startTracking in
+            identityMap.batched { getTracked, startTracking in
                 for row in results {
-                    guard let id = ULID(ulidString: row[SQLExpression<String>("id")]) else {
-                        throw MOCError.propertyDecode(message: """
-                                Failed to decode id from row. DB may be corrupt.
-                            """)
-                    }
+                    let id = ULID(ulidString: row[SQLExpression<String>("id")])!
 
                     if currentlyDeleted[id] != nil { continue }
 

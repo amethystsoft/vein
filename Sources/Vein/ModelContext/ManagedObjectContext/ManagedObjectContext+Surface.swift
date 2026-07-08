@@ -24,9 +24,9 @@ extension ManagedObjectContext {
 
     /// Returns all models matching the predicate.
     /// Non existent tables are treated as empty state and therefore return [].
-    public nonisolated func fetchAll<T: PersistentModel>(_ predicate: Predicate<T>) throws(MOCError)
-        -> [T]
-    {
+    public nonisolated func fetchAll<T: PersistentModel>(
+        _ predicate: Predicate<T>
+    ) throws(MOCError) -> [T] {
         do {
             guard
                 self.modelContainer.getSchema(for: T.typeIdentifier) != nil
@@ -44,11 +44,9 @@ extension ManagedObjectContext {
 
     /// Returns all models matching the ``ModelPredicate``.
     /// Non existent tables are treated as empty state and therefore return [].
-    public nonisolated func fetchAll<T: PersistentModel>(_ modelPredicate: ModelPredicate<
-        T
-    >) throws(MOCError)
-        -> [T]
-    {
+    public nonisolated func fetchAll<T: PersistentModel>(
+        _ modelPredicate: ModelPredicate<T>
+    ) throws(MOCError) -> [T] {
         do {
             guard
                 self.modelContainer.getSchema(for: T.typeIdentifier) != nil
@@ -65,9 +63,9 @@ extension ManagedObjectContext {
 
     /// Returns all models of a model type.
     /// Non existent tables are treated as empty state and therefore return [].
-    public nonisolated func fetchAll<T: PersistentModel>(_ modelType: T
-        .Type) throws(MOCError) -> [T]
-    {
+    public nonisolated func fetchAll<T: PersistentModel>(
+        _ modelType: T.Type
+    ) throws(MOCError) -> [T] {
         try fetchAll(#Predicate<T>{ _ in true })
     }
 
@@ -75,9 +73,9 @@ extension ManagedObjectContext {
     ///
     /// It gets saved in the in memory write cache until persisted by calling ``save()``.
     /// Once inserted it will be included in fetches.
-    public nonisolated func insert<M: PersistentModel>(_ model: M) throws(
-        ManagedObjectContextError
-    ) {
+    public nonisolated func insert<M: PersistentModel>(
+        _ model: M
+    ) throws(ManagedObjectContextError) {
         _updateModelMetadata(on: model)
         guard model.context == nil else {
             throw MOCError
@@ -177,9 +175,9 @@ extension ManagedObjectContext {
     }
 
     /// Specifies an object that should be removed from its persistent store when changes are committed.
-    public nonisolated func delete<M: PersistentModel>(_ model: M) throws(
-        ManagedObjectContextError
-    ) {
+    public nonisolated func delete<M: PersistentModel>(
+        _ model: M
+    ) throws(ManagedObjectContextError) {
         guard model.context != nil else { return }
         guard modelContainer.getSchema(for: model.typeIdentifier) != nil else {
             throw ManagedObjectContextError.inactiveModelType(model)
@@ -237,9 +235,9 @@ extension ManagedObjectContext {
     }
 
     /// Delete a batch of models.
-    public nonisolated func batchDelete<M: PersistentModel>(_ models: [
-        M
-    ]) throws(ManagedObjectContextError) {
+    public nonisolated func batchDelete<M: PersistentModel>(
+        _ models: [M]
+    ) throws(ManagedObjectContextError) {
         let managedModels = models.compactMap { $0.context != nil ? $0: nil }
 
         if let first = managedModels.first {
