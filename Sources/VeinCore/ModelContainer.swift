@@ -48,7 +48,7 @@ extension ModelContainer {
             _notifyBeforeChange: false
         )
     }
-    
+
     /// Manages the schema and storage for a Vein database.
     ///
     /// - Parameters:

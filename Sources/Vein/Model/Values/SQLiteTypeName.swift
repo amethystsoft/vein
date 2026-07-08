@@ -3,17 +3,21 @@ import SQLiteDB
 
 /// Represents the supported SQLite storage classes, including specialized types like `jsonb`.
 public enum SQLiteTypeName: Sendable, Hashable {
-    case integer, real, text, blob, jsonb
+    case integer
+    case real
+    case text
+    case blob
+    case jsonb
     /// Represents a nullable version of the base type.
     indirect case null(SQLiteTypeName)
-    
+
     var isNull: Bool {
         return switch self {
             case .null: true
             default: false
         }
     }
-    
+
     public static func notNull(_ type: SQLiteTypeName) -> SQLiteTypeName {
         if case .null(let inner) = type {
             return .notNull(inner)
@@ -21,7 +25,7 @@ public enum SQLiteTypeName: Sendable, Hashable {
             return type
         }
     }
-    
+
     var castTypeString: String {
         switch self {
             case .integer:
@@ -45,7 +49,7 @@ public enum SQLiteValue: Sendable, Hashable {
     case text(String)
     case blob(Data)
     case null
-    
+
     var intval: Int {
         switch self {
             case .integer:
@@ -60,7 +64,7 @@ public enum SQLiteValue: Sendable, Hashable {
                 6
         }
     }
-    
+
     public func hash(into hasher: inout Hasher) {
         hasher.combine(self.intval)
         switch self {
@@ -76,7 +80,7 @@ public enum SQLiteValue: Sendable, Hashable {
                 hasher.combine("NULL".hashValue)
         }
     }
-    
+
     init(typeName: SQLiteTypeName, key: String, row: SQLiteDB.Row) {
         if typeName.isNull {
             switch SQLiteTypeName.notNull(typeName) {

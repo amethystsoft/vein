@@ -3,15 +3,15 @@ import Testing
 import Logging
 @testable import Vein
 #if TEST_SWIFTUI
-@testable import VeinSwiftUI
+    @testable import VeinSwiftUI
 #elseif !TEST_SWIFTUI
-@testable import VeinCore
+    @testable import VeinCore
 #endif
 
 extension MigrationTests {
     @Test func versionedSchemaIsNotPartOfSchemaMigrationPlan() async throws {
         let path = try prepareContainerLocation(name: "ModelContainerErrors")
-        
+
         do {
             let _ = try ModelContainer(
                 Version0_0_2.self,
@@ -22,9 +22,9 @@ extension MigrationTests {
             )
         } catch {
             if
-                case let .schemaNotRegisteredOnMigrationPlan(
-                    schema,
-                    migration
+                case .schemaNotRegisteredOnMigrationPlan(
+                    let schema,
+                    let migration
                 ) = error
             {
                 #expect("\(schema)" == "Version0_0_2")
@@ -34,24 +34,23 @@ extension MigrationTests {
             Issue.record("Thrown error does not match expectations: \(error.errorDescription)")
             return
         }
-        
+
         Issue.record("Unexpectedly no error was thrown")
     }
 }
 
 fileprivate enum Version0_0_1: VersionedSchema {
     static let version = ModelVersion(0, 0, 1)
-    
+
     static var models: [any Vein.PersistentModel.Type] {[
         BasicModel.self
     ]}
-    
-    
+
     @Model
     final class BasicModel {
         @Field
         var field: String
-        
+
         init(field: String) {
             self.field = field
         }
@@ -60,23 +59,21 @@ fileprivate enum Version0_0_1: VersionedSchema {
 
 fileprivate enum Version0_0_2: VersionedSchema {
     static let version = ModelVersion(0, 0, 2)
-    
+
     static var models: [any Vein.PersistentModel.Type] {[
         BasicModel.self
     ]}
-    
-    
+
     @Model
     final class BasicModel {
         @Field
         var field: String
-        
+
         init(field: String) {
             self.field = field
         }
     }
 }
-
 
 fileprivate enum MigrationPlan: SchemaMigrationPlan {
     static var schemas: [any Vein.VersionedSchema.Type] {
@@ -84,7 +81,6 @@ fileprivate enum MigrationPlan: SchemaMigrationPlan {
             Version0_0_1.self
         ]
     }
-    
+
     static var stages: [Vein.MigrationStage] { [] }
 }
-

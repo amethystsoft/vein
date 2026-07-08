@@ -11,20 +11,20 @@ import Logging
 public class PrimaryKey: PersistedField, @unchecked Sendable {
     static let logger = Logger(label: "Vein PrimaryKey")
     public typealias WrappedType = ULID
-    
+
     public var _key: String? {
         get {
             "id"
         }
         set {}
     }
-    
+
     private let lock = NSLock()
-    
+
     private var store: ULID
-    
+
     public var wasTouched = false
-    
+
     /// Only set during migrations to preserve old ID
     /// Must be set before inserting new Model into context
     public var wrappedValue: ULID {
@@ -38,9 +38,9 @@ public class PrimaryKey: PersistedField, @unchecked Sendable {
                 if let context = model?.context {
                     if context.modelContainer.logConfiguration.primaryKeyMutation {
                         PrimaryKey.logger.warning("""
-                        Attempted to mutate ID of inserted model with ID: \(store). \
-                        This is not supported.
-                        """)
+                            Attempted to mutate ID of inserted model with ID: \(store). \
+                            This is not supported.
+                            """)
                     }
                 } else {
                     store = newValue
@@ -48,29 +48,29 @@ public class PrimaryKey: PersistedField, @unchecked Sendable {
             }
         }
     }
-    
+
     public var isLazy: Bool {
         false
     }
-    
+
     public static var sqliteTypeName: SQLiteTypeName {
         UUID.sqliteTypeName
     }
-    
+
     public weak var _model: (any PersistentModel)?
-    
+
     public init(wrappedValue: ULID = ULID()) {
         self.store = wrappedValue
     }
-    
+
     /// No-op: Primary key is immutable after insertion and doesn't participate in rollback.
     public func _setStoreToCapturedState(_ state: Any) {}
-    
+
     public var _persistableValue: ULID {
         get { self.wrappedValue }
         set { self.wrappedValue = newValue }
     }
-    
+
     // Connect model instance to wrapper.
     public static subscript<OuterSelf: PersistentModel>(
         _enclosingInstance observed: OuterSelf,

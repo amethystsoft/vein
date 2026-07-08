@@ -4,13 +4,13 @@ struct TableBuilder {
     private let context: ManagedObjectContext
     private let schemaName: String
     private var schema: (SQLiteDB.TableBuilder) -> Void
-    
+
     init(_ context: ManagedObjectContext, named schemaName: String) {
         self.context = context
         self.schemaName = schemaName
         self.schema = { _ in }
     }
-    
+
     @discardableResult
     func id() -> Self {
         var copy = self
@@ -19,7 +19,7 @@ struct TableBuilder {
         }
         return copy
     }
-    
+
     @discardableResult
     func field(
         _ key: String,
@@ -35,7 +35,7 @@ struct TableBuilder {
         }
         return copy
     }
-    
+
     func run() throws(ManagedObjectContextError) {
         try context.run(Table(schemaName).create (ifNotExists: true) { t in
             schema(t)

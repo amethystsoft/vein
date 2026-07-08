@@ -8,22 +8,22 @@ public struct SQLiteJSONB: ColumnType, Persistable {
     public typealias SQLiteType = Data
     public typealias PersistentRepresentation = Self
     public let jsonString: String
-    
+
     public init(jsonString: String) {
         self.jsonString = jsonString
     }
-    
+
     public static var sqliteTypeName: SQLiteTypeName { .jsonb }
-    
+
     public var sqliteValue: SQLiteValue { .text(jsonString) }
-    
+
     public static func decode(sqliteValue: SQLiteValue) throws(MOCError) -> SQLiteJSONB {
         if case .text(let rawString) = sqliteValue {
             return SQLiteJSONB(jsonString: rawString)
         }
         throw MOCError.propertyDecode(message: "\(Self.self)")
     }
-    
+
     public var asPersistentRepresentation: Self { self }
     public init?(fromPersistent representation: Self) { self = representation }
 }
@@ -63,7 +63,7 @@ extension ColumnType {
     var sqliteTypeName: SQLiteTypeName {
         Self.sqliteTypeName
     }
-    
+
     public var sqlExpression: SQLExpression<SQLiteType> {
         switch sqliteValue {
             case .null:
@@ -72,7 +72,7 @@ extension ColumnType {
                 SQLExpression<SQLiteType>("?", [sqliteValue.bindingValue])
         }
     }
-    
+
     /// Only use to store values.
     ///
     /// Columns of type JSONB convert it to the JSONB format from a JSON string.
@@ -95,9 +95,9 @@ extension ColumnType {
 
 extension ULID: Persistable {
     public typealias PersistentRepresentation = String
-    
+
     public var asPersistentRepresentation: String { ulidString }
-    
+
     public init?(fromPersistent representation: String) {
         self.init(ulidString: representation)
     }
@@ -105,23 +105,23 @@ extension ULID: Persistable {
 
 extension Int16: Persistable, ColumnType {
     public var sqliteTypeRepresentation: Int64 { Int64(self) }
-    
+
     public typealias SQLiteType = Int64
-    
+
     public typealias PersistentRepresentation = Self
-    
+
     public var asPersistentRepresentation: Self { self }
-    
+
     public init?(fromPersistent representation: PersistentRepresentation) {
         self = representation
     }
-    
+
     public static var sqliteTypeName: SQLiteTypeName { .integer }
-    
+
     public var sqliteValue: SQLiteValue {
         .integer(Int64(self))
     }
-    
+
     public static func decode(sqliteValue: SQLiteValue) throws(MOCError) -> Int16 {
         if
             case .integer(let value) = sqliteValue,
@@ -136,23 +136,23 @@ extension Int16: Persistable, ColumnType {
 
 extension Int32: Persistable, ColumnType {
     public var sqliteTypeRepresentation: Int64 { Int64(self) }
-    
+
     public typealias SQLiteType = Int64
-    
+
     public typealias PersistentRepresentation = Self
-    
+
     public var asPersistentRepresentation: Self { self }
-    
+
     public init?(fromPersistent representation: PersistentRepresentation) {
         self = representation
     }
-    
+
     public static var sqliteTypeName: SQLiteTypeName { .integer }
-    
+
     public var sqliteValue: SQLiteValue {
         .integer(Int64(self))
     }
-    
+
     public static func decode(sqliteValue: SQLiteValue) throws(MOCError) -> Int32 {
         if
             case .integer(let value) = sqliteValue,
@@ -167,23 +167,23 @@ extension Int32: Persistable, ColumnType {
 
 extension Int64: Persistable, ColumnType {
     public var sqliteTypeRepresentation: Int64 { self }
-    
+
     public typealias SQLiteType = Int64
-    
+
     public typealias PersistentRepresentation = Self
-    
+
     public var asPersistentRepresentation: Self { self }
-    
+
     public init?(fromPersistent representation: PersistentRepresentation) {
         self = representation
     }
-    
+
     public static var sqliteTypeName: SQLiteTypeName { .integer }
-    
+
     public var sqliteValue: SQLiteValue {
         .integer(self)
     }
-    
+
     public static func decode(sqliteValue: SQLiteValue) throws(MOCError) -> Int64 {
         if case .integer(let value) = sqliteValue {
             return value
@@ -195,39 +195,39 @@ extension Int64: Persistable, ColumnType {
 
 extension Int: Persistable {
     public typealias PersistentRepresentation = Int64
-    
+
     public static var sqliteTypeName: SQLiteTypeName {
         .integer
     }
-    
+
     public var asPersistentRepresentation: Int64 { Int64(self) }
-    
+
     public init?(fromPersistent representation: Int64) {
         self = Int(representation)
     }
 }
 
 extension Double: Persistable, ColumnType {
-    public var sqliteTypeRepresentation: Double  { self }
-    
+    public var sqliteTypeRepresentation: Double { self }
+
     public typealias SQLiteType = Double
-    
+
     public typealias PersistentRepresentation = Self
-    
+
     public var asPersistentRepresentation: Self { self }
-    
+
     public init?(fromPersistent representation: PersistentRepresentation) {
         self = representation
     }
-    
+
     public static var sqliteTypeName: SQLiteTypeName {
         .real
     }
-    
+
     public var sqliteValue: SQLiteValue {
         .real(self)
     }
-    
+
     public static func decode(sqliteValue: SQLiteValue) throws(MOCError) -> Double {
         if case .real(let value) = sqliteValue {
             return value
@@ -238,26 +238,26 @@ extension Double: Persistable, ColumnType {
 }
 
 extension Float: Persistable, ColumnType {
-    public var sqliteTypeRepresentation: Double  { Double(self) }
-    
+    public var sqliteTypeRepresentation: Double { Double(self) }
+
     public typealias SQLiteType = Double
-    
+
     public typealias PersistentRepresentation = Self
-    
+
     public var asPersistentRepresentation: Self { self }
-    
+
     public init?(fromPersistent representation: PersistentRepresentation) {
         self = representation
     }
-    
+
     public static var sqliteTypeName: SQLiteTypeName {
         .real
     }
-    
+
     public var sqliteValue: SQLiteValue {
         .real(Double(self))
     }
-    
+
     public static func decode(sqliteValue: SQLiteValue) throws(MOCError) -> Float {
         if case .real(let value) = sqliteValue {
             return Float(value)
@@ -269,25 +269,25 @@ extension Float: Persistable, ColumnType {
 
 extension Bool: Persistable, ColumnType {
     public var sqliteTypeRepresentation: Bool { self }
-    
+
     public typealias SQLiteType = Bool
-    
+
     public typealias PersistentRepresentation = Self
-    
+
     public var asPersistentRepresentation: Self { self }
-    
+
     public init?(fromPersistent representation: PersistentRepresentation) {
         self = representation
     }
-    
+
     public static var sqliteTypeName: SQLiteTypeName {
         .integer
     }
-    
+
     public var sqliteValue: SQLiteValue {
         .integer(self ? 1 : 0)
     }
-    
+
     public static func decode(sqliteValue: SQLiteValue) throws(MOCError) -> Bool {
         switch sqliteValue {
             case .integer(0):
@@ -303,23 +303,23 @@ extension Bool: Persistable, ColumnType {
 extension String: Persistable, ColumnType {
     public var sqliteTypeRepresentation: String { self }
     public typealias SQLiteType = String
-    
+
     public typealias PersistentRepresentation = Self
-    
+
     public var asPersistentRepresentation: Self { self }
-    
+
     public init?(fromPersistent representation: PersistentRepresentation) {
         self = representation
     }
-    
+
     public static var sqliteTypeName: SQLiteTypeName {
         .text
     }
-    
+
     public var sqliteValue: SQLiteValue {
         .text(self)
     }
-    
+
     public static func decode(sqliteValue: SQLiteValue) throws(MOCError) -> String {
         if case .text(let value) = sqliteValue {
             return value
@@ -331,18 +331,18 @@ extension String: Persistable, ColumnType {
 
 extension URL: Persistable {
     public var sqliteTypeRepresentation: String { absoluteString }
-    
+
     public typealias SQLiteType = String
-    
+
     public typealias PersistentRepresentation = String
-    
+
     public var asPersistentRepresentation: String { absoluteString }
-    
+
     public init?(fromPersistent representation: PersistentRepresentation) {
         guard let url = URL(string: representation) else { return nil }
         self = url
     }
-    
+
     public static var sqliteTypeName: SQLiteTypeName {
         .text
     }
@@ -350,25 +350,25 @@ extension URL: Persistable {
 
 extension Data: Persistable, ColumnType {
     public var sqliteTypeRepresentation: Data { self }
-    
+
     public typealias SQLiteType = Data
-    
+
     public typealias PersistentRepresentation = Self
-    
+
     public var asPersistentRepresentation: Self { self }
-    
+
     public init?(fromPersistent representation: PersistentRepresentation) {
         self = representation
     }
-    
+
     public static var sqliteTypeName: SQLiteTypeName {
         .blob
     }
-    
+
     public var sqliteValue: SQLiteValue {
         .blob(self)
     }
-    
+
     public static func decode(sqliteValue: SQLiteValue) throws(MOCError) -> Data {
         if case .blob(let value) = sqliteValue {
             return value
@@ -380,9 +380,9 @@ extension Data: Persistable, ColumnType {
 
 extension Date: Persistable {
     public typealias PersistentRepresentation = Double
-    
+
     public var asPersistentRepresentation: Double { self.timeIntervalSince1970 }
-    
+
     public init?(fromPersistent representation: PersistentRepresentation) {
         self = Date(timeIntervalSince1970: representation)
     }
@@ -390,30 +390,31 @@ extension Date: Persistable {
 
 extension UUID: Persistable, ColumnType {
     public typealias SQLiteType = String
-    
+
     public typealias PersistentRepresentation = Self
-    
+
     public var asPersistentRepresentation: Self { self }
-    
+
     public init?(fromPersistent representation: PersistentRepresentation) {
         self = representation
     }
-    
+
     public static var sqliteTypeName: SQLiteTypeName {
         .text
     }
-    
+
     public var sqliteValue: SQLiteValue {
         .text(uuidString)
     }
-    
+
     public static func decode(sqliteValue: SQLiteValue) throws(MOCError) -> UUID {
         switch sqliteValue {
             case .text(let string):
                 if let uuid = UUID(uuidString: string) {
                     return uuid
                 }
-                throw MOCError.propertyDecode(message: "'\(string)' not compatible with UUID.uuidString")
+                throw MOCError
+                    .propertyDecode(message: "'\(string)' not compatible with UUID.uuidString")
             default:
                 throw MOCError.propertyDecode(message: "\(Self.self)")
         }
@@ -422,32 +423,34 @@ extension UUID: Persistable, ColumnType {
 
 extension Optional: Persistable, ColumnType where Wrapped: Persistable {
     public typealias SQLiteType = Wrapped.PersistentRepresentation.SQLiteType?
-    
+
     public typealias PersistentRepresentation = Self
-    
+
     public var asPersistentRepresentation: Self { self }
-    
+
     public init?(fromPersistent representation: PersistentRepresentation) {
         self = representation
     }
-    
+
     public static var sqliteTypeName: SQLiteTypeName {
         .null(Wrapped.sqliteTypeName)
     }
-    
+
     public var sqliteValue: SQLiteValue {
         switch self {
             case .none:
-                    .null
+                .null
             case .some(let value):
                 value.asPersistentRepresentation.sqliteValue
         }
     }
-    
+
     public static func decode(sqliteValue: SQLiteValue) throws(MOCError) -> Wrapped? {
         if case .null = sqliteValue {
             return .none
-        } else if let representation = try? Wrapped.PersistentRepresentation.decode(sqliteValue: sqliteValue) {
+        } else if let representation = try? Wrapped.PersistentRepresentation
+            .decode(sqliteValue: sqliteValue)
+        {
             return Wrapped(fromPersistent: representation)
         } else {
             throw MOCError.propertyDecode(message: "\(Self.self)")
@@ -463,10 +466,11 @@ extension Optional: Persistable, ColumnType where Wrapped: Persistable {
 // where datasets a lot smaller than on a server are expected.
 extension Array: Persistable where Element == ULID {
     public typealias PersistentRepresentation = SQLiteJSONB
-    
+
     public init?(fromPersistent representation: SQLiteJSONB) {
         guard let data = representation.jsonString.data(using: .utf8),
-              let strings = try? JSONDecoder().decode([String].self, from: data) else {
+              let strings = try? JSONDecoder().decode([String].self, from: data)
+        else {
             return nil
         }
         self = strings.map {
@@ -476,7 +480,7 @@ extension Array: Persistable where Element == ULID {
             return ulid
         }
     }
-    
+
     public var asPersistentRepresentation: SQLiteJSONB {
         let serialized = "[" + self.map { "\"\($0.ulidString)\"" }.joined(separator: ",") + "]"
         return SQLiteJSONB(jsonString: serialized)
@@ -499,7 +503,7 @@ extension RawRepresentablePersistable {
         }
         self.init(rawValue: rawValue)
     }
-    
+
     public var asPersistentRepresentation: RawValue.PersistentRepresentation {
         self.rawValue.asPersistentRepresentation
     }
@@ -510,7 +514,8 @@ extension RawRepresentablePersistable {
 /// It will be stored as JSONB in SQLite, allowing for performant custom filtering.
 /// Please note that changing the Codable implementation within one version might break decoding.
 /// It is recommended to only change it during Schema Version bumps.
-public protocol CodablePersistable: Codable, Persistable where PersistentRepresentation == SQLiteJSONB {}
+public protocol CodablePersistable: Codable,
+    Persistable where PersistentRepresentation == SQLiteJSONB {}
 extension CodablePersistable {
     public init?(fromPersistent representation: SQLiteJSONB) {
         guard
@@ -519,10 +524,10 @@ extension CodablePersistable {
         else {
             return nil
         }
-        
+
         self = instance
     }
-    
+
     public var asPersistentRepresentation: SQLiteJSONB {
         do {
             let serialized = try JSONEncoder().encode(self)
@@ -531,7 +536,9 @@ extension CodablePersistable {
             }
             return SQLiteJSONB(jsonString: jsonString)
         } catch {
-            fatalError("Failed to JSON-encode data for \(Self.self). Error: \(error), Description: \(error.localizedDescription)")
+            fatalError(
+                "Failed to JSON-encode data for \(Self.self). Error: \(error), Description: \(error.localizedDescription)"
+            )
         }
     }
 }

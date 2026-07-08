@@ -32,7 +32,7 @@ extension Connection {
             }
         }
     }
-    
+
     var isInTransaction: Bool {
         sqlite3_get_autocommit(handle) == 0
     }

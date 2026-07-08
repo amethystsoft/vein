@@ -6,9 +6,9 @@ struct ContentView: View {
         post.title.contains("Swift")
     })
     var posts: [Post]
-    
+
     @Environment(\.modelContext) var context
-    
+
     var body: some View {
         Button("Add post") {
             context.insert(Post(/* ... */))

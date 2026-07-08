@@ -4,12 +4,12 @@ func setupAndUseVein() throws {
     // When encryption is enabled and you're running on Linux,
     // you need to tell KeyringAccess your appID too.
     // If Linux is not one of your targets you can ignore it.
-#if os(Linux)
-    Keyring.appIdentifier.withLock { identifier in
-        identifier = "com.example.app"
-    }
-#endif
-    
+    #if os(Linux)
+        Keyring.appIdentifier.withLock { identifier in
+            identifier = "com.example.app"
+        }
+    #endif
+
     let container = try ModelContainer(
         V0_0_1.self, // Your VersionedSchema
         migration: Migration.self, // Your SchemaMigrationPlan

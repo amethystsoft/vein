@@ -21,7 +21,7 @@ public final class Mutex<Value>: @unchecked Sendable {
         get { lock.withLock { _value } }
         set { lock.withLock { _value = newValue } }
     }
-    
+
     /// Mutate the content in a thread-safe way
     public func mutate<R>(_ body: (inout Value) throws -> R) rethrows -> R {
         try lock.withLock{ try body(&_value) }

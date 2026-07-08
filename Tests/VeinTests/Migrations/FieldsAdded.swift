@@ -3,16 +3,16 @@ import Testing
 import Logging
 @testable import Vein
 #if TEST_SWIFTUI
-@testable import VeinSwiftUI
+    @testable import VeinSwiftUI
 #elseif !TEST_SWIFTUI
-@testable import VeinCore
+    @testable import VeinCore
 #endif
 
 extension MigrationTests {
     @Test
     func fieldsAddedMigration() throws {
         let dbPath = try prepareContainerLocation(name: "fieldAddedMigration")
-        
+
         let container = try ModelContainer(
             SimpleSchemaV0_0_3.self,
             migration: SimpleMigration.self,
@@ -20,12 +20,12 @@ extension MigrationTests {
             appID: "de.amethystsoft.vein.MigrationTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-        
+
         let test = SimpleSchemaV0_0_3.AddingFieldsModel(value: "")
-        
+
         try container.context.insert(test)
         try container.context.save()
-        
+
         // Check both tables exist under the expected name
         let storedSchemas = try container.context.getAllStoredSchemas()
         #expect(
@@ -33,7 +33,7 @@ extension MigrationTests {
                 SimpleSchemaV0_0_3.AddingFieldsModel.schema
             ].sorted()
         )
-        
+
         // Create new container & trigger migration
         let newContainer = try ModelContainer(
             SimpleSchemaV0_0_4.self,
@@ -43,20 +43,20 @@ extension MigrationTests {
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         try newContainer.migrate()
-        
+
         // Check new model was migrated correctly
         let first = try newContainer.context.fetchAll(
             SimpleSchemaV0_0_4.AddingFieldsModel.self
         ).first
-        
+
         #expect(first?.newValue == nil)
         #expect(first?.value == test.value)
-        
+
         // Check if tables got updated/deleted like expected
         let newStoredSchemas = try newContainer.context.getAllStoredSchemas()
         #expect(newStoredSchemas == [SimpleSchemaV0_0_4.AddingFieldsModel.schema])
     }
-    
+
     @Test
     func versionOrderThrowsOnFieldsAddedMigration() throws {
         let dbPath = try prepareContainerLocation(name: "errorTests")
@@ -67,11 +67,11 @@ extension MigrationTests {
             appID: "de.amethystsoft.vein.MigrationTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-        
+
         // Entering migration manually
         // This is an internal function and not publicly exposed
         container.context.isInActiveMigration.value = true
-        
+
         do {
             try SimpleSchemaV0_0_2.Test
                 .fieldsAddedMigration(
@@ -80,9 +80,9 @@ extension MigrationTests {
                 )
         } catch let error as ManagedObjectContextError {
             if
-                case let .baseNotOlderThanDestination(
-                    base,
-                    destination
+                case .baseNotOlderThanDestination(
+                    let base,
+                    let destination
                 ) = error
             {
                 #expect(base.schema == SimpleSchemaV0_0_2.Test.schema)
@@ -95,10 +95,10 @@ extension MigrationTests {
             Issue.record("Thrown error does not match expectations: \(error.localizedDescription)")
             return
         }
-        
+
         Issue.record("Unexpectedly no error was thrown")
     }
-    
+
     @Test
     func equalVersionThrowsOnFieldsAddedMigration() throws {
         let dbPath = try prepareContainerLocation(name: "errorTests")
@@ -109,11 +109,11 @@ extension MigrationTests {
             appID: "de.amethystsoft.vein.MigrationTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-        
+
         // Entering migration manually
         // This is an internal function and not publicly exposed
         container.context.isInActiveMigration.value = true
-        
+
         do {
             try SimpleSchemaV0_0_2.Test
                 .fieldsAddedMigration(
@@ -122,9 +122,9 @@ extension MigrationTests {
                 )
         } catch let error as ManagedObjectContextError {
             if
-                case let .baseNotOlderThanDestination(
-                    base,
-                    destination
+                case .baseNotOlderThanDestination(
+                    let base,
+                    let destination
                 ) = error
             {
                 #expect(base.schema == SimpleSchemaV0_0_2.Test.schema)
@@ -139,7 +139,7 @@ extension MigrationTests {
         }
         Issue.record("Unexpectedly no error was thrown")
     }
-    
+
     @Test
     func destinationMustHaveOnlyAddedFieldsOnFieldsAddedMigration() throws {
         let dbPath = try prepareContainerLocation(name: "errorTests")
@@ -150,11 +150,11 @@ extension MigrationTests {
             appID: "de.amethystsoft.vein.MigrationTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-        
+
         // Entering migration manually
         // This is an internal function and not publicly exposed
         container.context.isInActiveMigration.value = true
-        
+
         do {
             try SimpleSchemaV0_0_3.AddingFieldsModel
                 .fieldsAddedMigration(
@@ -163,9 +163,9 @@ extension MigrationTests {
                 )
         } catch let error as ManagedObjectContextError {
             if
-                case let .destinationMustHaveOnlyAddedFields(
-                    base,
-                    destination
+                case .destinationMustHaveOnlyAddedFields(
+                    let base,
+                    let destination
                 ) = error
             {
                 #expect(base.schema == SimpleSchemaV0_0_3.AddingFieldsModel.schema)
@@ -180,7 +180,7 @@ extension MigrationTests {
         }
         Issue.record("Unexpectedly no error was thrown")
     }
-    
+
     @Test
     func requiresOnlyOptionalFieldsAddedOnFieldsAddedMigration() throws {
         let dbPath = try prepareContainerLocation(name: "errorTests")
@@ -191,11 +191,11 @@ extension MigrationTests {
             appID: "de.amethystsoft.vein.MigrationTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-        
+
         // Entering migration manually
         // This is an internal function and not publicly exposed
         container.context.isInActiveMigration.value = true
-        
+
         do {
             try SimpleSchemaV0_0_3.AddingFieldsModel
                 .fieldsAddedMigration(
@@ -204,9 +204,9 @@ extension MigrationTests {
                 )
         } catch let error as ManagedObjectContextError {
             if
-                case let .automaticMigrationRequiresOnlyOptionalFieldsAdded(
-                    base,
-                    destination
+                case .automaticMigrationRequiresOnlyOptionalFieldsAdded(
+                    let base,
+                    let destination
                 ) = error
             {
                 #expect(base.schema == SimpleSchemaV0_0_3.AddingFieldsModel.schema)
@@ -225,27 +225,27 @@ extension MigrationTests {
 
 fileprivate enum SimpleSchemaV0_0_1: VersionedSchema {
     static let version = ModelVersion(0, 0, 1)
-    
+
     static let models: [any Vein.PersistentModel.Type] = [
         Test.self,
         Unused.self
     ]
-    
+
     @Model
     final class Test: Identifiable {
         @Field
         var date: Date
-        
+
         init(date: Date) {
             self.date = date
         }
     }
-    
+
     @Model
     final class Unused {
         @Field
         var content: String
-        
+
         init(content: String) {
             self.content = content
         }
@@ -255,12 +255,12 @@ fileprivate enum SimpleSchemaV0_0_1: VersionedSchema {
 fileprivate enum SimpleSchemaV0_0_2: VersionedSchema {
     static let version = ModelVersion(0, 0, 2)
     static let models: [any Vein.PersistentModel.Type] = [Test.self]
-    
+
     @Model
     final class Test: Identifiable {
         @Field
         var date: String
-        
+
         init(date: String) {
             self.date = date
         }
@@ -273,26 +273,26 @@ fileprivate enum SimpleSchemaV0_0_3: VersionedSchema {
         Test.self,
         AddingFieldsModel.self
     ]
-    
+
     // Used to test field mismatch on changing underlying SQLite type
     @Model
     final class Test: Identifiable {
         @Field
         var date: Int
-        
+
         @Field
         var additionalField: Int?
-        
+
         init(date: Int) {
             self.date = date
         }
     }
-    
+
     @Model
     final class AddingFieldsModel {
         @Field
         var value: String
-        
+
         init(value: String) {
             self.value = value
         }
@@ -305,29 +305,29 @@ fileprivate enum SimpleSchemaV0_0_4: VersionedSchema {
         Test.self,
         AddingFieldsModel.self
     ]
-    
+
     // Used to test field mismatch on changing field name with consistent field type
     @Model
     final class Test: Identifiable {
         @Field
         var addedAt: Date
-        
+
         @Field
         var additionalField: Int?
-        
+
         init(addedAt: Date) {
             self.addedAt = addedAt
         }
     }
-    
+
     @Model
     final class AddingFieldsModel {
         @Field
         var value: String
-        
+
         @Field
         var newValue: String?
-        
+
         init(value: String) {
             self.value = value
         }
@@ -340,28 +340,28 @@ fileprivate enum SimpleSchemaV0_0_5: VersionedSchema {
         Test.self,
         AddingFieldsModel.self
     ]
-    
+
     // Used to test field mismatch on changing field name with consistent field type
     @Model
     final class Test: Identifiable {
         @Field
         var date: Date
-        
+
         init(date: Date) {
             self.date = date
         }
     }
-    
+
     // Used to test throwing automaticMigrationRequiresOnlyOptionalFieldsAdded
     // on fieldsAddedMigration
     @Model
     final class AddingFieldsModel {
         @Field
         var value: String
-        
+
         @Field
         var newValue: String
-        
+
         init(value: String, newValue: String) {
             self.value = value
             self.newValue = newValue
@@ -375,29 +375,29 @@ fileprivate enum SimpleSchemaV0_0_6: VersionedSchema {
         Test.self,
         AddingFieldsModel.self
     ]
-    
+
     // Used to test field mismatch on changing field name with consistent field type
     @Model
     final class Test: Identifiable {
         @Field
         var addedAt: Date
-        
+
         @Field
         var additionalField: Int?
-        
+
         init(addedAt: Date) {
             self.addedAt = addedAt
         }
     }
-    
+
     @Model
     final class AddingFieldsModel {
         @Field
         var eulav: String
-        
+
         @Field
         var newValue: String?
-        
+
         init(eulav: String) {
             self.eulav = eulav
         }
@@ -413,14 +413,14 @@ fileprivate enum SimpleMigration: SchemaMigrationPlan {
             SimpleSchemaV0_0_4.self,
         ]
     }
-    
+
     static var stages: [MigrationStage] {
         [
             migrateV1toV2,
             migrateV3toV4
         ]
     }
-    
+
     static let migrateV1toV2 = MigrationStage.complex(
         fromVersion: SimpleSchemaV0_0_1.self,
         toVersion: SimpleSchemaV0_0_2.self,
@@ -429,12 +429,12 @@ fileprivate enum SimpleMigration: SchemaMigrationPlan {
                 to: SimpleSchemaV0_0_2.Test.self,
                 on: context
             )
-            
+
             try SimpleSchemaV0_0_1.Unused.deleteMigration(on: context)
         },
         didMigrate: nil
     )
-    
+
     static let migrateV3toV4 = MigrationStage.complex(
         fromVersion: SimpleSchemaV0_0_3.self,
         toVersion: SimpleSchemaV0_0_4.self,
@@ -445,24 +445,23 @@ fileprivate enum SimpleMigration: SchemaMigrationPlan {
                     to: SimpleSchemaV0_0_4.AddingFieldsModel.self,
                     on: context
                 )
-            
+
             let models = try context.fetchAll(
                 SimpleSchemaV0_0_3.Test.self
             )
-            
+
             for model in models {
                 let new = SimpleSchemaV0_0_4.Test(
                     addedAt: Date(timeIntervalSince1970: Double(model.date))
                 )
                 new.additionalField = model.additionalField
-                
+
                 try context.delete(model)
                 try context.insert(new)
             }
-            
+
             try context.cleanupOldSchema(SimpleSchemaV0_0_3.self)
         },
         didMigrate: nil
     )
 }
-

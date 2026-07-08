@@ -5,9 +5,9 @@ import SQLiteDB
 @testable import Vein
 
 #if TEST_SWIFTUI
-@_spi(VeinTesting) @testable import VeinSwiftUI
+    @_spi(VeinTesting) @testable import VeinSwiftUI
 #elseif !TEST_SWIFTUI
-@_spi(VeinTesting) @testable import VeinCore
+    @_spi(VeinTesting) @testable import VeinCore
 #endif
 
 @Suite
@@ -21,16 +21,16 @@ struct BugTests {
             appID: "de.amethystsoft.vein.BugTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-        
+
         let model1 = V0_0_1.User(name: "Test")
         let model2 = V0_0_1.User(name: "Test2")
-        
+
         try container.context.insert(model1)
         try container.context.insert(model2)
         try container.context.save()
-        
+
         let connection = container.getConnection()
-        
+
         let newContainer = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
@@ -38,14 +38,14 @@ struct BugTests {
             appID: "de.amethystsoft.vein.BugTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-            
+
         let result = try newContainer.context.getModel(id: model1.id, type: V0_0_1.User.self)
         #expect(result?.name == model1.name)
-        
+
         let result2 = try newContainer.context.getModel(id: model2.id, type: V0_0_1.User.self)
         #expect(result2?.name == model2.name)
     }
-    
+
     @Test
     func `validateMetadataFields`() async throws {
         let model = V0_0_1.User(name: "Test")
@@ -66,16 +66,15 @@ struct BugTests {
     }
 }
 
-
 fileprivate enum V0_0_1: VersionedSchema {
     static let version = ModelVersion(0, 0, 1)
     static let models: [any Vein.PersistentModel.Type] = [User.self]
-    
+
     @Model
     final class User: Identifiable {
         @Field
         var name: String
-        
+
         init(name: String) {
             self.name = name
         }
@@ -86,6 +85,6 @@ fileprivate enum Migration: SchemaMigrationPlan {
     static var schemas: [any Vein.VersionedSchema.Type] {
         [V0_0_1.self]
     }
-    
+
     static var stages: [MigrationStage] {[]}
 }

@@ -16,29 +16,29 @@ public struct ModelMacro: MemberMacro, ExtensionMacro, MemberAttributeMacro {
         guard let classDecl = declaration.as(ClassDeclSyntax.self) else {
             throw MacroError.onlyApplicableToClasses
         }
-        
+
         let common = try ModelMacroBase(frameworkName: Self.frameworkName).expansion(
             of: node,
             providingMembersOf: classDecl,
             conformingTo: protocols,
             in: context
         )
-        
-        let specific = """
-        let objectWillChange = PassthroughSubject<Void, Never>()
 
-        var notifyOfChanges: () -> Void {
-            { [weak self] in
-                guard let self else { return }
-                self._observers.value.notifyAll()
-                self.objectWillChange.send()
+        let specific = """
+            let objectWillChange = PassthroughSubject<Void, Never>()
+
+            var notifyOfChanges: () -> Void {
+                { [weak self] in
+                    guard let self else { return }
+                    self._observers.value.notifyAll()
+                    self.objectWillChange.send()
+                }
             }
-        }
-        """
-        
+            """
+
         return common + [DeclSyntax(stringLiteral: specific)]
     }
-    
+
     public static func expansion(
         of node: AttributeSyntax,
         attachedTo declaration: some DeclGroupSyntax,
@@ -49,7 +49,7 @@ public struct ModelMacro: MemberMacro, ExtensionMacro, MemberAttributeMacro {
         guard let classDecl = declaration.as(ClassDeclSyntax.self) else {
             throw MacroError.onlyApplicableToClasses
         }
-        
+
         let common = try ModelMacroBase(frameworkName: Self.frameworkName).expansion(
             of: node,
             attachedTo: classDecl,
@@ -57,14 +57,14 @@ public struct ModelMacro: MemberMacro, ExtensionMacro, MemberAttributeMacro {
             conformingTo: protocols,
             in: context
         )
-        
+
         let specific = try ExtensionDeclSyntax(
             """
             @MainActor
             extension \(raw: type): ObservableObject { }
             """
         )
-        
+
         return common + [specific]
     }
 
@@ -91,7 +91,11 @@ public struct ModelMacro: MemberMacro, ExtensionMacro, MemberAttributeMacro {
 }
 
 public struct RelationshipMarkerMacro: PeerMacro {
-    public static func expansion(of node: SwiftSyntax.AttributeSyntax, providingPeersOf declaration: some SwiftSyntax.DeclSyntaxProtocol, in context: some SwiftSyntaxMacros.MacroExpansionContext) throws -> [SwiftSyntax.DeclSyntax] {
+    public static func expansion(
+        of node: SwiftSyntax.AttributeSyntax,
+        providingPeersOf declaration: some SwiftSyntax.DeclSyntaxProtocol,
+        in context: some SwiftSyntaxMacros.MacroExpansionContext
+    ) throws -> [SwiftSyntax.DeclSyntax] {
         []
     }
 }

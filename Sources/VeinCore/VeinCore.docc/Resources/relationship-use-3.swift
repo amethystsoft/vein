@@ -11,7 +11,7 @@ func tryRelationships(context: ManagedObjectContext) throws {
         fileType: .swift,
         data: Data([UInt8](repeating: 0, count: 1024 * 1024)) // very real swift file
     )
-    
+
     // Relationships only work with context.
     try context.insert(post)
     // Added models get inserted automatically.

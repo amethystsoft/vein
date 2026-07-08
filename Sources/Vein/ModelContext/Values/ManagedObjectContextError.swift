@@ -20,7 +20,10 @@ public enum ManagedObjectContextError: Error {
     case fieldMismatch(any PersistentModel.Type, any PersistentModel.Type)
     case notInsideMigration(String)
     case destinationMustHaveOnlyAddedFields(any PersistentModel.Type, any PersistentModel.Type)
-    case automaticMigrationRequiresOnlyOptionalFieldsAdded(any PersistentModel.Type, any PersistentModel.Type)
+    case automaticMigrationRequiresOnlyOptionalFieldsAdded(
+        any PersistentModel.Type,
+        any PersistentModel.Type
+    )
     case modelsUnhandledAfterMigration(any VersionedSchema.Type, any VersionedSchema.Type, [String])
     case noSchemaMatchingVersion(SchemaMigrationPlan.Type, ModelVersion)
     case noMigrationForOutdatedModelVersion(SchemaMigrationPlan.Type, ModelVersion)
@@ -99,7 +102,7 @@ extension ManagedObjectContextError: LocalizedError {
                 return "Unexpected: \(message)"
         }
     }
-    
+
     public var failureReason: String? {
         switch self {
             case .connect:
@@ -152,7 +155,7 @@ extension ManagedObjectContextError: LocalizedError {
                 return nil
         }
     }
-    
+
     public var recoverySuggestion: String? {
         switch self {
             case .connect:

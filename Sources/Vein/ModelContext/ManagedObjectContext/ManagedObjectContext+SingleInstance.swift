@@ -5,7 +5,7 @@ extension ManagedObjectContext {
     public nonisolated var trackedObjectCount: Int {
         identityMap.getTrackedCount()
     }
-    
+
     public nonisolated func compactIdentityMap() {
         identityMap.compact()
     }
@@ -14,7 +14,7 @@ extension ManagedObjectContext {
 nonisolated final class ThreadSafeIdentityMap {
     private let lock = NSLock()
     private var cache = [ObjectIdentifier: [ULID: WeakModel]]()
-    
+
     func getAll<T: PersistentModel>(of type: T.Type) -> [T] {
         return lock.withLock {
             cache[type.typeIdentifier]?
@@ -22,25 +22,25 @@ nonisolated final class ThreadSafeIdentityMap {
                 .compactMap { $0.wrappedValue as? T } ?? []
         }
     }
-    
+
     func removeAll<T: PersistentModel>(of type: T.Type) {
         lock.withLock {
             cache[type.typeIdentifier] = nil
         }
     }
-    
+
     func getTracked<T: PersistentModel>(_ type: T.Type, id: ULID) -> T? {
         lock.withLock {
             get(type.typeIdentifier, id: id)
         }
     }
-    
+
     func getTracked<T: PersistentModel>(_ type: ObjectIdentifier, id: ULID) -> T? {
         lock.withLock {
             get(type, id: id)
         }
     }
-    
+
     func getTrackedCount() -> Int {
         lock.withLock {
             cache.reduce(0, {
@@ -50,13 +50,13 @@ nonisolated final class ThreadSafeIdentityMap {
             })
         }
     }
-    
+
     func startTracking<T: PersistentModel>(_ object: T) {
         lock.withLock {
             cache[object.typeIdentifier, default: [:]][object.id] = WeakModel(wrappedValue: object)
         }
     }
-    
+
     func batched<T: PersistentModel>(
         _ block: (
             (T.Type, ULID) -> T?,
@@ -70,25 +70,25 @@ nonisolated final class ThreadSafeIdentityMap {
             )
         }
     }
-    
+
     private func track<T: PersistentModel>(_ object: T) {
         cache[object.typeIdentifier, default: [:]][object.id] = WeakModel(wrappedValue: object)
     }
-    
+
     private func get<T: PersistentModel>(_ type: ObjectIdentifier, id: ULID) -> T? {
         cache[type]?[id]?.wrappedValue as? T
     }
-    
+
     func remove<T: PersistentModel>(_ type: T.Type, id: ULID) {
         remove(T.typeIdentifier, id: id)
     }
-    
+
     func remove(_ type: ObjectIdentifier, id: ULID) {
         lock.withLock {
             _ = cache[type]?.removeValue(forKey: id)
         }
     }
-    
+
     func compact() {
         lock.withLock {
             for (type, var references) in cache {
@@ -106,7 +106,7 @@ nonisolated final class ThreadSafeIdentityMap {
 private struct WeakModel {
     weak var wrappedValue: AnyObject?
     var isDeallocated: Bool { wrappedValue.isNil }
-    
+
     init(wrappedValue: AnyObject? = nil) {
         self.wrappedValue = wrappedValue
     }

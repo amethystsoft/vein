@@ -15,7 +15,8 @@ enum UnderlayingFieldType {
 extension UnderlayingFieldType {
     func addColumn(to table: inout SQLiteDB.TableBuilder, withName name: String) {
         switch self {
-            case .uuid(let required), .string(let required), .date(let required), .url(let required):
+            case .uuid(let required), .string(let required), .date(let required),
+                 .url(let required):
                 if required {
                     table.column(SQLExpression<String>(name))
                 } else {

@@ -7,8 +7,14 @@ struct PersistedFieldDTO: Sendable {
     let schema: String
     let sqliteType: SQLiteTypeName
     let enclosingObjectID: ObjectIdentifier
-    
-    init(key: String, id: ULID, schema: String, sqliteType: SQLiteTypeName, enclosingObjectID: ObjectIdentifier) {
+
+    init(
+        key: String,
+        id: ULID,
+        schema: String,
+        sqliteType: SQLiteTypeName,
+        enclosingObjectID: ObjectIdentifier
+    ) {
         self.key = key
         self.id = id
         self.schema = schema
@@ -23,7 +29,7 @@ public struct FieldInformation: Sendable {
     let key: String
     let eagerLoaded: Bool
     let relationshipToType: (any PersistentModel.Type)?
-    
+
     public nonisolated init(
         _ typeName: SQLiteTypeName,
         _ key: String,
@@ -41,7 +47,7 @@ extension FieldInformation: Hashable {
     public static func == (lhs: FieldInformation, rhs: FieldInformation) -> Bool {
         lhs.typeName == rhs.typeName && lhs.key == rhs.key
     }
-    
+
     public func hash(into hasher: inout Hasher) {
         hasher.combine(typeName)
         hasher.combine(key)
@@ -50,7 +56,7 @@ extension FieldInformation: Hashable {
 
 extension [FieldInformation] {
     var eagerLoaded: [FieldInformation] {
-        self.filter { $0.eagerLoaded }
+        self.filter(\.eagerLoaded)
     }
 }
 
@@ -83,7 +89,7 @@ extension FieldInformation {
                 }
         }
     }
-    
+
     package func addRetroactively(to schema: String, on context: ManagedObjectContext) throws {
         switch SQLiteTypeName.notNull(typeName) {
             case .integer:

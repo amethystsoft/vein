@@ -5,9 +5,9 @@ import Crypto
 import Logging
 import Atomics
 #if canImport(AppKit) || canImport(UIKit)
-import KeychainAccess
+    import KeychainAccess
 #elseif os(Linux)
-@_exported import KeyringAccess
+    @_exported import KeyringAccess
 #endif
 
 public typealias Connection = SQLiteDB.Connection
@@ -26,16 +26,16 @@ public actor ManagedObjectContext {
     public static let logger = Logger(label: "ManagedObjectContext")
     package nonisolated let connection: SQLiteDB.Connection
     public nonisolated unowned let modelContainer: ModelContainer
-    
+
     @TaskLocal static var isSettingInternalMetdata = false
-    
+
     nonisolated let _clientID = Mutex<String?>(nil)
     nonisolated var clientID: String {
         _clientID.mutate { clientID in
             if let clientID {
                 return clientID
             }
-            
+
             let key = "de.amethystsoft.vein-database.clientID"
             if let stored = UserDefaults.standard.string(forKey: key) {
                 clientID = stored
@@ -43,27 +43,27 @@ public actor ManagedObjectContext {
             }
             let id = UUID().uuidString
             UserDefaults.standard.set(id, forKey: key)
-            
+
             clientID = id
             return id
         }
     }
-    
+
     // MARK: - Migrations
     package nonisolated let isInActiveMigration = Mutex(false)
-    
+
     // MARK: - In memory write caching and rollback
     package nonisolated let writeCache = WriteCache()
-    
+
     package nonisolated let stagingCache = WriteCache()
-    
+
     // Used in `ManagedObjectContext/save` to
     // make sure only one save is running at a time
     nonisolated let saveLock = NSLock()
-    
+
     // MARK: - Ensure single row - single instance
     nonisolated(unsafe) let identityMap = ThreadSafeIdentityMap()
-    
+
     // MARK: - UI change notification
     nonisolated let registeredQueries = Mutex(
         [ObjectIdentifier: [Int: WeakQueryObserver]]()
@@ -72,7 +72,7 @@ public actor ManagedObjectContext {
         [ObjectIdentifier: [AnyObject]]()
     )
     nonisolated let notificationTask = Mutex(Task<Void, Never>?.none)
-    
+
     // MARK: - Initializers
     /// Connects to database at `path`, creates a new one if it doesn't exist
     init(
@@ -82,20 +82,21 @@ public actor ManagedObjectContext {
         self.modelContainer = modelContainer
         do {
             self.connection = try Connection(path)
-            
-#if canImport(AppKit) || canImport(UIKit) || os(Linux)
-            if modelContainer.encryptionEnabled {
-                guard
-                    let key = Self.getKeyForDatabase(
-                        at: path,
-                        appID: modelContainer.appID
-                    ) else {
-                    fatalError("Vein: Failed to retrieve/save key to encrypt Database.")
+
+            #if canImport(AppKit) || canImport(UIKit) || os(Linux)
+                if modelContainer.encryptionEnabled {
+                    guard
+                        let key = Self.getKeyForDatabase(
+                            at: path,
+                            appID: modelContainer.appID
+                        )
+                    else {
+                        fatalError("Vein: Failed to retrieve/save key to encrypt Database.")
+                    }
+                    try self.connection.key(key)
                 }
-                try self.connection.key(key)
-            }
-#endif
-            
+            #endif
+
             try self.connection.execute("PRAGMA journal_mode=WAL;")
         } catch let error as SQLiteDB.Result {
             throw error.parse()
@@ -103,7 +104,7 @@ public actor ManagedObjectContext {
             throw .other(message: error.localizedDescription)
         }
     }
-    
+
     /// In memory only
     init(
         modelContainer: ModelContainer
@@ -117,7 +118,7 @@ public actor ManagedObjectContext {
             throw .other(message: error.localizedDescription)
         }
     }
-    
+
     init(
         connection: Connection,
         modelContainer: ModelContainer
@@ -125,7 +126,7 @@ public actor ManagedObjectContext {
         self.modelContainer = modelContainer
         self.connection = connection
     }
-    
+
     /// Retrieves the hex-encoded encryption key used to secure the database.
     ///
     /// Use this method to provide users with a manual backup of their encryption
@@ -148,7 +149,7 @@ public actor ManagedObjectContext {
             createIfMissing: false
         )
     }
-    
+
     /// Accesses the encryption key for a specific database file without requiring an active database connection.
     ///
     /// This static method allows you to retrieve or generate encryption keys by providing the file path
@@ -165,39 +166,43 @@ public actor ManagedObjectContext {
     ///   system Keyring.
     ///
     /// - Returns: A hex-encoded 256-bit key string if found or successfully created; otherwise, `nil`.
-    public static func getKeyForDatabase(at path: String, appID: String, createIfMissing: Bool = true) -> String? {
+    public static func getKeyForDatabase(
+        at path: String,
+        appID: String,
+        createIfMissing: Bool = true
+    ) -> String? {
         let url = URL(fileURLWithPath: path)
         let fileName = url.lastPathComponent
-        
-#if canImport(AppKit) || canImport(UIKit)
-        let keychain = Keychain(service: "com.amethyst.vein.sqlcipher.\(appID)")
-        
-        if let key = keychain[fileName] {
-            return key
-        } else if createIfMissing {
-            let keyData = SymmetricKey(size: .bits256).withUnsafeBytes { Data($0) }
-            let hexKey = keyData.map { String(format: "%02hhx", $0) }.joined()
-            
-            guard let _ = try? keychain.set(hexKey, key: fileName) else {
-                return nil
+
+        #if canImport(AppKit) || canImport(UIKit)
+            let keychain = Keychain(service: "com.amethyst.vein.sqlcipher.\(appID)")
+
+            if let key = keychain[fileName] {
+                return key
+            } else if createIfMissing {
+                let keyData = SymmetricKey(size: .bits256).withUnsafeBytes { Data($0) }
+                let hexKey = keyData.map { String(format: "%02hhx", $0) }.joined()
+
+                guard let _ = try? keychain.set(hexKey, key: fileName) else {
+                    return nil
+                }
+                return hexKey
             }
-            return hexKey
-        }
-#elseif os(Linux)
-        let keyring = Keyring(service: "com.amethyst.vein.sqlcipher.\(appID)")
-        
-        if let key = keyring[fileName] {
-            return key
-        } else if createIfMissing {
-            let keyData = SymmetricKey(size: .bits256).withUnsafeBytes { Data($0) }
-            let hexKey = keyData.map { String(format: "%02hhx", $0) }.joined()
-            
-            guard let _ = try? keyring.set(hexKey, for: fileName) else {
-                return nil
+        #elseif os(Linux)
+            let keyring = Keyring(service: "com.amethyst.vein.sqlcipher.\(appID)")
+
+            if let key = keyring[fileName] {
+                return key
+            } else if createIfMissing {
+                let keyData = SymmetricKey(size: .bits256).withUnsafeBytes { Data($0) }
+                let hexKey = keyData.map { String(format: "%02hhx", $0) }.joined()
+
+                guard let _ = try? keyring.set(hexKey, for: fileName) else {
+                    return nil
+                }
+                return hexKey
             }
-            return hexKey
-        }
-#endif
+        #endif
         return nil
     }
 }

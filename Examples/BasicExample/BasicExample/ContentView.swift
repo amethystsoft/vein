@@ -7,11 +7,11 @@ struct ContentView: View {
     var testItems: [Test]
     @State var stop = false
     @Environment(\.modelContext) var context
-    
+
     init(predicate: Predicate<Test> = #Predicate<Test> { _ in true } ) {
         self._testItems = Query<Test>(predicate)
     }
-    
+
     var body: some View {
         VStack {
             Text("\(testItems.count)")
@@ -20,12 +20,15 @@ struct ContentView: View {
                 Task {
                     for _ in 0...30 {
                         if stop { return }
-                        try? context.insert(Test(flag: Int.random(in: 0...1) > 0, randomValue: Int.random(in: 0...1000)))
+                        try? context.insert(Test(
+                            flag: Int.random(in: 0...1) > 0,
+                            randomValue: Int.random(in: 0...1000)
+                        ))
                         await Task.yield()
                     }
                 }
             }
-            Button("printQuery") { print(testItems.map { $0.id }) }
+            Button("printQuery") { print(testItems.map(\.id)) }
             Button("Stop") { stop = true }
             Button("print managed instances") {
                 print(context.trackedObjectCount)
@@ -39,7 +42,10 @@ struct ContentView: View {
             }
             Button("add one") {
                 do {
-                    try context.insert(Test(flag: Int.random(in: 0...1) > 0, randomValue: Int.random(in: 0...1000)))
+                    try context.insert(Test(
+                        flag: Int.random(in: 0...1) > 0,
+                        randomValue: Int.random(in: 0...1000)
+                    ))
                 } catch {
                     print(error.localizedDescription)
                 }
@@ -62,7 +68,7 @@ struct ContentView: View {
 
 struct ObservedTextField: View {
     @ObservedObject var item: Test
-    
+
     var body: some View {
         Toggle("", isOn: $item.flag)
         Picker("", selection: $item.selectedGroup) {
@@ -104,4 +110,3 @@ struct TestModelDisplay: View {
         }
     }
 }
-
