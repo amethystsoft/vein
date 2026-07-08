@@ -3,9 +3,10 @@
 // This source file is part of the Amethyst Vein open source project
 //
 // Copyright (c) 2026 Mia Koring.
-// Licensed under Mozilla Public License v2.0
 //
-// See LICENSE.txt for license information
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
 //
 // ===----------------------------------------------------------------------===
 
