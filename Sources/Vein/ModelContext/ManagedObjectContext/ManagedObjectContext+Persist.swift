@@ -86,7 +86,17 @@ extension ManagedObjectContext {
         }
         
         do {
-            try connection.run(query)
+            do {
+                try connection.run(query)
+            } catch let error as SQLiteDB.Result  {
+                let parsed = error.parse()
+                switch parsed {
+                    // If there is no table there's no delete to persist.
+                    // In memory changes are enough in this case.
+                    case .noSuchTable: break
+                    default: throw error
+                }
+            }
             model.context = nil
             
             Task { @MainActor in
