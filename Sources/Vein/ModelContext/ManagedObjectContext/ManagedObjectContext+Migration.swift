@@ -1,3 +1,14 @@
+// ===----------------------------------------------------------------------===
+//
+// This source file is part of the Amethyst Vein open source project
+//
+// Copyright (c) 2026 Mia Koring.
+// Licensed under Mozilla Public License v2.0
+//
+// See LICENSE.txt for license information
+//
+// ===----------------------------------------------------------------------===
+
 import SQLiteDB
 import Foundation
 
@@ -29,7 +40,7 @@ extension ManagedObjectContext {
         // swiftformat:enable wrap, wrapArguments
         try connection.run(query)
     }
-    
+
     internal nonisolated func deleteTable(_ schema: String) throws {
         let query = Table(schema).drop(ifExists: true)
         try connection.run(query)

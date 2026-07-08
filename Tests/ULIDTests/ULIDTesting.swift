@@ -9,7 +9,6 @@
 //
 //  copied at https://github.com/yaslab/ULID.swift/tree/15c21a2f4a6d27f65df2468c5338c949ae857903
 
-// swiftformat: disable wrapMultilineStatementBraces
 import Foundation
 import Testing
 import ULID

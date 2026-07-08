@@ -1,3 +1,14 @@
+// ===----------------------------------------------------------------------===
+//
+// This source file is part of the Amethyst Vein open source project
+//
+// Copyright (c) 2026 Mia Koring.
+// Licensed under Mozilla Public License v2.0
+//
+// See LICENSE.txt for license information
+//
+// ===----------------------------------------------------------------------===
+
 import Foundation
 import SQLiteDB
 
@@ -41,20 +52,26 @@ extension PredicateConversionError: LocalizedError {
 extension Predicate {
     public func toSQLiteFilter() throws(PredicateConversionError) -> SQLExpression<Bool> {
         let rootExpression: any StandardPredicateExpression<Bool> = self.expression
-        
+
         guard let sqliteExpression = try openAndResolveRoot(rootExpression) else {
             throw .incompatiblePredicate
         }
-        
+
         return sqliteExpression
     }
-    
-    private func openAndCastToFilter<T: SQLiteExpressibleBuilder>(_ builder: T) throws(PredicateConversionError) -> SQLExpression<Bool>? {
+
+    private func openAndCastToFilter<T: SQLiteExpressibleBuilder>(_ builder: T) throws(
+        PredicateConversionError
+    ) -> SQLExpression<Bool>? {
         let result = try builder.asSQLiteExpression()
         return result as? SQLExpression<Bool>
     }
-    
-    private func openAndResolveRoot<E: StandardPredicateExpression<Bool>>(_ expression: E) throws(PredicateConversionError) -> SQLExpression<Bool>? {
+
+    private func openAndResolveRoot<E: StandardPredicateExpression<
+        Bool
+    >>(_ expression: E) throws(PredicateConversionError)
+        -> SQLExpression<Bool>?
+    {
         // If the concrete underlying node conforms to SQLiteExpressibleBuilder, pass it to the next step
         if let builder = expression as? any SQLiteExpressibleBuilder {
             return try openAndCastToFilter(builder)
@@ -123,8 +140,7 @@ extension PredicateExpressions.Equal: SQLiteExpressibleBuilder where
 
         if right.template == "NULL" {
             return SQLExpression<Bool>("(\(left.template) IS NULL)", left.bindings)
-        }
-        else if left.template == "NULL" {
+        } else if left.template == "NULL" {
             return SQLExpression<Bool>("(\(right.template) IS NULL)", right.bindings)
         }
 
@@ -149,8 +165,7 @@ extension PredicateExpressions.NotEqual: SQLiteExpressibleBuilder where
 
         if right.template == "NULL" {
             return SQLExpression<Bool>("(\(left.template) IS NOT NULL)", left.bindings)
-        }
-        else if left.template == "NULL" {
+        } else if left.template == "NULL" {
             return SQLExpression<Bool>("(\(right.template) IS NOT NULL)", right.bindings)
         }
 
