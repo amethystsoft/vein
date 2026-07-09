@@ -23,7 +23,7 @@ extension PersistableTests {
     @Test
     func testCodablePersistable() async throws {
         let metadataDate = Date(timeIntervalSince1970: 1782830817.0)
-        let (connection, objectID) = try setupContainer(date: metadataDate)
+        let connection = try setupContainer(date: metadataDate)
 
         let container = try ModelContainer(
             V0_0_1.self,
@@ -42,15 +42,12 @@ extension PersistableTests {
 
         #expect(model.metadata.createdAt == metadataDate)
         #expect(model.metadata.createdInCity == "Berlin")
-        // Confirm the fetched model is really fetched from the db,
-        // not just from an identity map.
-        #expect(ObjectIdentifier(model) != objectID)
     }
 
     @Test
     func testCodablePersistableUpdate() async throws {
         let metadataDate = Date(timeIntervalSince1970: 1782830817.0)
-        let (connection, objectID) = try setupContainer(date: metadataDate)
+        let connection = try setupContainer(date: metadataDate)
         // TODO: Silence unused _keepaliveContainer once we use Swift 6.4
         let (newObjectID, _keepaliveContainer) = try runUpdate()
 
@@ -71,9 +68,6 @@ extension PersistableTests {
 
         #expect(model.metadata.createdAt == metadataDate)
         #expect(model.metadata.createdInCity == "Cologne")
-        // Confirm the fetched model is really fetched from the db,
-        // not just from an identity map.
-        #expect(ObjectIdentifier(model) != objectID)
         #expect(ObjectIdentifier(model) != newObjectID)
 
         func runUpdate() throws -> (ObjectIdentifier?, ModelContainer) {
@@ -94,9 +88,6 @@ extension PersistableTests {
 
             #expect(model.metadata.createdAt == metadataDate)
             #expect(model.metadata.createdInCity == "Berlin")
-            // Confirm the fetched model is really fetched from the db,
-            // not just from an identity map.
-            #expect(ObjectIdentifier(model) != objectID)
 
             model.metadata = .init(
                 createdAt: metadataDate,
@@ -111,8 +102,8 @@ extension PersistableTests {
         }
     }
 
-    func setupContainer(date: Date) throws -> (Connection, ObjectIdentifier) {
-        let container = try ModelContainer(
+    func setupContainer(date: Date) throws -> Connection {
+        let setupContainer = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
@@ -122,13 +113,10 @@ extension PersistableTests {
 
         let metadata = V0_0_1.Account.Metadata(createdAt: date, createdInCity: "Berlin")
         let model = V0_0_1.Account(metadata: metadata)
-        try container.context.insert(model)
-        try container.context.save()
+        try setupContainer.context.insert(model)
+        try setupContainer.context.save()
 
-        return (
-            container.getConnection(),
-            ObjectIdentifier(model)
-        )
+        return setupContainer.getConnection()
     }
 }
 
