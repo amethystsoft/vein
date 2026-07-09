@@ -1,0 +1,84 @@
+@Tutorial(time: 10) {
+    @Intro(title: "Unit Testing Migrations") {
+        Migrations are a crucial and complex operation. 
+        Please please please unit test your migrations, it's incredibly important for data integrity.
+        
+        To make unit tests slightly more pleasant, Vein comes with a testing helper.
+    }
+    
+    @Section(title: "The migration we are going to test:") {
+        @ContentAndMedia {
+            This is a shortened part of one of Vein's unit tests.
+        }
+        
+        @Steps {
+            @Step {
+                You would just use your own existing models and migrations.
+                
+                @Code(name: "Schemas.swift", file: unit-test-migrations-schemas)
+            }
+        }
+    }
+    
+    @Section(title: "Unit Testing") {
+        @ContentAndMedia {
+            There are two builtin ways to test your migrations.
+            First we're going to cover the step by step approach and then the full chain one.
+            You can choose whatever you like more.
+        }
+        
+        @Steps {
+            @Step {
+                First, create a `MigrationTester` from `VeinTesting`.
+                It will validate the protocol requirements of `VersionedSchema`.
+                
+                @Code(name: "StepByStepTest.swift", file: unit-test-migrations-0)
+            }
+            
+            @Step {
+                Now seed the database with arbitrary contents you want to migrate.
+                We recommend starting at the first version to cover everything.
+                
+                @Code(name: "StepByStepTest.swift", file: unit-test-migrations-1)
+            }
+            
+            @Step {
+                Now migrate to the next version and check the migration results.
+                
+                @Code(name: "StepByStepTest.swift", file: unit-test-migrations-2)
+            }
+            
+            @Step {
+                Repeat for any further versions until you're done.
+                
+                @Code(name: "StepByStepTest.swift", file: unit-test-migrations-3)
+            }
+        }
+    }
+        
+    @Section(title: "Unit Testing full migration chain") {
+        @ContentAndMedia {
+            The other option is migrating the whole chain and checking where you want to.
+        }
+        
+        @Steps {
+            @Step {
+                First, again create a `MigrationTester` from `VeinTesting`.
+                
+                @Code(name: "FullChainTest.swift", file: unit-test-migrations-f-0)
+            }
+            
+            @Step {
+                Just like before, seed the database with arbitrary contents you want to migrate.
+                
+                @Code(name: "FullChainTest.swift", file: unit-test-migrations-f-1)
+            }
+            
+            @Step {
+                For every version you want to check after migrating, add the version with a validation block to the validations dictionary.
+                
+                @Code(name: "FullChainTest.swift", file: unit-test-migrations-f-2)
+            }
+        }
+    }
+}

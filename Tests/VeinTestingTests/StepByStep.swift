@@ -12,8 +12,7 @@
 
 import Foundation
 import Testing
-@testable import VeinTesting
-import Vein
+import VeinTesting
 #if TEST_SWIFTUI
     import VeinSwiftUI
 #elseif !TEST_SWIFTUI

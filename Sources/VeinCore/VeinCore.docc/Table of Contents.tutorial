@@ -24,4 +24,8 @@
     @Chapter(name: "Custom Persistable") {
         @TutorialReference(tutorial: "doc:CustomPersistable")
     }
+    
+    @Chapter(name: "Unit Testing Migrations") {
+        @TutorialReference(tutorial: "doc:MigrationUnitTests")
+    }
 }
