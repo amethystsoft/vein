@@ -35,7 +35,8 @@
         named(_predicateInformation),
         named(_updatedAt),
         named(_clientID),
-        named(_isDeleted)
+        named(_isDeleted),
+        named(_isSynced)
     )
     @attached(
         extension,
