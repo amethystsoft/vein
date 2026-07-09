@@ -57,6 +57,9 @@ struct MacrosTests {
                         @Vein.LazyField(suppressUIUpdates: true)
                         var _isDeleted: Bool? = false
 
+                        @Vein.LazyField(suppressUIUpdates: true)
+                        var _isSynced: Bool? = false
+
                         required init(id: Vein.ULID, fields: [String: Vein.SQLiteValue]) {
                             self.id = id
                             self.test = try! String.init(
@@ -77,6 +80,8 @@ struct MacrosTests {
                             self.__clientID._key = "_clientID"
                             self.__isDeleted._model = self
                             self.__isDeleted._key = "_isDeleted"
+                            self.__isSynced._model = self
+                            self.__isSynced._key = "_isSynced"
                             self.__updatedAt._model = self
                             self.__updatedAt._key = "_updatedAt"
                             self._test._model = self
@@ -96,6 +101,7 @@ struct MacrosTests {
                                 self._id,
                                 self.__clientID,
                                 self.__isDeleted,
+                                self.__isSynced,
                                 self.__updatedAt,
                                 self._test
                             ]
@@ -117,6 +123,7 @@ struct MacrosTests {
                             switch keyPath {
                                 case \\._clientID: Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false)
                                 case \\._isDeleted: Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false)
+                                case \\._isSynced: Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false)
                                 case \\._updatedAt: Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false)
                                 case \\.test: Vein.FieldInformation(String.sqliteTypeName, "test", true)
                                 case \\.id: Vein.FieldInformation(ULID.sqliteTypeName, "id", true)
@@ -127,6 +134,7 @@ struct MacrosTests {
                         static let _fieldInformation: [Vein.FieldInformation] = [
                             Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false),
                             Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false),
+                            Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false),
                             Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false),
                             Vein.FieldInformation(String.sqliteTypeName, "test", true)
                         ]
@@ -178,6 +186,9 @@ struct MacrosTests {
                         @Vein.LazyField(suppressUIUpdates: true)
                         var _isDeleted: Bool? = false
 
+                        @Vein.LazyField(suppressUIUpdates: true)
+                        var _isSynced: Bool? = false
+
                         required init(id: Vein.ULID, fields: [String: Vein.SQLiteValue]) {
                             self.id = id
                             self.test = try! String.init(
@@ -198,6 +209,8 @@ struct MacrosTests {
                             self.__clientID._key = "_clientID"
                             self.__isDeleted._model = self
                             self.__isDeleted._key = "_isDeleted"
+                            self.__isSynced._model = self
+                            self.__isSynced._key = "_isSynced"
                             self.__updatedAt._model = self
                             self.__updatedAt._key = "_updatedAt"
                             self._test._model = self
@@ -217,6 +230,7 @@ struct MacrosTests {
                                 self._id,
                                 self.__clientID,
                                 self.__isDeleted,
+                                self.__isSynced,
                                 self.__updatedAt,
                                 self._test
                             ]
@@ -238,6 +252,7 @@ struct MacrosTests {
                             switch keyPath {
                                 case \\._clientID: Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false)
                                 case \\._isDeleted: Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false)
+                                case \\._isSynced: Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false)
                                 case \\._updatedAt: Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false)
                                 case \\.test: Vein.FieldInformation(String.sqliteTypeName, "test", true)
                                 case \\.id: Vein.FieldInformation(ULID.sqliteTypeName, "id", true)
@@ -248,6 +263,7 @@ struct MacrosTests {
                         static let _fieldInformation: [Vein.FieldInformation] = [
                             Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false),
                             Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false),
+                            Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false),
                             Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false),
                             Vein.FieldInformation(String.sqliteTypeName, "test", true)
                         ]
@@ -312,6 +328,9 @@ struct MacrosTests {
                         @Vein.LazyField(suppressUIUpdates: true)
                         var _isDeleted: Bool? = false
 
+                        @Vein.LazyField(suppressUIUpdates: true)
+                        var _isSynced: Bool? = false
+
                         required init(id: Vein.ULID, fields: [String: Vein.SQLiteValue]) {
                             self.id = id
                             self.test = try! String.init(
@@ -332,6 +351,8 @@ struct MacrosTests {
                             self.__clientID._key = "_clientID"
                             self.__isDeleted._model = self
                             self.__isDeleted._key = "_isDeleted"
+                            self.__isSynced._model = self
+                            self.__isSynced._key = "_isSynced"
                             self.__updatedAt._model = self
                             self.__updatedAt._key = "_updatedAt"
                             self._test._model = self
@@ -351,6 +372,7 @@ struct MacrosTests {
                                 self._id,
                                 self.__clientID,
                                 self.__isDeleted,
+                                self.__isSynced,
                                 self.__updatedAt,
                                 self._test
                             ]
@@ -372,6 +394,7 @@ struct MacrosTests {
                             switch keyPath {
                                 case \\._clientID: Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false)
                                 case \\._isDeleted: Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false)
+                                case \\._isSynced: Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false)
                                 case \\._updatedAt: Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false)
                                 case \\.test: Vein.FieldInformation(String.sqliteTypeName, "test", true)
                                 case \\.id: Vein.FieldInformation(ULID.sqliteTypeName, "id", true)
@@ -382,6 +405,7 @@ struct MacrosTests {
                         static let _fieldInformation: [Vein.FieldInformation] = [
                             Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false),
                             Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false),
+                            Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false),
                             Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false),
                             Vein.FieldInformation(String.sqliteTypeName, "test", true)
                         ]
@@ -432,6 +456,9 @@ struct MacrosTests {
                         @Vein.LazyField(suppressUIUpdates: true)
                         var _isDeleted: Bool? = false
 
+                        @Vein.LazyField(suppressUIUpdates: true)
+                        var _isSynced: Bool? = false
+
                         required init(id: Vein.ULID, fields: [String: Vein.SQLiteValue]) {
                             self.id = id
                             self.test = try! String.init(
@@ -452,6 +479,8 @@ struct MacrosTests {
                             self.__clientID._key = "_clientID"
                             self.__isDeleted._model = self
                             self.__isDeleted._key = "_isDeleted"
+                            self.__isSynced._model = self
+                            self.__isSynced._key = "_isSynced"
                             self.__updatedAt._model = self
                             self.__updatedAt._key = "_updatedAt"
                             self._test._model = self
@@ -471,6 +500,7 @@ struct MacrosTests {
                                 self._id,
                                 self.__clientID,
                                 self.__isDeleted,
+                                self.__isSynced,
                                 self.__updatedAt,
                                 self._test
                             ]
@@ -492,6 +522,7 @@ struct MacrosTests {
                             switch keyPath {
                                 case \\._clientID: Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false)
                                 case \\._isDeleted: Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false)
+                                case \\._isSynced: Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false)
                                 case \\._updatedAt: Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false)
                                 case \\.test: Vein.FieldInformation(String.sqliteTypeName, "test", true)
                                 case \\.id: Vein.FieldInformation(ULID.sqliteTypeName, "id", true)
@@ -502,6 +533,7 @@ struct MacrosTests {
                         static let _fieldInformation: [Vein.FieldInformation] = [
                             Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false),
                             Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false),
+                            Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false),
                             Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false),
                             Vein.FieldInformation(String.sqliteTypeName, "test", true)
                         ]

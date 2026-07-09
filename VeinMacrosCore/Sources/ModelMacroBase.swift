@@ -46,6 +46,7 @@ public struct ModelMacroBase {
         lazyFields["_updatedAt"] = "Foundation.Date?"
         lazyFields["_clientID"] = "String?"
         lazyFields["_isDeleted"] = "Bool?"
+        lazyFields["_isSynced"] = "Bool?"
 
         let eagerFields = fieldVariables.fields()
 
@@ -152,6 +153,9 @@ public struct ModelMacroBase {
 
             @Vein.LazyField(suppressUIUpdates: true)
             var _isDeleted: Bool? = false
+
+            @Vein.LazyField(suppressUIUpdates: true)
+            var _isSynced: Bool? = false
 
             required init(id: Vein.ULID, fields: [String: Vein.SQLiteValue]) {
                 self.id = id
