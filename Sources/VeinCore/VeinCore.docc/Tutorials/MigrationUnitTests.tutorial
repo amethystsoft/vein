@@ -1,7 +1,7 @@
 @Tutorial(time: 10) {
     @Intro(title: "Unit Testing Migrations") {
         Migrations are a crucial and complex operation. 
-        Please please please unit test your migrations, itÄs incredibly important for data integrity.
+        Please please please unit test your migrations, it's incredibly important for data integrity.
         
         To make unit tests slightly more pleasant, Vein comes with a testing helper.
     }
