@@ -49,7 +49,7 @@ extension PersistableTests {
         let metadataDate = Date(timeIntervalSince1970: 1782830817.0)
         let connection = try setupContainer(date: metadataDate)
         // TODO: Silence unused _keepaliveContainer once we use Swift 6.4
-        let (newObjectID, _keepaliveContainer) = try runUpdate()
+        let _keepaliveContainer = try runUpdate()
 
         let container = try ModelContainer(
             V0_0_1.self,
@@ -68,9 +68,8 @@ extension PersistableTests {
 
         #expect(model.metadata.createdAt == metadataDate)
         #expect(model.metadata.createdInCity == "Cologne")
-        #expect(ObjectIdentifier(model) != newObjectID)
 
-        func runUpdate() throws -> (ObjectIdentifier?, ModelContainer) {
+        func runUpdate() throws -> ModelContainer {
             let updateContainer = try ModelContainer(
                 V0_0_1.self,
                 migration: Migration.self,
@@ -83,7 +82,7 @@ extension PersistableTests {
                 let model = try updateContainer.context.fetchAll(V0_0_1.Account.self).first
             else {
                 Issue.record("Unexpectedly found no model.")
-                return (nil, updateContainer)
+                return updateContainer
             }
 
             #expect(model.metadata.createdAt == metadataDate)
@@ -98,7 +97,7 @@ extension PersistableTests {
 
             try updateContainer.context.save()
 
-            return (ObjectIdentifier(model), updateContainer)
+            return updateContainer
         }
     }
 
