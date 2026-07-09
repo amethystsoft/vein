@@ -462,7 +462,7 @@ extension Optional: Persistable, ColumnType where Wrapped: Persistable {
             return .none
         } else if
             let representation = try? Wrapped.PersistentRepresentation
-                .decode(sqliteValue: sqliteValue),
+            .decode(sqliteValue: sqliteValue),
             let wrapped = Wrapped(fromPersistent: representation)
         {
             return wrapped
