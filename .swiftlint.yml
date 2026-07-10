@@ -22,7 +22,7 @@ included:
   - Sources
   - Examples
 excluded:
-  - Examples/.build
+  - Examples/CliExample/.build
   - Sources/ULID
   - Tests/ULIDTests
   - Sources/VeinCore/VeinCore.docc

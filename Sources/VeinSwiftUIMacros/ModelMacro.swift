@@ -37,7 +37,7 @@ public struct ModelMacro: MemberMacro, ExtensionMacro, MemberAttributeMacro {
         )
 
         let specific = """
-            let objectWillChange = PassthroughSubject<Void, Never>()
+            let objectWillChange = Combine.PassthroughSubject<Void, Never>()
 
             var notifyOfChanges: () -> Void {
                 { [weak self] in
@@ -73,7 +73,7 @@ public struct ModelMacro: MemberMacro, ExtensionMacro, MemberAttributeMacro {
         let specific = try ExtensionDeclSyntax(
             """
             @MainActor
-            extension \(raw: type): ObservableObject { }
+            extension \(raw: type): Combine.ObservableObject { }
             """
         )
 
