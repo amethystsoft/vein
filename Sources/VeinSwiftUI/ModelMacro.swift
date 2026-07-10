@@ -42,7 +42,7 @@
         extension,
         conformances: PersistentModel,
         Sendable,
-        ObservableObject,
+        Combine.ObservableObject,
         names: named(version),
         named(schema)
     )

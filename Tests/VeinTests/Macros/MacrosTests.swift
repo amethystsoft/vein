@@ -268,7 +268,7 @@ struct MacrosTests {
                             Vein.FieldInformation(String.sqliteTypeName, "test", true)
                         ]
 
-                        let objectWillChange = PassthroughSubject<Void, Never>()
+                        let objectWillChange = Combine.PassthroughSubject<Void, Never>()
 
                         var notifyOfChanges: () -> Void {
                             { [weak self] in
@@ -287,7 +287,7 @@ struct MacrosTests {
                     }
 
                     @MainActor
-                    extension Test: ObservableObject {
+                    extension Test: Combine.ObservableObject {
                     }
                     """,
                 macroSpecs: testMacros,
@@ -538,7 +538,7 @@ struct MacrosTests {
                             Vein.FieldInformation(String.sqliteTypeName, "test", true)
                         ]
 
-                        let objectWillChange = PassthroughSubject<Void, Never>()
+                        let objectWillChange = Combine.PassthroughSubject<Void, Never>()
 
                         var notifyOfChanges: () -> Void {
                             { [weak self] in
@@ -557,7 +557,7 @@ struct MacrosTests {
                     }
 
                     @MainActor
-                    extension Test: ObservableObject {
+                    extension Test: Combine.ObservableObject {
                     }
                     """,
                 macroSpecs: testMacros,

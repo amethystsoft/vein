@@ -24,6 +24,8 @@ jobs:
         run: ./Scripts/tsan-test.sh
   build-example:
     runs-on: blacksmith-4vcpu-ubuntu-2404
+    container:
+      image: swift:6.3.2-noble
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
         with:
