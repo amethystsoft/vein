@@ -10,7 +10,7 @@
 //
 // ===----------------------------------------------------------------------===
 
-import Foundation
+@_exported import Foundation
 import SQLiteDB
 
 /// The primary entry point for managing database schema and storage.

@@ -20,3 +20,11 @@ jobs:
         run: ./Scripts/tsan-test.sh
       - name: Test VeinSwiftUI
         run: IS_RUNNING_HEADLESS=1 TEST_SWIFTUI=1 ./Scripts/tsan-test.sh
+  build-example:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
+        with:
+          persist-credentials: false
+      - name: Build FacetCLI
+        run: ./Scripts/build-cli-examples.sh
