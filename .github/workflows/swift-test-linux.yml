@@ -19,9 +19,17 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
         with:
           persist-credentials: false
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y dbus-x11 gnome-keyring
       - name: Test
-        # Disable encryption for testing purposes if needed
-        run: ./Scripts/tsan-test.sh
+        run: |
+          # Use dbus-run-session to wrap the test execution
+          dbus-run-session -- sh -c '
+            echo "test" | gnome-keyring-daemon --unlock --components=secrets
+            ./Scripts/tsan-test.sh
+          '
   build-example:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     container:

@@ -32,6 +32,8 @@ package extension SQLiteDB.Result {
                 .writeInReadonly(message: msg)
             case 10: // IOERR
                 .io(message: msg, code: code)
+            case 26:
+                .notADatabase
             default:
                 .unknownSQLite(message: msg, code: code)
         }

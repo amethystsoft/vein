@@ -302,7 +302,7 @@ extension FacetCLI {
                     contents: string.data(using: .utf8),
                     attributes: nil
                 )
-                
+
                 if result {
                     count += 1
                 }
@@ -335,31 +335,31 @@ extension FacetCLI {
             help: "The short of the Facet you want to delete."
         )
         var short: String
-        
+
         func run() async throws {
             let container = try await makeModelContainer()
-            
+
             let facets = try container.context.fetchAll(
                 #Predicate<Facet> {
                     $0.short == short
                 }
             )
-            
+
             guard !facets.isEmpty else {
                 print("No results for short '\(short)'.")
                 return
             }
-            
+
             guard facets.count == 1 else {
                 print("Multiple matches for short '\(short)'.")
                 return
             }
-            
+
             guard let facet = facets.first else {
                 print("How did we get here?")
                 return
             }
-            
+
             try container.context.delete(facet)
             try container.context.save()
         }

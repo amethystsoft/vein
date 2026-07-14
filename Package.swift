@@ -71,7 +71,7 @@ let package = Package(
         // The bundled version of swift-sqlcipher >= 1.9.0 matches that requirement.
         .package(
             url: "https://github.com/skiptools/swift-sqlcipher",
-            .upToNextMajor(from: "1.9.0")
+            .upToNextMajor(from: "1.11.0")
         ),
         .package(url: "https://github.com/apple/swift-crypto.git", "1.0.0" ..< "5.0.0"),
         .package(url: "https://github.com/swiftlang/swift-syntax.git", "600.0.0" ..< "610.0.0"),
