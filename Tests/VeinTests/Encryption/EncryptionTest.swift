@@ -18,6 +18,7 @@ import Testing
     @_spi(VeinTesting) @testable import VeinCore
 #endif
 
+#if !os(Android)
 @Suite
 struct EncryptionTest {
     func prepareContainerLocation(name: String) throws -> String {
@@ -106,3 +107,4 @@ fileprivate enum Migration: SchemaMigrationPlan {
         []
     }
 }
+#endif
