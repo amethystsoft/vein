@@ -14,7 +14,7 @@ import Foundation
 
 extension ProcessInfo {
     static var shouldEnableEncryption: Bool {
-        //ProcessInfo.processInfo.environment["SHOULD_DISABLE_ENCRYPTION"] != "1"
+        // ProcessInfo.processInfo.environment["SHOULD_DISABLE_ENCRYPTION"] != "1"
         // Currently encryption should be disabled for all tests, except test ignoring this flag.
         false
     }

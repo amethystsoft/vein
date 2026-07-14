@@ -113,7 +113,7 @@ extension ManagedObjectContextError: LocalizedError {
             case .dbNewerThanCode(let dbVersion, let codeVersion):
                 return "DB version \(dbVersion) is newer than the version used by the model container \(codeVersion)"
             case .notADatabase:
-                return "File is not a database or encrypted and an incorrect key was provided."
+                return "File is not a database, or it is encrypted and the provided key is incorrect."
             case .other(let message):
                 return "Unexpected: \(message)"
         }

@@ -71,18 +71,18 @@ struct FieldSpecificTests {
 fileprivate enum V0_0_1: VersionedSchema {
     static let version = ModelVersion(0, 0, 1)
     static let models: [any Vein.PersistentModel.Type] = [Test.self]
-    
+
     @Model
     final class Test: Identifiable {
         var someValue: String
-        
+
         @LazyField
         var text: String?
-        
+
         init(someValue: String) {
             self.someValue = someValue
         }
-        
+
         func getLazyField() -> LazyField<String> {
             _text
         }
@@ -93,7 +93,7 @@ fileprivate enum Migration: SchemaMigrationPlan {
     static var schemas: [any Vein.VersionedSchema.Type] {
         [V0_0_1.self]
     }
-    
+
     static var stages: [MigrationStage] {
         []
     }
