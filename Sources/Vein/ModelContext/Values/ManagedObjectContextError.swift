@@ -45,6 +45,7 @@ public enum ManagedObjectContextError: Error {
     case inactiveModelType(any PersistentModel)
     case inactiveModelTypeFetched(any PersistentModel.Type)
     case dbNewerThanCode(ModelVersion, ModelVersion)
+    case notADatabase
     case other(message: String)
 }
 
@@ -111,6 +112,8 @@ extension ManagedObjectContextError: LocalizedError {
                 return "Attempted read operation on inactive model \(model.schema)."
             case .dbNewerThanCode(let dbVersion, let codeVersion):
                 return "DB version \(dbVersion) is newer than the version used by the model container \(codeVersion)"
+            case .notADatabase:
+                return "File is not a database or encrypted and an incorrect key was provided."
             case .other(let message):
                 return "Unexpected: \(message)"
         }
@@ -164,6 +167,8 @@ extension ManagedObjectContextError: LocalizedError {
                 return "Operations are restricted to types belonging to the current version or origin/destination version during an active migration."
             case .dbNewerThanCode:
                 return "The schema version used by the code must be equal to or newer than the db version."
+            case .notADatabase:
+                return "File is not a database or encrypted and an incorrect key was provided."
             case .other:
                 return nil
         }
@@ -231,6 +236,8 @@ extension ManagedObjectContextError: LocalizedError {
                 return "Make sure to only use up to date Versions of Models and not keep instances of outdated Model versions outside of migrations. Outdated versions are only safe to use outside of the context and during their migrations."
             case .dbNewerThanCode:
                 return "Update your app or notify your administrator if no update is available"
+            case .notADatabase:
+                return "Use the right key to decrypt the database or check if it is a database."
             case .other:
                 return nil
         }

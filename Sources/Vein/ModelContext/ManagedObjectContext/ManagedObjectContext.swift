@@ -95,7 +95,7 @@ public actor ManagedObjectContext {
         do {
             self.connection = try Connection(path)
 
-            #if canImport(AppKit) || canImport(UIKit) || os(Linux)
+            #if canImport(AppKit) || canImport(UIKit) || os(Linux) || canImport(WinSDK)
                 if modelContainer.encryptionEnabled {
                     guard
                         let key = Self.getKeyForDatabase(
@@ -210,6 +210,19 @@ public actor ManagedObjectContext {
                 let hexKey = keyData.map { String(format: "%02hhx", $0) }.joined()
 
                 guard (try? keyring.set(hexKey, for: fileName)) != nil else {
+                    return nil
+                }
+                return hexKey
+            }
+        #elseif canImport(WinSDK)
+            let ressource = "com.amethyst.vein.sqlcipher.\(appID)+\(fileName)"
+            if let key = WinCredential.retrieve(resource: ressource) {
+                return key
+            } else if createIfMissing {
+                let keyData = SymmetricKey(size: .bits256).withUnsafeBytes { Data($0) }
+                let hexKey = keyData.map { String(format: "%02hhx", $0) }.joined()
+                
+                guard WinCredential.store(resource: ressource, username: "veindbsecret", secret: hexKey) else {
                     return nil
                 }
                 return hexKey
