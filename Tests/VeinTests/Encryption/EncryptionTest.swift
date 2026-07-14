@@ -38,6 +38,11 @@ struct EncryptionTest {
 
     @Test
     func testEncryption() async throws {
+        #if os(Linux)
+        Keyring.appIdentifier.withLock { identifier in
+            identifier = "de.amethystsoft.vein.tests"
+        }
+        #endif
         let path = try prepareContainerLocation(name: "encryptionTest")
 
         let container = try ModelContainer(
