@@ -16,7 +16,6 @@
 
     enum WinCredential {
         static func store(resource: String, username: String, secret: String) -> Bool {
-            // Simple and robust conversion to null-terminated UTF-16 arrays
             var resourceW = Array(resource.utf16) + [0]
             var usernameW = Array(username.utf16) + [0]
 
@@ -38,7 +37,6 @@
                         let rawBlob = secretBuffer.bindMemory(to: BYTE.self).baseAddress
                         credential.CredentialBlob = UnsafeMutablePointer<BYTE>(mutating: rawBlob)
 
-                        // Must be called within the bounds of lifetime closures
                         return CredWriteW(&credential, 0)
                     }
                 }
