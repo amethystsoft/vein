@@ -1,8 +1,0 @@
-disabled_rules:
-  - type_name
-  - private_over_fileprivate
-  - switch_case_alignment
-  - force_cast
-
-identifier_name:
-  allowed_symbols: ["_"]
