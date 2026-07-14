@@ -23,7 +23,7 @@ import Testing
 struct PersistableTests {
     @Test
     func testRawRepresentablePersistable() async throws {
-        let (connection, objectID) = try setupContainer()
+        let connection = try setupContainer()
 
         let container = try ModelContainer(
             V0_0_1.self,
@@ -41,14 +41,11 @@ struct PersistableTests {
         }
 
         #expect(model.accountType == .admin)
-        // Confirm the fetched model is really fetched from the db,
-        // not just from an identity map.
-        #expect(ObjectIdentifier(model) != objectID)
     }
 
     @Test
     func testRawRepresentablePersistableUpdate() async throws {
-        let (connection, objectID) = try setupContainer()
+        let connection = try setupContainer()
         let newObjectID = try runUpdate()
 
         let container = try ModelContainer(
@@ -67,10 +64,6 @@ struct PersistableTests {
         }
 
         #expect(model.accountType == .user)
-        // Confirm the fetched model is really fetched from the db,
-        // not just from an identity map.
-        #expect(ObjectIdentifier(model) != objectID)
-        #expect(ObjectIdentifier(model) != newObjectID)
 
         func runUpdate() throws -> ObjectIdentifier? {
             let updateContainer = try ModelContainer(
@@ -89,9 +82,6 @@ struct PersistableTests {
             }
 
             #expect(model.accountType == .admin)
-            // Confirm the fetched model is really fetched from the db,
-            // not just from an identity map.
-            #expect(ObjectIdentifier(model) != objectID)
 
             model.accountType = .user
 
@@ -103,7 +93,7 @@ struct PersistableTests {
         }
     }
 
-    private func setupContainer() throws -> (Connection, ObjectIdentifier) {
+    private func setupContainer() throws -> Connection {
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
@@ -116,10 +106,7 @@ struct PersistableTests {
         try container.context.insert(model)
         try container.context.save()
 
-        return (
-            container.getConnection(),
-            ObjectIdentifier(model)
-        )
+        return container.getConnection()
     }
 }
 

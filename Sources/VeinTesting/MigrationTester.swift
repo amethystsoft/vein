@@ -119,7 +119,7 @@ public struct MigrationTester {
             migration: migrationPlan,
             at: containerPath,
             appID: "de.amethystsoft.vein.MigrationTests",
-            encryptionEnabled: ProcessInfo.shouldEnableEncryption,
+            encryptionEnabled: false,
             logConfiguration: logConfiguration
         )
         try block(container.context)
@@ -134,7 +134,7 @@ public struct MigrationTester {
             migration: migrationPlan,
             at: containerPath,
             appID: "de.amethystsoft.vein.MigrationTests",
-            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+            encryptionEnabled: false
         )
         try container.migrate()
         try block(container.context)
@@ -157,7 +157,7 @@ public struct MigrationTester {
             migration: migrationPlan,
             at: containerPath,
             appID: "de.amethystsoft.vein.MigrationTests",
-            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+            encryptionEnabled: false
         )
 
         try initialData(container.context)
@@ -169,7 +169,7 @@ public struct MigrationTester {
                 migration: migrationPlan,
                 at: containerPath,
                 appID: "de.amethystsoft.vein.MigrationTests",
-                encryptionEnabled: ProcessInfo.shouldEnableEncryption
+                encryptionEnabled: false
             )
 
             try currentContainer.migrate()

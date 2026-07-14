@@ -95,7 +95,8 @@ public actor ManagedObjectContext {
         self.modelContainer = modelContainer
         do {
             self.connection = try Connection(path)
-
+            // That stuff can take 15s with TSAN enabled and compiled with Onone.
+            // I confirmed its only an issue with TSAN.
             #if canImport(AppKit) || canImport(UIKit) || os(Linux) || canImport(WinSDK)
                 if modelContainer.encryptionEnabled {
                     guard
