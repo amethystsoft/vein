@@ -32,13 +32,6 @@ struct EncryptionTest {
             withIntermediateDirectories: true
         )
 
-        if !FileManager.default.fileExists(atPath: dbPath) {
-            FileManager.default.createFile(
-                atPath: dbPath,
-                contents: nil
-            )
-        }
-
         return dbPath
     }
 
