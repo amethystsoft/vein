@@ -1,4 +1,4 @@
-# Amethyst Vein
+ Amethyst Vein
 
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/amethystsoft/vein/swift-test-mac.yml?label=mac)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/amethystsoft/vein/swift-test-linux.yml?label=linux)
@@ -25,9 +25,9 @@ Amethyst Vein was build out of frustration with the current state of local persi
 Vein's long-term goal is to fill the void left by Realm's deprecation. We aim to construct a **platform-independent sync engine** that provides the same seamless device-to-cloud experience, but with privacy at its core via **end-to-end encryption (E2EE)** and selfhostability. 
 
 ### Key Features
-* **Zero-Boilerplate Schemas:** No need to manually define your database schema (unlike Fluent for example). Vein generates it automatically from your model declarations using the `@Model` macro at compile time.
+* **Zero-Boilerplate Schemas:** No need to manually define your database schema (unlike Fluent for example). Vein generates all information it needs automatically from your model declarations using the `@Model` macro at compile time.
 * **Identity Map:** Ensures a maximum of one in-memory class instance per database row and context.
-* **Declarative Migrations:** Schema migrations between versions are declared similarly to SwiftData—no raw SQL required. Every migration has to be declared explicitly and if any data is left unhandled the migration fails and rolls back. For the simple migrations there are single line helper functions.
+* **Declarative Migrations:** Schema migrations between versions are declared similarly to SwiftData. No raw SQL required. Every migration has to be declared explicitly and if any data is left unhandled the migration fails and rolls back. For the simple migrations there are single line helper functions.
 * **UI Reactivity:** Out-of-the-box bindings for modern declarative UI frameworks.
 * **Foundation.Predicate based filters & custom SQL**: You can use either the `#Predicate` macro or write a custom SQLExpression & runtime filter separately.
 * **Control over time of fetch**: By default all fields are eager loaded. For bigger blobs, texts or data you just don't need that often, you can apply `@LazyField` to the property, then it will be fetched on first access.
@@ -58,10 +58,10 @@ Vein models do not conform to `Codable`. Since Vein knows all fields at compile 
 ### Testing of Migrations
 You can create an in memory database by passing `nil` as path to a `ModelContainer`. Also Vein comes with a small Test helper in `VeinTesting`, reducing the code you need to write yourself.
 
-### Transaction handling and conflicts
+### Save Transaction handling and conflicts
 Each `context.save()` is atomic per context and happens inside an SQL transaction.
 
-We generally recommend not to save the same models on multiple threads for concurrency, for error handling becoming annoying alone.
+We generally recommend not to save the same models on multiple threads concurrently, for error handling becoming annoying alone.
 
 ### Dependency Footprint
 Vein is designed to be highly portable, relying on standard Swift Evolution tools, cross platform wrappers and platform specific tools (for storing encryption keys), to make usage as seemless as possible for you.
