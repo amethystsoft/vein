@@ -1,0 +1,26 @@
+--swift-version 6.2
+--max-width 100
+--indent-case true
+--no-space-operators ...,..<
+--pattern-let inline
+--semicolons never
+--strip-unused-args closure-only
+--wrap-collections before-first
+--wrap-parameters before-first
+--single-line-for-each convert
+--allow-partial-wrapping false
+--wrap-arguments before-first
+--wrap-parameters before-first
+--indent-strings true
+--guardelse auto
+--wrap-return-type never
+--header "===----------------------------------------------------------------------===\n\nThis source file is part of the Amethyst Vein open source project\n\nCopyright (c) {year} Mia Koring.\n\nThis Source Code Form is subject to the terms of the Mozilla Public\nLicense, v. 2.0. If a copy of the MPL was not distributed with this\nfile, You can obtain one at https://mozilla.org/MPL/2.0/.\n\n===----------------------------------------------------------------------==="
+--rules blockComments, consecutiveBlankLines, \
+        consecutiveSpaces, consistentSwitchCaseSpacing, \
+        docCommentsBeforeModifiers, duplicateImports, \
+        lineBreakAtEndOfFile, preferKeyPath, \
+        singlePropertyPerLine, spaceInsideComments, \
+        wrapArguments, indent, hoistPatternLet, \
+        semicolons, wrap, wrapEnumCases, \
+        wrapMultilineStatementBraces, simplifyGenericConstraints, \
+        trailingSpace, elseOnSameLine, braces, fileHeader
