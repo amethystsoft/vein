@@ -90,7 +90,7 @@ Vein is designed to be highly portable, relying on standard Swift Evolution tool
 
 ## Sponsoring, Alternative Licensing & CLA
 
-Amethyst Vein is independent open source. My goal is to strengthen the cross-platform Swift ecosystem (including my work as a core contributor to SwiftCrossUI). I currently work on these projects without traditional funding.
+Amethyst Vein is independent open source. Swift and an open ecosystem are incredibly important to me. My goal is to strengthen the cross-platform Swift ecosystem (including my work as a core contributor to SwiftCrossUI). I currently work on these projects without traditional funding.
 
 If Vein is valuable to your business, please consider supporting its development:
 
