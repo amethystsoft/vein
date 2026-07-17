@@ -27,7 +27,7 @@ To prevent maintainer burnout, we limit the scope of accepted PRs:
 ## Development & Code Style
 
 - **Naming:** Use highly descriptive names for types, functions, and variables. The only exception is simple loop counters (e.g., `for i in range`).
-- **Documentation:** 
+- **Documentation:**
   - All public-facing APIs must contain DocC comments explaining their usage.
   - If internal code is complex you might be asked to add a comment explaining it too.
   - If a new feature warrants a guide, please include a comprehensive DocC tutorial.
@@ -45,7 +45,7 @@ The required header:
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
 //
 // ===----------------------------------------------------------------------===
 ```
