@@ -97,7 +97,7 @@ Vein is licensed under the MPL 2.0. To maintain long-term viability and accommod
 
 To respect your contributions and protect the community from abandonment, we include a Maintenance Commitment & Fallback Right:
 
-**What we commit to:** We actively maintain Amethyst Vein as the primary maintainer. This means regularly committing code, merging pull requests, closing or resolving issues with explanations, posting reviews or substantive updates, updating documentation—or designating other maintainers to do so on our behalf.
+**What we commit to:** We actively maintain Amethyst Vein as the primary maintainer. This means regularly committing code, merging pull requests, closing or resolving issues with explanations, posting reviews or substantive updates, updating documentation or designating other maintainers to do so on our behalf.
 
 **How it works:** If there is a complete absence of maintenance activity for 6 continuous months, the project is considered unmaintained. We can pause this counter by posting a pinned notice of temporary unavailability (e.g., due to illness or sabbatical) for up to 12 months per year.
 
