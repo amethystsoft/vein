@@ -85,16 +85,25 @@ To keep the review process manageable and quick, we ask that you follow these pr
    ./Scripts/format_and_lint.sh
    ```
 
-## Contributor License Agreement (CLA)
+# Contributor License Agreement (CLA)
 
-To keep Vein open and healthy for the ecosystem, contributors must sign a CLA. To respect your contributions, we include a **Maintenance Commitment & Fallback Right**:
+To keep Vein open and healthy for the ecosystem, contributors must sign a CLA. To respect your contributions, we include a Maintenance Commitment & Fallback Right:
 
-### Why a CLA?
-Vein is licensed under the MPL 2.0. To maintain long-term viability and accommodate corporate users whose legal departments cannot work with copyleft licenses, we dual-license Vein. The CLA allows Mia Koring as **Amethyst Software** to offer alternative commercial licensing terms while keeping the main distribution entirely free and open-source.
+## Why a CLA?
 
-To respect your contributions and protect the community from "licensing rug-pulls," we include a **Maintenance Commitment & Fallback Right** (our Safety Hatch):
+Vein is licensed under the MPL 2.0. To maintain long-term viability and accommodate corporate users whose legal departments cannot work with copyleft licenses, we dual-license Vein. The CLA allows Mia Koring as Amethyst Software to offer alternative commercial licensing terms while keeping the main distribution entirely free and open-source.
 
-> **Summary:** We commit to actively maintaining this project. If an issue or PR is left completely unaddressed for a continuous period of 6 months, Vein is considered unmaintained. In this unlikely event, all contributors immediately gain the right to relicense and redistribute the project under any OSI-approved license.
+## Our Safety Hatch: Maintenance Commitment & Fallback Right
+
+To respect your contributions and protect the community from abandonment, we include a Maintenance Commitment & Fallback Right:
+
+**What we commit to:** We actively maintain Amethyst Vein as the primary maintainer. This means regularly committing code, merging pull requests, closing or resolving issues with explanations, posting reviews or substantive updates, updating documentation—or designating other maintainers to do so on our behalf.
+
+**How it works:** If there is a complete absence of maintenance activity for 6 continuous months, the project is considered unmaintained. We can pause this counter by posting a pinned notice of temporary unavailability (e.g., due to illness or sabbatical) for up to 12 months per year.
+
+**Your protection:** Any contributor can notify us at mia.koring@amethystsoft.de if they suspect maintenance failure. We have 60 days to demonstrate recent maintenance activity or commit to resuming within 14 days. If we don't respond, all contributors automatically gain the right to relicense and redistribute the entire project under any OSI-approved license.
+
+**Want to help?** We are the primary maintainer of Amethyst Vein. If our circumstances change and we need additional designated maintainers, we will consider interested contributors in good faith. Reach out at mia.koring@amethystsoft.de if you'd like to express interest.
 
 ### How to Sign
 When you open your first Pull Request, CLA assistant will automatically post a comment with instructions to sign the agreement digitally in just a few clicks.
@@ -104,14 +113,31 @@ When you open your first Pull Request, CLA assistant will automatically post a c
 
 ### Maintenance Commitment and Fallback Right
 
-We agree to actively maintain the Material. A failure to maintain shall only be triggered if one or more open issues or pull requests remain completely unaddressed by Us for a continuous period of six (6) months.
+We agree to actively maintain the main distribution of the Amethyst Vein project, regardless of platform or hosting location. The "main distribution" is defined in the project's Contributing.md file; if no such declaration exists, the repository hosted on GitHub under the amethystsoft organization shall be considered the main distribution.
 
-An issue or pull request is considered "addressed" (and will not trigger a failure to maintain) if We have done any of the following:
-- Closed, merged, or resolved it;
-- Added a comment, review, or question to it; or
-- Applied a label indicating it is under review or awaiting feedback.
+A failure to maintain shall only be triggered if there is a complete absence of maintenance activity by Us or designated maintainers for a continuous period of six (6) months, provided that We have not declared temporary unavailability due to illness, personal emergency, or similar circumstances.
 
-If We have requested information or action from a contributor, that issue or pull request cannot trigger a failure to maintain unless the contributor has fully responded and We fail to react for six (6) months following their response.
+"Maintenance activity" includes at least one of the following actions on the repository within the six-month period:
 
-In the event of a failure to maintain, You and all other contributors shall automatically acquire a non-exclusive, perpetual, worldwide right to relicense, republish, and distribute the Material (including all Contributions) under any license approved by the Open Source Initiative (OSI).
+- Committing code, merging pull requests, or releasing new versions;
+- Closing or resolving issues or pull requests with substantive explanations;
+- Posting reviews or substantive updates on issues, discussions, or pull requests;
+- Updating documentation or project roadmaps.
+
+For the avoidance of doubt:
+
+- We may designate other contributors or maintainers to perform maintenance activities on Our behalf. Designated maintainers shall be publicly listed in a pinned issue. Activity by such designated maintainers shall count as Our maintenance activity.
+- The existence of open, unresolved issues or pull requests shall not constitute a failure to maintain, provided We or designated maintainers have engaged in maintenance activities listed above within the preceding six (6) months.
+- Repositories explicitly marked as archived, read-only, or in maintenance-freeze status shall not trigger this clause.
+- We may declare temporary unavailability (illness, emergency, sabbatical, etc.) by pinning a notice in the repository. During such periods, the six-month clock is paused. This pause shall remain in effect for up to twelve (12) months per calendar year. If a substitute maintainer is designated in such notice, contributors may contact them at the contact information provided.
+
+**Contributor Involvement:**
+
+We are the primary maintainer of Amethyst Vein. If circumstances change such that we require additional designated maintainers (due to workload, availability, or other factors), we will consider interested contributors in good faith. Qualified candidates may reach out at mia.koring@amethystsoft.de to express interest. Accepting a contributor as a designated maintainer constitutes activity under this agreement and demonstrates Our ongoing commitment to maintenance.
+
+**Triggering the Fallback Right:**
+
+Any contributor may provide written notice to Us at mia.koring@amethystsoft.de (or to the substitute contact listed in the temporary unavailability notice, if applicable) reporting suspected maintenance failure. We shall have sixty (60) calendar days from receipt to either: (a) demonstrate maintenance activity within the preceding six months, or (b) commit to resuming maintenance within fourteen (14) days. If neither is satisfied within the specified timeframes, the failure to maintain is automatically confirmed.
+
+Upon confirmation, all contributors automatically acquire a non-exclusive, perpetual, worldwide right to relicense, republish, and distribute the Material (including all Contributions) under any OSI-approved license.
 </details>
