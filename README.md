@@ -39,7 +39,7 @@ Amethyst Vein was built out of frustration with the current state of local persi
 * **Cross-platform Swift is growing:** With the rise of Swift on Android, Windows, Linux, and embedded systems, there is a critical need for a modern, local-first, thread-agnostic ORM where the exact same Swift models compile and run on every platform.
 
 ### The Mission: Platform-Independent Sync
-Vein's long-term goal is to fill the void left by Realm's deprecation. We aim to construct a **platform-independent sync engine** that provides the same seamless device-to-cloud experience, but with privacy at its core via **end-to-end encryption (E2EE)** and selfhostability. 
+Vein's long-term goal is to fill the void left by Realm's deprecation. We aim to construct a **platform-independent sync engine** that provides the same seamless device-to-cloud experience, but with privacy at its core via **end-to-end encryption (E2EE)** and selfhostability.
 
 ### Key Features
 * **Zero-Boilerplate Schemas:** No need to manually define your database schema (unlike Fluent for example). Vein generates all information it needs automatically from your model declarations using the `@Model` macro at compile time.
@@ -55,7 +55,7 @@ Vein provides a lightweight transaction API that directly wraps SQL transactions
 * **In-Memory State:** SQL transactions do not automatically revert in-memory Swift object mutated states. To sync your in-memory objects back to the database state after a failed transaction (if you wish to do so), simply call `context.rollback()`.
 
 ### Thread Safety & Concurrency
-Unlike Core Data or SwiftData, which enforce strict thread-confinement rules, **Vein models are thread-safe and can be shared and mutated freely across threads.** 
+Unlike Core Data or SwiftData, which enforce strict thread-confinement rules, **Vein models are thread-safe and can be shared and mutated freely across threads.**
 
 Vein achieves thread agnosticism synchronously through the heavy use of unfair locks:
 * **Field-Level Locking:** Each individual model property has its own lock, minimizing lock contention.
@@ -73,7 +73,7 @@ Relationships only eager load the `ULID`s. Model instances will be resolved on a
 Vein models do not conform to `Codable`. Since Vein knows all fields at compile time via the `@Model` macro, it bypasses `Codable` entirely.
 
 ### Testing of Migrations
-You can create an in memory database by passing `nil` as path to a `ModelContainer`. Also Vein comes with a small Test helper in `VeinTesting`, reducing the code you need to write yourself. There's a tutorial [here](https://vein.amethystsoft.de/tutorials/veincore/migrationunittests).
+You can create an in memory database by passing `nil` as path to a `ModelContainer`. Also Vein comes with a small Test helper in `VeinTesting`, reducing the code you need to write yourself. See the [migration unit testing tutorial](https://vein.amethystsoft.de/tutorials/veincore/migrationunittests).
 
 ### Save Transaction handling and conflicts
 Each `context.save()` is atomic per context and happens inside an SQL transaction.
