@@ -73,7 +73,7 @@ Relationships only eager load the `ULID`s. Model instances will be resolved on a
 Vein models do not conform to `Codable`. Since Vein knows all fields at compile time via the `@Model` macro, it bypasses `Codable` entirely.
 
 ### Testing of Migrations
-You can create an in memory database by passing `nil` as path to a `ModelContainer`. Also Vein comes with a small Test helper in `VeinTesting`, reducing the code you need to write yourself.
+You can create an in memory database by passing `nil` as path to a `ModelContainer`. Also Vein comes with a small Test helper in `VeinTesting`, reducing the code you need to write yourself. There's a tutorial [here](https://vein.amethystsoft.de/tutorials/veincore/migrationunittests).
 
 ### Save Transaction handling and conflicts
 Each `context.save()` is atomic per context and happens inside an SQL transaction.
