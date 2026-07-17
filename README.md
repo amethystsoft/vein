@@ -1,23 +1,40 @@
 # Amethyst Vein
 
+[![Sponsor Vein Development](https://img.shields.io/badge/Sponsor-Mia%20Koring-DE69FF?logo=github-sponsors)](https://github.com/sponsors/miakoring)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/amethystsoft/vein/swift-test-mac.yml?label=mac)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/amethystsoft/vein/swift-test-linux.yml?label=linux)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/amethystsoft/vein/swift-test-android.yml?label=android)
 
-## What?
-Vein is a local first, highly abstracted ORM for Swift, backed by an SQLite (+ SQLCipher) database. Its API is heavily inspired by Apples SwiftData framework.
+## Table of Contents
+- [What is Vein](#what)
+- [Getting Started & Docs](#getting-started--documentation)
+- [Why Vein](#why-vein)
+  - [Mission](#the-mission-platform-independent-sync)
+  - [Key Features](#key-features)
+  - [Transactions](#how-transactions-work)
+  - [Thread Safety & Concurrency](#thread-safety--concurrency)
+  - [Relationships](#relationships)
+  - [Serialization & Codable](#serialization-and-codable)
+  - [Migration Testing](#testing-of-migrations)
+  - [Save Transaction & Conflicts](#save-transaction-handling-and-conflicts)
+  - [Dependency Footprint](#dependency-footprint)
+- [Sponsoring, Alternative Licensing & CLA](#sponsoring-alternative-licensing--cla)
+- [Third Party Licenses](#third-party-licenses)
 
-Unlike SwiftData, Amethyst Vein is open source and aims to use the least amount of runtime magic possible while still providing a very userfriendly API. It is also compatible with every major consumer OS (Apple, Android, Linux and Windows), SwiftUI, SwiftCrossUI and it obviously works UI framework independently too, just without automatic reactivity.
+## What?
+Vein is a local first, highly abstracted ORM for Swift, backed by an SQLite (+ SQLCipher) database. Its API is heavily inspired by Apple's SwiftData framework.
+
+Unlike SwiftData, Amethyst Vein is open source and aims to use the least amount of runtime magic possible while still providing a very user-friendly API. It is also compatible with every major consumer OS (Apple, Android, Linux and Windows), SwiftUI, SwiftCrossUI and functions independent of UI framework too, just without automatic reactivity.
 
 ## Getting started & Documentation
 You can find our tutorials and docs at [vein.amethystsoft.de](https://vein.amethystsoft.de).
 
 ## Why Vein?
 
-Amethyst Vein was build out of frustration with the current state of local persistence in the Swift ecosystem:
+Amethyst Vein was built out of frustration with the current state of local persistence in the Swift ecosystem:
 
 * **SwiftData is restricted:** It is closed-source, limited to Apple platforms, and heavily reliant on implicit runtime magic that can be difficult to debug.
-* **Core Data is dated:** It's old, doesn't integrate nicely with declarative UI frameworks and is limited to apple platforms too.
+* **Core Data is dated:** It's old, doesn't integrate nicely with declarative UI frameworks and like SwiftData it's limited to Apple's platforms.
 * **Realm is deprecated & Apple-locked:** With MongoDB deprecating the Atlas Device SDK (Realm's sync engine), a massive gap has been left for cross-platform sync. Additionally, while Realm has SDKs for other languages, the `RealmSwift` SDK relies heavily on the Objective-C runtime (more than 50% objc code in RealmSwift). This makes it virtually impossible to compile your Swift models on Android, Linux, or Windows. And it just doesn't feel as nice as SwiftData.
 * **Cross-platform Swift is growing:** With the rise of Swift on Android, Windows, Linux, and embedded systems, there is a critical need for a modern, local-first, thread-agnostic ORM where the exact same Swift models compile and run on every platform.
 
@@ -71,7 +88,17 @@ Vein is designed to be highly portable, relying on standard Swift Evolution tool
 - **Metadata & Tooling**: `swiftlang/swift-syntax` (compile time macros), `apple/swift-log`, `apple/swift-atomics` (used only in a write once, read a lot place)
 - **Testing**: `typelift/SwiftCheck` for property based testing.
 
-### Third-Party-Licenses
+## Sponsoring, Alternative Licensing & CLA
+
+Amethyst Vein is independent open source. My goal is to strengthen the cross-platform Swift ecosystem (including my work as a core contributor to SwiftCrossUI). I currently work on these projects without traditional funding.
+
+If Vein is valuable to your business, please consider supporting its development:
+
+* **[Sponsor on GitHub Sponsors](https://github.com/sponsors/miakoring)**: Help me keep development active and sustainable.
+* **Alternative/Commercial Licensing**: Vein is licensed under the MPL 2.0. Because I utilize a Contributor License Agreement (CLA) to maintain licensing flexibility under the **Amethyst Software** name, I can offer custom or commercial licensing terms if your organization's legal policies require them. Please reach out to me at [mia.koring@amethystsoft.de](mailto:mia.koring@amethystsoft.de).
+* **My CLA Commitment (Safety Hatch)**: To protect contributors and ensure the project's longevity, the CLA includes a "safety hatch". If Amethyst Software (me) ever stops maintaining the open-source distribution of Vein, all contributors automatically gain the right to redistribute the entire codebase under any OSI-approved license. Your contributions will always remain free and open. Long live Swift, everywhere.
+
+## Third-Party-Licenses
 Licenses of third party projects are in the Acknowledgements folder.
 * Vein contains a modified copy of [yaslab/ULID.swift](https://github.com/yaslab/ULID.swift.git).
   The original MIT license can be found in [Acknowledgements/ULID-LICENSE](./Acknowledgements/yaslab_ULID.swift/LICENSE).
