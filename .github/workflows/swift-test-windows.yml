@@ -23,11 +23,9 @@ jobs:
         uses: SwiftyLab/setup-swift@38f54a76b70d989321de9dc7c840618c08cf56e9 #1.14.0
         with:
           swift-version: "6.3.2"
-      # Prevent NTFS long path/case sensitivity quirks during CI
-      - name: Configure Git for Windows
-        run: git config --global core.protectNTFS false
 
       - name: Test
+        shell: bash
         run: ./Scripts/test.sh
   build-example:
     runs-on: windows-latest
@@ -41,4 +39,5 @@ jobs:
         with:
           swift-version: "6.3.2"
       - name: Build FacetCLI
+        shell: bash
         run: ./Scripts/build-cli-examples.sh
