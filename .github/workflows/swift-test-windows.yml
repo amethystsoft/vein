@@ -1,0 +1,45 @@
+name: Swift Windows CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  test-windows:
+    name: Test on Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
+        with:
+          persist-credentials: false
+      - name: Setup Swift
+        uses: SwiftyLab/setup-swift@38f54a76b70d989321de9dc7c840618c08cf56e9 #1.14.0
+        with:
+          swift-version: "6.3.2"
+      # Prevent NTFS long path/case sensitivity quirks during CI
+      - name: Configure Git for Windows
+        run: git config --global core.protectNTFS false
+
+      - name: Test
+        run: ./Scripts/test.sh
+  build-example:
+    runs-on: windows-latest
+    container:
+      image: swift:6.3.2-noble
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
+        with:
+          persist-credentials: false
+      - name: Setup Swift
+        uses: SwiftyLab/setup-swift@38f54a76b70d989321de9dc7c840618c08cf56e9 #1.14.0
+        with:
+          swift-version: "6.3.2"
+      - name: Build FacetCLI
+        run: ./Scripts/build-cli-examples.sh
