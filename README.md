@@ -4,6 +4,7 @@
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/amethystsoft/vein/swift-test-mac.yml?label=mac)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/amethystsoft/vein/swift-test-linux.yml?label=linux)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/amethystsoft/vein/swift-test-android.yml?label=android)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/amethystsoft/vein/swift-test-windows.yml?label=windows)
 
 ## Table of Contents
 - [What is Vein](#what)
