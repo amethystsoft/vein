@@ -12,7 +12,7 @@ permissions:
 jobs:
   test-windows:
     name: Test on Windows
-    runs-on: windows-latest
+    runs-on: blacksmith-4vcpu-windows-2025
 
     steps:
       - name: Checkout Code
@@ -28,7 +28,7 @@ jobs:
         shell: bash
         run: ./Scripts/test.sh
   build-example:
-    runs-on: windows-latest
+    runs-on: blacksmith-4vcpu-windows-2025
     
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
