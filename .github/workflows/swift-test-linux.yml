@@ -23,13 +23,20 @@ jobs:
         run: |
           apt-get update
           apt-get install -y dbus-x11 gnome-keyring
-      - name: Test
+      - name: Test VeinCore
         run: |
           # Use dbus-run-session to wrap the test execution
           dbus-run-session -- sh -c '
             echo "test" | gnome-keyring-daemon --unlock --components=secrets
             ./Scripts/tsan-test.sh
           '
+      - name: Test VeinSCUI
+        run: |
+          dbus-run-session -- sh -c '
+            echo "test" | gnome-keyring-daemon --unlock --components=secrets
+            TEST_SCUI=1 ./Scripts/tsan-test.sh
+          '
+TEST_SCUI=1 ./Scripts/tsan-test.sh
   build-example:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     container:
