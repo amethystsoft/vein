@@ -221,7 +221,7 @@ public struct ModelMacroBase {
         let modelVersionString = "\("\(type)".prefix(while: { $0 != "."})).version"
         let extensionDecl = try ExtensionDeclSyntax(
             """
-            extension \(raw: type): Vein.PersistentModel, @unchecked Sendable { 
+            extension \(raw: type): Vein.PersistentModel, @unchecked Sendable {
                 static let schema = "\(raw: type)"
                 static var version: Vein.ModelVersion { \(raw: modelVersionString) }
             }

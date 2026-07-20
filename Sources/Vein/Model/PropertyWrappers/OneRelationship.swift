@@ -185,7 +185,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
 
         guard
             let _inverseKey,
-            let inverseField = target._relationships.first (
+            let inverseField = target._relationships.first(
                 where: { $0.instanceKey == _inverseKey }
             )
         else { return }

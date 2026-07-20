@@ -28,3 +28,6 @@ excluded:
   - Tests/ULIDTests
   - Sources/VeinCore/VeinCore.docc
   - Sources/VeinSwiftUI/VeinSwiftUI.docc
+  - .build
+  - Examples/SCUIBasicExample/.build
+  - Examples/CliExample/.build
