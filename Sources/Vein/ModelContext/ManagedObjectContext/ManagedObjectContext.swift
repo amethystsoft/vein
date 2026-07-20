@@ -79,7 +79,7 @@ public actor ManagedObjectContext {
 
     // MARK: - UI change notification
     nonisolated let registeredQueries = Mutex(
-        [ObjectIdentifier: [Int: WeakQueryObserver]]()
+        [ObjectIdentifier: [String: WeakQueryObserver]]()
     )
     nonisolated let pendingNotifications = Mutex(
         [ObjectIdentifier: [AnyObject]]()

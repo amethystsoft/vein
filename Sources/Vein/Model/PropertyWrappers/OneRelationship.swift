@@ -12,9 +12,16 @@
 
 import Foundation
 import Logging
+#if VeinSCUI
+    import SwiftCrossUI
+#endif
 
 @propertyWrapper
 public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unchecked Sendable {
+    #if VeinSCUI
+        public let didChange = Publisher()
+    #endif
+
     static var logger: Logger { .init(label: "Vein.OneRelationship") }
 
     public var isLazy: Bool { false }
@@ -136,7 +143,12 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         var previousID: ULID?
 
         VeinNotificationGuard.$isProcessing.withValue(true) {
-            _withObservationNotification({ model?.notifyOfChanges() }) {
+            _withObservationNotification({
+                model?.notifyOfChanges()
+                #if VeinSCUI
+                    didChange.send()
+                #endif
+            }) {
                 lock.withLock {
                     previousID = idStore
                     idStore = newID
@@ -171,7 +183,12 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         guard let target = get(for: id) else { return }
         target._observers.value.removeObserver(id: model.id, key: instanceKey)
 
-        guard let _inverseKey else { return }
+        guard
+            let _inverseKey,
+            let inverseField = target._relationships.first(
+                where: { $0.instanceKey == _inverseKey }
+            )
+        else { return }
         if isRemoving {
             model._observers.value.removeObserver(id: target.id, key: _inverseKey)
         } else {
@@ -184,7 +201,12 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
 
         let matchingField = target._fields.first { $0.key == _inverseKey }
 
-        _withObservationNotification({ target.notifyOfChanges()}) {
+        _withObservationNotification({
+            target.notifyOfChanges()
+            #if VeinSCUI
+                inverseField.didChange.send()
+            #endif
+        }) {
 
             if var manyField = matchingField as? (any ManyRelationship) {
                 if isRemoving {
@@ -213,10 +235,13 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         target?._observers.value.addObserver(
             id: model.id,
             key: instanceKey,
-            observer: { [weak model] in
+            observer: { [weak model, weak self] in
                 guard !VeinNotificationGuard.isProcessing else { return }
                 VeinNotificationGuard.$isProcessing.withValue(true) {
                     model?.notifyOfChanges()
+                    #if VeinSCUI
+                        self?.didChange.send()
+                    #endif
                 }
             }
         )
@@ -341,3 +366,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         }
     }
 }
+
+#if VeinSCUI
+    extension _OneRelationship: PublishedMarkerProtocol, SwiftCrossUI.ObservableObject {}
+#endif

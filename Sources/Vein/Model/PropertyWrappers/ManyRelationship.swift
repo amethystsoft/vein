@@ -12,9 +12,17 @@
 
 import Foundation
 import Logging
+
+#if VeinSCUI
+    import SwiftCrossUI
+#endif
 // swiftlint:disable multiple_closures_with_trailing_closure
 @propertyWrapper
 public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unchecked Sendable {
+    #if VeinSCUI
+        public let didChange = Publisher()
+    #endif
+
     static var logger: Logger { .init(label: "Vein.ManyRelationship") }
 
     public typealias Value = [T]
@@ -130,6 +138,9 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                     model?.notifyOfChanges()
                 }
             }
+            #if VeinSCUI
+                didChange.send()
+            #endif
         } block: {
             lock.withLock {
                 oldIDs = idStore
@@ -167,11 +178,16 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
 
             let matchingField = target._fields.first { $0.key == _inverseKey }
 
-            _withObservationNotification({ matchingField?.model?.notifyOfChanges() }) {
-                if var manyField = matchingField as? (any ManyRelationship) {
+            _withObservationNotification({
+                matchingField?.model?.notifyOfChanges()
+                #if VeinSCUI
+                    matchingField?.didChange.send()
+                #endif
+            }) {
+                if let manyField = matchingField as? (any ManyRelationship) {
                     manyField._persistableValue.removeAll { $0 == model.id }
                     manyField.wasTouched = true
-                } else if var oneField = matchingField as? (any OneRelationship) {
+                } else if let oneField = matchingField as? (any OneRelationship) {
                     if oneField._persistableValue == model.id {
                         oneField._persistableValue = nil
                     }
@@ -198,6 +214,9 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                 if !VeinNotificationGuard.isProcessing {
                     VeinNotificationGuard.$isProcessing.withValue(true) {
                         target.notifyOfChanges()
+                        #if VeinSCUI
+                            matchingField?.didChange.send()
+                        #endif
                     }
                 }
             } block: {
@@ -214,12 +233,12 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                     fatalError(error.localizedDescription)
                 }
 
-                if var manyField = matchingField as? (any ManyRelationship) {
+                if let manyField = matchingField as? (any ManyRelationship) {
                     if !manyField._persistableValue.contains(model.id) {
                         manyField._persistableValue.append(model.id)
                     }
                     manyField.wasTouched = true
-                } else if var oneField = matchingField as? (any OneRelationship) {
+                } else if let oneField = matchingField as? (any OneRelationship) {
                     oneField._persistableValue = model.id
                     oneField.wasTouched = true
                 }
@@ -240,10 +259,13 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
         target?._observers.value.addObserver(
             id: model.id,
             key: instanceKey,
-            observer: { [weak model] in
+            observer: { [weak model, weak self] in
                 guard !VeinNotificationGuard.isProcessing else { return }
                 VeinNotificationGuard.$isProcessing.withValue(true) {
                     model?.notifyOfChanges()
+                    #if VeinSCUI
+                        self?.didChange.send()
+                    #endif
                 }
             }
         )
@@ -310,10 +332,10 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
 
                         let inverse = target._fields.first { $0.key == _inverseKey }
 
-                        if var manyField = inverse as? (any ManyRelationship) {
+                        if let manyField = inverse as? (any ManyRelationship) {
                             manyField._persistableValue.removeAll(where: { $0 == model.id })
                             manyField.wasTouched = true
-                        } else if var oneField = inverse as? (any OneRelationship) {
+                        } else if let oneField = inverse as? (any OneRelationship) {
                             oneField._persistableValue = nil
                             oneField.wasTouched = true
                         }
@@ -360,3 +382,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
         }
     }
 }
+
+#if VeinSCUI
+    extension _ManyRelationship: PublishedMarkerProtocol, SwiftCrossUI.ObservableObject {}
+#endif

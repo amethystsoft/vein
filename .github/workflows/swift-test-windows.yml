@@ -24,7 +24,7 @@ jobs:
         with:
           swift-version: "6.3.2"
 
-      - name: Test
+      - name: Test VeinCore
         shell: bash
         run: ./Scripts/test.sh
   build-example:

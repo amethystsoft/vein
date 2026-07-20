@@ -20,15 +20,16 @@ import Foundation
 public struct ModelPredicate<T: PersistentModel>: Sendable, Hashable, AnyPredicateBuilder {
     public let runtimeFilter: @Sendable (T) -> Bool
     public let sql: SQLExpression<Bool>
-    private let id = ULID()
+    public let identity: String
 
     public func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
+        hasher.combine(identity)
     }
 
     public init(runtimeFilter: @Sendable @escaping (T) -> Bool, sql: SQLExpression<Bool>) {
         self.runtimeFilter = runtimeFilter
         self.sql = sql
+        self.identity = sql.template + sql.bindings.description
     }
 
     public init(_ predicate: Foundation.Predicate<T>) throws {
@@ -42,13 +43,14 @@ public struct ModelPredicate<T: PersistentModel>: Sendable, Hashable, AnyPredica
             }
         }
         sql = try predicate.toSQLiteFilter()
+        self.identity = sql.template + sql.bindings.description
     }
 
     public static func == (
         lhs: borrowing ModelPredicate<T>,
         rhs: borrowing ModelPredicate<T>
     ) -> Bool {
-        lhs.id == rhs.id
+        lhs.identity == rhs.identity
     }
 
     public static var all: Self {

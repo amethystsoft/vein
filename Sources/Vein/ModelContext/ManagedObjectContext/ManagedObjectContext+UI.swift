@@ -15,7 +15,7 @@ extension ManagedObjectContext {
     @MainActor
     public func getOrCreateQueryObserver(
         for identifier: ObjectIdentifier,
-        _ key: Int,
+        _ key: String,
         createWith block: @escaping () -> AnyQueryObserver
     ) -> AnyQueryObserver {
         if let observer = registeredQueries.value[identifier]?[key]?.query {

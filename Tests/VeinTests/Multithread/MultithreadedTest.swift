@@ -14,9 +14,11 @@ import Foundation
 import Testing
 @testable import Vein
 #if TEST_SWIFTUI
-    @testable import VeinSwiftUI
-#elseif !TEST_SWIFTUI
-    @testable import VeinCore
+    @_spi(VeinTesting) @testable import VeinSwiftUI
+#elseif TEST_SCUI
+    @_spi(VeinTesting) @testable import VeinSCUI
+#else
+    @_spi(VeinTesting) @testable import VeinCore
 #endif
 
 struct MultithreadedTest {

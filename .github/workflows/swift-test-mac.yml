@@ -20,6 +20,8 @@ jobs:
         run: ./Scripts/tsan-test.sh
       - name: Test VeinSwiftUI
         run: IS_RUNNING_HEADLESS=1 TEST_SWIFTUI=1 ./Scripts/tsan-test.sh
+      - name: Test VeinSCUI
+        run: TEST_SCUI=1 ./Scripts/tsan-test.sh
   build-example:
     runs-on: macos-26
     steps:
@@ -28,3 +30,5 @@ jobs:
           persist-credentials: false
       - name: Build FacetCLI
         run: ./Scripts/build-cli-examples.sh
+      - name: Build SCUI Basic Example
+        run: ./Scripts/build-scui-examples.sh

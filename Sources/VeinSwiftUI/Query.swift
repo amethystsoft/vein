@@ -61,7 +61,7 @@
 
         let predicate: ModelPredicate<M>
 
-        public var usedPredicate: AnyPredicateBuilder { predicate }
+        public var usedPredicate: any AnyPredicateBuilder { predicate }
 
         @MainActor
         package var results: [M]? = nil
@@ -72,7 +72,7 @@
 
             guard let primary = context.getOrCreateQueryObserver(
                 for: M.typeIdentifier,
-                predicate.hashValue,
+                predicate.identity,
                 createWith: {
                     return self
                 }
@@ -134,12 +134,15 @@
 
         @MainActor
         package func handleUpdate(_ model: any PersistentModel, matchedBeforeChange: Bool) {
-            guard let model = model as? ModelType else {
-                return
-            }
+            guard let model = model as? ModelType else { return }
+
+            let matchesNow = predicate.runtimeFilter(model)
+            guard matchesNow || matchedBeforeChange else { return }
+
             publishToEnclosingObserver?()
             objectWillChange.send()
-            if predicate.runtimeFilter(model) {
+
+            if matchesNow {
                 if !matchedBeforeChange {
                     results?.append(model)
                 }
@@ -204,8 +207,8 @@
             if container != nil, isInitialized {
                 content()
             } else if let container = container {
-                Text("An error occurred while migrating database:").font(.title3)
                 if let error = error as? LocalizedError {
+                    Text("An error occurred while migrating database:").font(.title3)
                     if let errorDescription = error.errorDescription {
                         Text(errorDescription).foregroundStyle(.red)
                     }
@@ -216,6 +219,7 @@
                         Text(recoverySuggestion).foregroundStyle(.secondary)
                     }
                 } else if let error {
+                    Text("An error occurred while migrating database:").font(.title3)
                     Text(error.localizedDescription).foregroundStyle(.red)
                 } else {
                     ProgressView()
