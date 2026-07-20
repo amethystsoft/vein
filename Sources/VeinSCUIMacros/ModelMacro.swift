@@ -40,8 +40,10 @@ public struct ModelMacro: MemberMacro, ExtensionMacro, MemberAttributeMacro {
             var notifyOfChanges: () -> Void {
                 { [weak self] in
                     guard let self else { return }
-                    self._observers.value.notifyAll()
-                    self.didChange.send()
+                    if Thread.isMainThread {
+                        self._observers.value.notifyAll()
+                        self.didChange.send()
+                    }
                 }
             }
             """

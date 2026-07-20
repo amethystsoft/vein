@@ -7,12 +7,15 @@ import Foundation
 
 #if os(macOS)
     let testSwiftUI = ProcessInfo.processInfo.environment["TEST_SWIFTUI"] != nil
+    let testSCUI = ProcessInfo.processInfo.environment["TEST_SCUI"] != nil
 
     let veinAPIToTestDependencies: [Target.Dependency] = testSwiftUI ?
         ["VeinSwiftUI", "VeinSwiftUIMacros"]:
-        ["VeinCore", "VeinCoreMacros"]
+        testSCUI ? ["VeinSCUI", "VeinSCUIMacros"]:
+            ["VeinCore", "VeinCoreMacros"]
 
-    let testSwiftSettings: [SwiftSetting] = testSwiftUI ? [.define("TEST_SWIFTUI")] : []
+    let testSwiftSettings: [SwiftSetting] = testSwiftUI ? [.define("TEST_SWIFTUI")] :
+        testSCUI ? [.define("TEST_SCUI")]: []
 #else
     let veinAPIToTestDependencies: [Target.Dependency] = ["VeinCore", "VeinCoreMacros"]
     let testSwiftSettings: [SwiftSetting] = []

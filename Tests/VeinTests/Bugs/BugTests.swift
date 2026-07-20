@@ -18,7 +18,9 @@ import SQLiteDB
 
 #if TEST_SWIFTUI
     @_spi(VeinTesting) @testable import VeinSwiftUI
-#elseif !TEST_SWIFTUI
+#elseif TEST_SCUI
+    @_spi(VeinTesting) @testable import VeinSCUI
+#else
     @_spi(VeinTesting) @testable import VeinCore
 #endif
 

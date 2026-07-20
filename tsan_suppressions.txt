@@ -1,1 +1,2 @@
 race:sqlite3.c
+race:Publisher.swift
