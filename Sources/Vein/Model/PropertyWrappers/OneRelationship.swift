@@ -12,9 +12,16 @@
 
 import Foundation
 import Logging
+#if VeinSCUI
+import SwiftCrossUI
+#endif
 
 @propertyWrapper
-public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unchecked Sendable {
+public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unchecked Sendable {    
+#if VeinSCUI
+    public let didChange = Publisher()
+#endif
+    
     static var logger: Logger { .init(label: "Vein.OneRelationship") }
 
     public var isLazy: Bool { false }
@@ -136,7 +143,12 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         var previousID: ULID?
 
         VeinNotificationGuard.$isProcessing.withValue(true) {
-            _withObservationNotification({ model?.notifyOfChanges() }) {
+            _withObservationNotification({
+                model?.notifyOfChanges()
+#if VeinSCUI
+                didChange.send()
+#endif
+            }) {
                 lock.withLock {
                     previousID = idStore
                     idStore = newID
@@ -341,3 +353,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         }
     }
 }
+
+#if VeinSCUI
+extension _OneRelationship: PublishedMarkerProtocol, SwiftCrossUI.ObservableObject {}
+#endif

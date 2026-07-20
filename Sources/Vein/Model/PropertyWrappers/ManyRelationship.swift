@@ -12,9 +12,17 @@
 
 import Foundation
 import Logging
+
+#if VeinSCUI
+import SwiftCrossUI
+#endif
 // swiftlint:disable multiple_closures_with_trailing_closure
 @propertyWrapper
 public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unchecked Sendable {
+#if VeinSCUI
+    public let didChange = Publisher()
+#endif
+    
     static var logger: Logger { .init(label: "Vein.ManyRelationship") }
 
     public typealias Value = [T]
@@ -130,6 +138,9 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                     model?.notifyOfChanges()
                 }
             }
+#if VeinSCUI
+            didChange.send()
+#endif
         } block: {
             lock.withLock {
                 oldIDs = idStore
@@ -360,3 +371,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
         }
     }
 }
+
+#if VeinSCUI
+extension _ManyRelationship: PublishedMarkerProtocol, SwiftCrossUI.ObservableObject {}
+#endif

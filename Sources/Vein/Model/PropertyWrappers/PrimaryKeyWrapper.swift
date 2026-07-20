@@ -13,6 +13,9 @@
 import Foundation
 import ULID
 import Logging
+#if VeinSCUI
+import SwiftCrossUI
+#endif
 
 /// The primary key of a ``PersistentModel``.
 ///
@@ -21,6 +24,9 @@ import Logging
 /// That can be helpful for migrations for example. Once managed, sets are ignored.
 @propertyWrapper
 public class PrimaryKey: PersistedField, @unchecked Sendable {
+#if VeinSCUI
+    public var didChange = Publisher()
+#endif
     static let logger = Logger(label: "Vein PrimaryKey")
     public typealias WrappedType = ULID
 
