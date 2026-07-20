@@ -43,6 +43,11 @@ public struct ModelMacro: MemberMacro, ExtensionMacro, MemberAttributeMacro {
                     if Thread.isMainThread {
                         self._observers.value.notifyAll()
                         self.didChange.send()
+                    } else {
+                        DispatchQueue.main.async {
+                            self._observers.value.notifyAll()
+                            self.didChange.send()
+                        }
                     }
                 }
             }

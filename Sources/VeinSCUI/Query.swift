@@ -41,7 +41,10 @@
                 return results.sorted(by: { $0.id < $1.id })
             }
             if queryObserver.results == nil && queryObserver.primaryObserver == nil {
-                queryObserver.initialize(with: context!)
+                guard let context else {
+                    fatalError("Missing model container in environment.")
+                }
+                queryObserver.initialize(with: context)
             }
             return (queryObserver.primaryObserver?.results ?? queryObserver.results ?? [])
                 .sorted(by: { $0.id < $1.id })
@@ -86,7 +89,7 @@
 
             guard let primary = context.getOrCreateQueryObserver(
                 for: M.typeIdentifier,
-                predicate.hashValue,
+                predicate.identity,
                 createWith: {
                     return self
                 }

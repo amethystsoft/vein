@@ -143,6 +143,11 @@ import SwiftSyntaxMacroExpansion
                                 if Thread.isMainThread {
                                     self._observers.value.notifyAll()
                                     self.didChange.send()
+                                } else {
+                                    DispatchQueue.main.async {
+                                        self._observers.value.notifyAll()
+                                        self.didChange.send()
+                                    }
                                 }
                             }
                         }
@@ -285,6 +290,11 @@ import SwiftSyntaxMacroExpansion
                                 if Thread.isMainThread {
                                     self._observers.value.notifyAll()
                                     self.didChange.send()
+                                } else {
+                                    DispatchQueue.main.async {
+                                        self._observers.value.notifyAll()
+                                        self.didChange.send()
+                                    }
                                 }
                             }
                         }

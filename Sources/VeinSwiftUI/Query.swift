@@ -72,7 +72,7 @@
 
             guard let primary = context.getOrCreateQueryObserver(
                 for: M.typeIdentifier,
-                predicate.hashValue,
+                predicate.identity,
                 createWith: {
                     return self
                 }
