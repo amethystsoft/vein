@@ -21,9 +21,11 @@ struct VeinTestEnvironmentApp: App {
     let modelContainer: ModelContainer
 
     init() {
-        Keyring.appIdentifier.withLock { identifier in
-            identifier = "de.amethystsoft.vein-scui.BasicExample"
-        }
+        #if os(Linux)
+            Keyring.appIdentifier.withLock { identifier in
+                identifier = "de.amethystsoft.vein-scui.BasicExample"
+            }
+        #endif
         do {
             let containerPath = FileManager.default.urls(
                 for: .applicationSupportDirectory,
