@@ -1,4 +1,4 @@
-name: Swift Test (macOS)
+name: SwiftFormat lint
 
 on:
   pull_request:

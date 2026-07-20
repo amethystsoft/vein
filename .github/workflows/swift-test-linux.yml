@@ -47,3 +47,5 @@ TEST_SCUI=1 ./Scripts/tsan-test.sh
           persist-credentials: false
       - name: Build FacetCLI
         run: ./Scripts/build-cli-examples.sh
+      - name: Build SCUI Basic Example
+        run: ./Scripts/build-scui-examples.sh

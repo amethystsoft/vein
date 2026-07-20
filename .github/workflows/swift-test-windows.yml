@@ -27,8 +27,6 @@ jobs:
       - name: Test VeinCore
         shell: bash
         run: ./Scripts/test.sh
-      - name: Test VeinSCUI
-        run: TEST_SCUI=1 ./Scripts/test.sh
   build-example:
     runs-on: blacksmith-4vcpu-windows-2025
     
