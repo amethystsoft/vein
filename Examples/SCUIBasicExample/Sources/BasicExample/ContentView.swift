@@ -1,31 +1,46 @@
+// ===----------------------------------------------------------------------===
+//
+// This source file is part of the Amethyst Vein open source project
+//
+// Copyright (c) 2026 Mia Koring.
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+//
+// ===----------------------------------------------------------------------===
+
 import Foundation
 import SwiftCrossUI
 import VeinSCUI
-
 
 struct ContentView: View {
     @Query
     var testItems: [Test]
     @State var stop = false
     @Environment(\.modelContext) var context
-    
+
     init(predicate: Predicate<Test> = #Predicate<Test> { _ in true }) {
         self._testItems = Query<Test>(predicate)
     }
-    
+
     var body: some View {
         VStack {
             Text("\(testItems.count)")
             Button("generate") {
                 stop = false
                 Task {
-                    for _ in 0...30 {
-                        if stop { return }
-                        try? context.insert(Test(
-                            flag: Int.random(in: 0...1) > 0,
-                            randomValue: Int.random(in: 0...1000)
-                        ))
-                        await Task.yield()
+                    do {
+                        for _ in 0...30 {
+                            if stop { return }
+                            try context.insert(Test(
+                                flag: Int.random(in: 0...1) > 0,
+                                randomValue: Int.random(in: 0...1000)
+                            ))
+                            await Task.yield()
+                        }
+                    } catch {
+                        print(error.localizedDescription)
                     }
                 }
             }
@@ -69,7 +84,7 @@ struct ContentView: View {
 
 struct ObservedTextField: View {
     @State var item: Test
-    
+
     var body: some View {
         Toggle("", isOn: $item.flag)
         Picker(of: Group.allCases, selection: $item.selectedGroup)
@@ -98,7 +113,7 @@ struct TestModelDisplay: View {
             }
         }
     }
-    
+
     struct CounterDisplay: View {
         @State var child: TestChild
         var body: some View {

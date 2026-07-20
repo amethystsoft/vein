@@ -1,3 +1,15 @@
+// ===----------------------------------------------------------------------===
+//
+// This source file is part of the Amethyst Vein open source project
+//
+// Copyright (c) 2026 Mia Koring.
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+//
+// ===----------------------------------------------------------------------===
+
 import Foundation
 import SwiftCrossUI
 import DefaultBackend
@@ -7,43 +19,46 @@ import VeinSCUI
 struct VeinTestEnvironmentApp: App {
     @State var toggleQueries = false
     let modelContainer: ModelContainer
-    
+
     init() {
         do {
             let containerPath = FileManager.default.urls(
                 for: .applicationSupportDirectory,
                 in: .userDomainMask
             ).first!
-            
-            let dbDir = containerPath.relativePath.replacingOccurrences(of: "%20", with: " ").appending("/BSCUITest/InternalData")
-            
-            let dbPath = dbDir.appending("/db.sqlite3")
-            print(dbDir)
+
+            let dbDirURL = containerPath
+                .appendingPathComponent("VeinSwiftUI")
+                .appendingPathComponent("BasicExample")
+                .appendingPathComponent("InternalData")
+
+            let dbURL = dbDirURL.appendingPathComponent("db.sqlite3")
+            print(dbDirURL.path)
             try FileManager.default.createDirectory(
-                atPath: dbDir,
+                at: dbDirURL,
                 withIntermediateDirectories: true
             )
-            
+
             self.modelContainer = try ModelContainer(
                 TestSchemaV0_0_1.self,
                 migration: TestMigration.self,
-                at: dbPath,
+                at: dbURL.path(),
                 appID: Bundle.main.bundleIdentifier ?? "de.amethystsoft.vein-scui.BasicExample"
             )
         } catch {
             fatalError(error.localizedDescription)
         }
     }
-    
+
     var body: some Scene {
         WindowGroup("VeinTest") {
             VeinContainer {
                 HStack {
                     ContentView()
                     #if !canImport(UIKit)
-                    ContentView(predicate: #Predicate<Test> { test in
-                        test.randomValue >= 500 && test.flag == true
-                    })
+                        ContentView(predicate: #Predicate<Test> { test in
+                            test.randomValue >= 500 && test.flag == true
+                        })
                     #endif
                 }
             }

@@ -13,9 +13,8 @@
 import Foundation
 import SQLiteDB
 #if VeinSCUI
-import SwiftCrossUI
+    import SwiftCrossUI
 #endif
-
 
 /// This is mostly an implementation detail, currently making your own fields is not supported.
 public protocol FieldBase {
@@ -26,10 +25,10 @@ public protocol FieldBase {
     func _setStoreToCapturedState(_ state: Any)
     var isLazy: Bool { get }
     var wasTouched: Bool { get }
-    
-#if VeinSCUI
-    var didChange: SwiftCrossUI.Publisher { get }
-#endif
+
+    #if VeinSCUI
+        var didChange: SwiftCrossUI.Publisher { get }
+    #endif
 
     var _persistableValue: WrappedType { get set }
 }

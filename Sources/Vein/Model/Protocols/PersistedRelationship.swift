@@ -13,7 +13,7 @@
 import ULID
 
 ///  This is mostly an implementation detail, currently making your own relationships is not supported.
-public protocol PersistedRelationship: FieldBase {
+public protocol PersistedRelationship: FieldBase, AnyObject {
     associatedtype Value
     var wrappedValue: Value { get set }
     func _handleModelDeletion()

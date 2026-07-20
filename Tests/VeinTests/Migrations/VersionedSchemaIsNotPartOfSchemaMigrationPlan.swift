@@ -15,11 +15,11 @@ import Testing
 import Logging
 @testable import Vein
 #if TEST_SWIFTUI
-@_spi(VeinTesting) @testable import VeinSwiftUI
+    @_spi(VeinTesting) @testable import VeinSwiftUI
 #elseif TEST_SCUI
-@_spi(VeinTesting) @testable import VeinSCUI
+    @_spi(VeinTesting) @testable import VeinSCUI
 #else
-@_spi(VeinTesting) @testable import VeinCore
+    @_spi(VeinTesting) @testable import VeinCore
 #endif
 extension MigrationTests {
     @Test func versionedSchemaIsNotPartOfSchemaMigrationPlan() async throws {

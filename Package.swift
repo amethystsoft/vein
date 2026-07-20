@@ -12,7 +12,7 @@ import Foundation
     let veinAPIToTestDependencies: [Target.Dependency] = testSwiftUI ?
         ["VeinSwiftUI", "VeinSwiftUIMacros"]:
         testSCUI ? ["VeinSCUI", "VeinSCUIMacros"]:
-            ["VeinCore", "VeinCoreMacros"]
+        ["VeinCore", "VeinCoreMacros"]
 
     let testSwiftSettings: [SwiftSetting] = testSwiftUI ? [.define("TEST_SWIFTUI")] :
         testSCUI ? [.define("TEST_SCUI")]: []

@@ -135,11 +135,14 @@
         @MainActor
         package func handleUpdate(_ model: any PersistentModel, matchedBeforeChange: Bool) {
             guard let model = model as? ModelType else { return }
-            
+
+            let matchesNow = predicate.runtimeFilter(model)
+            guard matchesNow || matchedBeforeChange else { return }
+
             publishToEnclosingObserver?()
             objectWillChange.send()
-            
-            if predicate.runtimeFilter(model) {
+
+            if matchesNow {
                 if !matchedBeforeChange {
                     results?.append(model)
                 }

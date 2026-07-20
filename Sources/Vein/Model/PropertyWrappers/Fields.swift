@@ -12,7 +12,7 @@
 
 import Foundation
 #if VeinSCUI
-import SwiftCrossUI
+    import SwiftCrossUI
 #endif
 // swiftlint:disable multiple_closures_with_trailing_closure
 
@@ -22,9 +22,9 @@ import SwiftCrossUI
 @propertyWrapper
 public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendable {
     public typealias WrappedType = T?
-    
+
     #if VeinSCUI
-    public let didChange = Publisher()
+        public let didChange = Publisher()
     #endif
 
     private let lock = NSLock()
@@ -114,7 +114,7 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
             if !suppressUIUpdates {
                 model?.notifyOfChanges()
                 #if VeinSCUI
-                didChange.send()
+                    didChange.send()
                 #endif
             }
         } block: {
@@ -177,10 +177,10 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
 /// You can also apply it yourself for explicitness.
 @propertyWrapper
 public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
-#if VeinSCUI
-    public let didChange = Publisher()
-#endif
-    
+    #if VeinSCUI
+        public let didChange = Publisher()
+    #endif
+
     public typealias WrappedType = T
 
     public var _key: String?
@@ -235,9 +235,9 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
     private func setAndNotify(_ newValue: WrappedType) {
         _withObservationNotification({
             model?.notifyOfChanges()
-#if VeinSCUI
-            didChange.send()
-#endif
+            #if VeinSCUI
+                didChange.send()
+            #endif
         }) {
             lock.withLock {
                 store = newValue
@@ -291,6 +291,6 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
 }
 
 #if VeinSCUI
-extension Field: PublishedMarkerProtocol, SwiftCrossUI.ObservableObject {}
-extension LazyField: PublishedMarkerProtocol, SwiftCrossUI.ObservableObject {}
+    extension Field: PublishedMarkerProtocol, SwiftCrossUI.ObservableObject {}
+    extension LazyField: PublishedMarkerProtocol, SwiftCrossUI.ObservableObject {}
 #endif

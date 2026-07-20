@@ -15,13 +15,13 @@
     import Foundation
     import XCTest
     @testable import Vein
-#if TEST_SWIFTUI
-@_spi(VeinTesting) @testable import VeinSwiftUI
-#elseif TEST_SCUI
-@_spi(VeinTesting) @testable import VeinSCUI
-#else
-@_spi(VeinTesting) @testable import VeinCore
-#endif
+    #if TEST_SWIFTUI
+        @_spi(VeinTesting) @testable import VeinSwiftUI
+    #elseif TEST_SCUI
+        @_spi(VeinTesting) @testable import VeinSCUI
+    #else
+        @_spi(VeinTesting) @testable import VeinCore
+    #endif
 
     fileprivate typealias Test = V0_0_1.Test
     final class SwiftCheckOperationsSuite: XCTestCase {
