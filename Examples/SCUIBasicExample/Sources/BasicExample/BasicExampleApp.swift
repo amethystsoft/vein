@@ -21,6 +21,9 @@ struct VeinTestEnvironmentApp: App {
     let modelContainer: ModelContainer
 
     init() {
+        Keyring.appIdentifier.withLock { identifier in
+            identifier = "de.amethystsoft.vein-scui.BasicExample"
+        }
         do {
             let containerPath = FileManager.default.urls(
                 for: .applicationSupportDirectory,
@@ -28,7 +31,7 @@ struct VeinTestEnvironmentApp: App {
             ).first!
 
             let dbDirURL = containerPath
-                .appendingPathComponent("VeinSwiftUI")
+                .appendingPathComponent("VeinSCUI")
                 .appendingPathComponent("BasicExample")
                 .appendingPathComponent("InternalData")
 
