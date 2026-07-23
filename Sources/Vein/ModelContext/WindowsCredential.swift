@@ -15,8 +15,8 @@
     import Foundation
 
     enum WinCredential {
-        static func store(resource: String, username: String, secret: String) -> Bool {
-            var resourceW = Array(resource.utf16) + [0]
+        static func store(ressource: String, username: String, secret: String) -> Bool {
+            var resourceW = Array(ressource.utf16) + [0]
             var usernameW = Array(username.utf16) + [0]
 
             let secretData = secret.data(using: .utf16LittleEndian)!
@@ -43,8 +43,8 @@
             }
         }
 
-        static func retrieve(resource: String) -> String? {
-            var resourceW = Array(resource.utf16) + [0]
+        static func retrieve(ressource: String) -> String? {
+            var resourceW = Array(ressource.utf16) + [0]
             var credentialPointer: PCREDENTIALW? = nil
 
             let success = resourceW.withUnsafeMutableBufferPointer { resBuffer in

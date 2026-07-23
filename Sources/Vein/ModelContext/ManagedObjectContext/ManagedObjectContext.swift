@@ -219,14 +219,14 @@ public actor ManagedObjectContext {
                 }
             #elseif canImport(WinSDK)
                 let ressource = "com.amethyst.vein.sqlcipher.\(appID)+\(fileName)"
-                if let key = WinCredential.retrieve(resource: ressource) {
+                if let key = WinCredential.retrieve(ressource: ressource) {
                     return key
                 } else if createIfMissing {
                     let keyData = SymmetricKey(size: .bits256).withUnsafeBytes { Data($0) }
                     let hexKey = keyData.map { String(format: "%02hhx", $0) }.joined()
 
                     guard WinCredential.store(
-                        resource: ressource,
+                        ressource: ressource,
                         username: "veindbsecret",
                         secret: hexKey
                     ) else {
