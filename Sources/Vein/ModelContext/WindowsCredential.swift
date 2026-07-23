@@ -64,18 +64,18 @@
             let secretData = Data(buffer: blobBuffer)
             return String(data: secretData, encoding: .utf16LittleEndian)
         }
-        
+
         static func delete(ressource: String) -> Bool {
             var resourceW = Array(ressource.utf16) + [0]
-            
+
             let success = resourceW.withUnsafeMutableBufferPointer { resBuffer in
                 CredDeleteW(resBuffer.baseAddress, DWORD(CRED_TYPE_GENERIC), 0)
             }
-            
+
             if !success {
                 let error = GetLastError()
                 print("Failed to delete credential. Windows Error Code: \(error)")
-                
+
                 if error == DWORD(ERROR_NOT_FOUND) {
                     // If it wasn't found there's nothing to delete.
                     return true
