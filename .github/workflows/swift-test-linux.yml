@@ -19,13 +19,19 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
         with:
           persist-credentials: false
+      - name: Cache Swift build
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: ${{ runner.os }}-swift-${{ hashFiles('Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-swift-
       - name: Install dependencies
         run: |
           apt-get update
           apt-get install -y dbus-x11 gnome-keyring
       - name: Test VeinCore
         run: |
-          # Use dbus-run-session to wrap the test execution
           dbus-run-session -- sh -c '
             echo "test" | gnome-keyring-daemon --unlock --components=secrets
             ./Scripts/tsan-test.sh
@@ -37,6 +43,7 @@ jobs:
             TEST_SCUI=1 ./Scripts/tsan-test.sh
           '
   build-example:
+    needs: linux
     runs-on: blacksmith-4vcpu-ubuntu-2404
     container:
       image: swift:6.3.2-noble
@@ -44,5 +51,12 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
         with:
           persist-credentials: false
+      - name: Cache Swift build
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: ${{ runner.os }}-swift-${{ hashFiles('Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-swift-
       - name: Build FacetCLI
         run: ./Scripts/build-cli-examples.sh
