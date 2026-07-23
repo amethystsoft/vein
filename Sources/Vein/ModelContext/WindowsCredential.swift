@@ -15,8 +15,8 @@
     import Foundation
 
     enum WinCredential {
-        static func store(resource: String, username: String, secret: String) -> Bool {
-            var resourceW = Array(resource.utf16) + [0]
+        static func store(ressource: String, username: String, secret: String) -> Bool {
+            var resourceW = Array(ressource.utf16) + [0]
             var usernameW = Array(username.utf16) + [0]
 
             let secretData = secret.data(using: .utf16LittleEndian)!
@@ -43,8 +43,8 @@
             }
         }
 
-        static func retrieve(resource: String) -> String? {
-            var resourceW = Array(resource.utf16) + [0]
+        static func retrieve(ressource: String) -> String? {
+            var resourceW = Array(ressource.utf16) + [0]
             var credentialPointer: PCREDENTIALW? = nil
 
             let success = resourceW.withUnsafeMutableBufferPointer { resBuffer in
@@ -63,6 +63,25 @@
             let blobBuffer = UnsafeBufferPointer(start: blob, count: blobSize)
             let secretData = Data(buffer: blobBuffer)
             return String(data: secretData, encoding: .utf16LittleEndian)
+        }
+
+        static func delete(ressource: String) -> Bool {
+            var resourceW = Array(ressource.utf16) + [0]
+
+            let success = resourceW.withUnsafeMutableBufferPointer { resBuffer in
+                CredDeleteW(resBuffer.baseAddress, DWORD(CRED_TYPE_GENERIC), 0)
+            }
+
+            if !success {
+                let error = GetLastError()
+                print("Failed to delete credential. Windows Error Code: \(error)")
+
+                if error == DWORD(ERROR_NOT_FOUND) {
+                    // If it wasn't found there's nothing to delete.
+                    return true
+                }
+                return false
+            } else { return true }
         }
     }
 #endif
