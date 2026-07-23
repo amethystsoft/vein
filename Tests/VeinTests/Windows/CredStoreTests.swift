@@ -22,11 +22,13 @@
             let username = "VeinCredentialTest"
             let secret = "test123-"
 
-            WinCredential.store(
+            let succeeded = WinCredential.store(
                 ressource: ressource,
                 username: username,
                 secret: secret
             )
+            
+            #expect(succeeded)
 
             let result = WinCredential.retrieve(ressource: ressource)
 
