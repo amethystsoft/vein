@@ -33,6 +33,9 @@
             let result = WinCredential.retrieve(ressource: ressource)
 
             #expect(secret == result)
+            
+            let deleteSucceeded = WinCredential.delete(ressource: ressource)
+            #expect(deleteSucceeded)
         }
     }
 #endif
