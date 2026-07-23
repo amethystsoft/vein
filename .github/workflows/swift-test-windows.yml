@@ -5,6 +5,10 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+    
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -19,25 +23,51 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
         with:
           persist-credentials: false
+
       - name: Setup Swift
         uses: SwiftyLab/setup-swift@38f54a76b70d989321de9dc7c840618c08cf56e9 #1.14.0
         with:
           swift-version: "6.3.2"
 
+      - name: Cache Swift Build
+        uses: actions/cache@v4
+        with:
+          path: |
+            .build
+            .swiftpm
+          key: ${{ runner.os }}-swift-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-swift-
+
       - name: Test VeinCore
         shell: bash
         run: ./Scripts/test.sh
+
   build-example:
-    runs-on: blacksmith-4vcpu-windows-2025
-    
+    name: Build Example
+    needs: [test-windows]
+    runs-on: blacksmith-2vcpu-windows-2025
+
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
         with:
           persist-credentials: false
+
       - name: Setup Swift
         uses: SwiftyLab/setup-swift@38f54a76b70d989321de9dc7c840618c08cf56e9 #1.14.0
         with:
           swift-version: "6.3.2"
+
+      - name: Restore Swift Build Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .build
+            .swiftpm
+          key: ${{ runner.os }}-swift-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-swift-
+
       - name: Build FacetCLI
         shell: bash
         run: ./Scripts/build-cli-examples.sh
