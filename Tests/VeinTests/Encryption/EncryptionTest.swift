@@ -156,7 +156,7 @@ fileprivate enum Migration: SchemaMigrationPlan {
 
 #if os(Android)
     struct StubKeyProvider: DatabaseKeyProvider {
-        static var keys: [String: String]
+        static nonisolated(unsafe) var keys = [String: String]()
         static func getKey(
             fileName: String,
             service: String,
