@@ -44,6 +44,9 @@ public final class ModelContainer: @unchecked Sendable {
     /// The logging verbosity for database operations.
     public let logConfiguration: LogConfiguration
 
+    /// The structure providing and storing the database key if encryption is enabled.
+    public let keyProvider: (any DatabaseKeyProvider.Type)?
+
     /// Manages the schema and storage for a Vein database.
     ///
     /// - Parameters:
@@ -53,6 +56,7 @@ public final class ModelContainer: @unchecked Sendable {
     ///   - appID: A unique identifier used per-database to construct the keyring
     ///   service string: `"com.amethyst.vein.sqlcipher.\(appID)"`.
     ///   - encryptionEnabled: Whether to apply DB-level encryption.
+    ///   - keyProvider: The structure providing and storing the database key if encryption is enabled.
     ///   - logConfiguration: What information to log.
     ///
     /// - Note: `Keyring.appIdentifier` is a global, one-time configuration for the
@@ -81,6 +85,7 @@ public final class ModelContainer: @unchecked Sendable {
         at path: String?,
         appID: String,
         encryptionEnabled: Bool,
+        keyProvider: (any DatabaseKeyProvider.Type)?,
         logConfiguration: LogConfiguration?,
         _notifyBeforeChange: Bool
     ) throws(ManagedObjectContextError) {
@@ -100,6 +105,7 @@ public final class ModelContainer: @unchecked Sendable {
             #endif
         }
         self.encryptionEnabled = encryptionEnabled
+        self.keyProvider = keyProvider
         self.appID = appID
 
         guard migration.schemas.contains(where: { $0.self == versionedSchema }) else {
@@ -159,6 +165,7 @@ public final class ModelContainer: @unchecked Sendable {
     ///   - appID: A unique identifier used per-database to construct the keyring
     ///   service string: `"com.amethyst.vein.sqlcipher.\(appID)"`.
     ///   - encryptionEnabled: Whether to apply DB-level encryption.
+    ///   - keyProvider: The structure providing and storing the database key if encryption is enabled.
     ///   - logConfiguration: What information to log.
     ///
     /// - Note: `Keyring.appIdentifier` is a global, one-time configuration for the
@@ -187,6 +194,7 @@ public final class ModelContainer: @unchecked Sendable {
         connection: Connection,
         appID: String,
         encryptionEnabled: Bool,
+        keyProvider: (any DatabaseKeyProvider.Type)?,
         logConfiguration: LogConfiguration?,
         _notifyBeforeChange: Bool
     ) throws(ManagedObjectContextError) {
@@ -207,6 +215,7 @@ public final class ModelContainer: @unchecked Sendable {
         }
 
         self.encryptionEnabled = encryptionEnabled
+        self.keyProvider = keyProvider
         self.appID = appID
 
         guard migration.schemas.contains(where: { $0.self == versionedSchema }) else {

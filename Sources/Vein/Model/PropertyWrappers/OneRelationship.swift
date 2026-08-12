@@ -208,14 +208,14 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
             #endif
         }) {
 
-            if var manyField = matchingField as? (any ManyRelationship) {
+            if let manyField = matchingField as? (any ManyRelationship) {
                 if isRemoving {
                     manyField._persistableValue.removeAll { $0 == model.id }
                 } else if !manyField._persistableValue.contains(model.id) {
                     manyField._persistableValue.append(model.id)
                 }
                 manyField.wasTouched = true
-            } else if var oneField = matchingField as? (any OneRelationship) {
+            } else if let oneField = matchingField as? (any OneRelationship) {
                 oneField._persistableValue = isRemoving ? nil : model.id
                 oneField.wasTouched = true
             }
@@ -317,10 +317,10 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
 
                     let inverse = target._fields.first { $0.key == _inverseKey }
 
-                    if var manyField = inverse as? (any ManyRelationship) {
+                    if let manyField = inverse as? (any ManyRelationship) {
                         manyField._persistableValue.removeAll(where: { $0 == model.id })
                         manyField.wasTouched = true
-                    } else if var oneField = inverse as? (any OneRelationship) {
+                    } else if let oneField = inverse as? (any OneRelationship) {
                         oneField._persistableValue = nil
                         oneField.wasTouched = true
                     }

@@ -22,6 +22,7 @@ extension ModelContainer {
     ///   - appID: A unique identifier used per-database to construct the keyring
     ///   service string: `"com.amethyst.vein.sqlcipher.\(appID)"`.
     ///   - encryptionEnabled: Whether to apply DB-level encryption.
+    ///   - keyProvider: The structure providing and storing the database key if encryption is enabled.
     ///   - logConfiguration: What information to log.
     ///
     /// - Note: `Keyring.appIdentifier` is a global, one-time configuration for the
@@ -42,24 +43,49 @@ extension ModelContainer {
     ///     }
     /// #endif
     /// ```
-    public convenience init(
-        _ versionedSchema: VersionedSchema.Type,
-        migration: SchemaMigrationPlan.Type,
-        at path: String?,
-        appID: String,
-        encryptionEnabled: Bool = true,
-        logConfiguration: LogConfiguration? = nil
-    ) throws(ManagedObjectContextError) {
-        try self.init(
-            versionedSchema,
-            migration: migration,
-            at: path,
-            appID: appID,
-            encryptionEnabled: encryptionEnabled,
-            logConfiguration: logConfiguration,
-            _notifyBeforeChange: true
-        )
-    }
+    #if !os(Android)
+        public convenience init(
+            _ versionedSchema: VersionedSchema.Type,
+            migration: SchemaMigrationPlan.Type,
+            at path: String?,
+            appID: String,
+            encryptionEnabled: Bool = true,
+            keyProvider: (any DatabaseKeyProvider.Type)? = Vein.IntegratedKeyProvider.self,
+            logConfiguration: LogConfiguration? = nil
+        ) throws(ManagedObjectContextError) {
+            try self.init(
+                versionedSchema,
+                migration: migration,
+                at: path,
+                appID: appID,
+                encryptionEnabled: encryptionEnabled,
+                keyProvider: keyProvider,
+                logConfiguration: logConfiguration,
+                _notifyBeforeChange: true
+            )
+        }
+    #else
+        public convenience init(
+            _ versionedSchema: VersionedSchema.Type,
+            migration: SchemaMigrationPlan.Type,
+            at path: String?,
+            appID: String,
+            encryptionEnabled: Bool = true,
+            keyProvider: (any DatabaseKeyProvider.Type)?,
+            logConfiguration: LogConfiguration? = nil
+        ) throws(ManagedObjectContextError) {
+            try self.init(
+                versionedSchema,
+                migration: migration,
+                at: path,
+                appID: appID,
+                encryptionEnabled: encryptionEnabled,
+                keyProvider: keyProvider,
+                logConfiguration: logConfiguration,
+                _notifyBeforeChange: true
+            )
+        }
+    #endif
 
     /// Manages the schema and storage for a Vein database.
     ///
@@ -70,6 +96,7 @@ extension ModelContainer {
     ///   - appID: A unique identifier used per-database to construct the keyring
     ///   service string: `"com.amethyst.vein.sqlcipher.\(appID)"`.
     ///   - encryptionEnabled: Whether to apply DB-level encryption.
+    ///   - keyProvider: The structure providing and storing the database key if encryption is enabled.
     ///   - logConfiguration: What information to log.
     ///
     /// - Note: `Keyring.appIdentifier` is a global, one-time configuration for the
@@ -90,22 +117,47 @@ extension ModelContainer {
     ///     }
     /// #endif
     /// ```
-    public convenience init(
-        _ versionedSchema: VersionedSchema.Type,
-        migration: SchemaMigrationPlan.Type,
-        connection: Connection,
-        appID: String,
-        encryptionEnabled: Bool = true,
-        logConfiguration: LogConfiguration? = nil
-    ) throws(ManagedObjectContextError) {
-        try self.init(
-            versionedSchema,
-            migration: migration,
-            connection: connection,
-            appID: appID,
-            encryptionEnabled: encryptionEnabled,
-            logConfiguration: logConfiguration,
-            _notifyBeforeChange: true
-        )
-    }
+    #if !os(Android)
+        public convenience init(
+            _ versionedSchema: VersionedSchema.Type,
+            migration: SchemaMigrationPlan.Type,
+            connection: Connection,
+            appID: String,
+            encryptionEnabled: Bool = true,
+            keyProvider: (any DatabaseKeyProvider.Type)? = Vein.IntegratedKeyProvider.self,
+            logConfiguration: LogConfiguration? = nil
+        ) throws(ManagedObjectContextError) {
+            try self.init(
+                versionedSchema,
+                migration: migration,
+                connection: connection,
+                appID: appID,
+                encryptionEnabled: encryptionEnabled,
+                keyProvider: keyProvider,
+                logConfiguration: logConfiguration,
+                _notifyBeforeChange: true
+            )
+        }
+    #else
+        public convenience init(
+            _ versionedSchema: VersionedSchema.Type,
+            migration: SchemaMigrationPlan.Type,
+            connection: Connection,
+            appID: String,
+            encryptionEnabled: Bool = true,
+            keyProvider: (any DatabaseKeyProvider.Type)?,
+            logConfiguration: LogConfiguration? = nil
+        ) throws(ManagedObjectContextError) {
+            try self.init(
+                versionedSchema,
+                migration: migration,
+                connection: connection,
+                appID: appID,
+                encryptionEnabled: encryptionEnabled,
+                keyProvider: keyProvider,
+                logConfiguration: logConfiguration,
+                _notifyBeforeChange: true
+            )
+        }
+    #endif
 }

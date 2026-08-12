@@ -97,19 +97,34 @@ public actor ManagedObjectContext {
             self.connection = try Connection(path)
             // That stuff can take 15s with TSAN enabled and compiled with Onone.
             // I confirmed its only an issue with TSAN.
-            #if canImport(AppKit) || canImport(UIKit) || os(Linux) || canImport(WinSDK)
-                if modelContainer.encryptionEnabled {
+            if modelContainer.encryptionEnabled {
+                guard let path = modelContainer.path else {
+                    throw ManagedObjectContextError.other(
+                        message: "Encryption is only supported on disk-stored databases."
+                    )
+                }
+                let service = "com.amethyst.vein.sqlcipher.\(modelContainer.appID)"
+                let url = URL(fileURLWithPath: path)
+                let fileName = url.lastPathComponent
+
+                try Self.keyLock.withLock {
                     guard
-                        let key = Self.getKeyForDatabase(
-                            at: path,
-                            appID: modelContainer.appID
+                        let key = try modelContainer.keyProvider?.getKey(
+                            fileName: fileName,
+                            service: service,
+                            generate: {
+                                let keyData = SymmetricKey(size: .bits256)
+                                    .withUnsafeBytes { Data($0) }
+                                let hexKey = keyData.map { String(format: "%02hhx", $0) }.joined()
+                                return hexKey
+                            }
                         )
                     else {
                         fatalError("Vein: Failed to retrieve/save key to encrypt Database.")
                     }
                     try self.connection.key(key)
                 }
-            #endif
+            }
 
             try self.connection.execute("PRAGMA journal_mode=WAL;")
         } catch let error as SQLiteDB.Result {
@@ -157,85 +172,16 @@ public actor ManagedObjectContext {
         else {
             return nil
         }
-        return Self.getKeyForDatabase(
-            at: path,
-            appID: modelContainer.appID,
-            createIfMissing: false
-        )
-    }
+        let service = "com.amethyst.vein.sqlcipher.\(modelContainer.appID)"
+        let url = URL(fileURLWithPath: path)
+        let fileName = url.lastPathComponent
 
-    /// Accesses the encryption key for a specific database file without requiring an active database connection.
-    ///
-    /// This static method allows you to retrieve or generate encryption keys by providing the file path
-    /// and application identifier. While the instance method `getDatabaseKey()` is preferred for
-    /// active contexts, this method is useful for utility tasks or pre-initialization checks.
-    ///
-    /// - Parameters:
-    ///   - path: The absolute file path to the database. The filename is used as the key identifier in the secure store.
-    ///   - appID: The unique application identifier used to namespace the Keychain or Keyring service.
-    ///   - createIfMissing: If `true`, a new 256-bit AES key will be generated and persisted if one
-    ///     does not already exist. Set this to `false` if you only want to verify the existence of a key.
-    ///
-    /// - Note: On Apple platforms, this utilizes the System Keychain. On Linux, it utilizes the
-    ///   system Keyring.
-    ///
-    /// - Returns: A hex-encoded 256-bit key string if found or successfully created; otherwise, `nil`.
-    public static func getKeyForDatabase(
-        at path: String,
-        appID: String,
-        createIfMissing: Bool = true
-    ) -> String? {
-        return keyLock.withLock {
-            let url = URL(fileURLWithPath: path)
-            let fileName = url.lastPathComponent
-
-            #if canImport(AppKit) || canImport(UIKit)
-                let keychain = Keychain(service: "com.amethyst.vein.sqlcipher.\(appID)")
-
-                if let key = keychain[fileName] {
-                    return key
-                } else if createIfMissing {
-                    let keyData = SymmetricKey(size: .bits256).withUnsafeBytes { Data($0) }
-                    let hexKey = keyData.map { String(format: "%02hhx", $0) }.joined()
-
-                    guard (try? keychain.set(hexKey, key: fileName)) != nil else {
-                        return nil
-                    }
-                    return hexKey
-                }
-            #elseif os(Linux)
-                let keyring = Keyring(service: "com.amethyst.vein.sqlcipher.\(appID)")
-
-                if let key = keyring[fileName] {
-                    return key
-                } else if createIfMissing {
-                    let keyData = SymmetricKey(size: .bits256).withUnsafeBytes { Data($0) }
-                    let hexKey = keyData.map { String(format: "%02hhx", $0) }.joined()
-
-                    guard (try? keyring.set(hexKey, for: fileName)) != nil else {
-                        return nil
-                    }
-                    return hexKey
-                }
-            #elseif canImport(WinSDK)
-                let ressource = "com.amethyst.vein.sqlcipher.\(appID)+\(fileName)"
-                if let key = WinCredential.retrieve(ressource: ressource) {
-                    return key
-                } else if createIfMissing {
-                    let keyData = SymmetricKey(size: .bits256).withUnsafeBytes { Data($0) }
-                    let hexKey = keyData.map { String(format: "%02hhx", $0) }.joined()
-
-                    guard WinCredential.store(
-                        ressource: ressource,
-                        username: "veindbsecret",
-                        secret: hexKey
-                    ) else {
-                        return nil
-                    }
-                    return hexKey
-                }
-            #endif
-            return nil
+        return Self.keyLock.withLock {
+            return try? modelContainer.keyProvider?.getKey(
+                fileName: fileName,
+                service: service,
+                generate: nil
+            )
         }
     }
 }
