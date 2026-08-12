@@ -43,7 +43,7 @@ extension ModelContainer {
     ///     }
     /// #endif
     /// ```
-    #if !os(Android)
+    #if canImport(AppKit) || canImport(UIKit) || os(Linux) || canImport(WinSDK)
         public convenience init(
             _ versionedSchema: VersionedSchema.Type,
             migration: SchemaMigrationPlan.Type,
@@ -117,7 +117,7 @@ extension ModelContainer {
     ///     }
     /// #endif
     /// ```
-    #if !os(Android)
+    #if canImport(AppKit) || canImport(UIKit) || os(Linux) || canImport(WinSDK)
         public convenience init(
             _ versionedSchema: VersionedSchema.Type,
             migration: SchemaMigrationPlan.Type,

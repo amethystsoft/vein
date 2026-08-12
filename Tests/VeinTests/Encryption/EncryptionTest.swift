@@ -111,7 +111,7 @@ struct EncryptionTest {
         func encryptionEnabledDBWithoutKeyProviderThrows() async throws {
             let path = try prepareContainerLocation(name: "androidEncryptionTest")
             do {
-                try ModelContainer(
+                _ = try ModelContainer(
                     V0_0_1.self,
                     migration: Migration.self,
                     at: path,
