@@ -22,7 +22,6 @@ import Foundation
 #endif
 
 var veinDependencies: [Target.Dependency] = [
-    .product(name: "Crypto", package: "swift-crypto"),
     .product(name: "SQLiteDB", package: "swift-sqlcipher"),
     "ULID",
     .product(name: "Logging", package: "swift-log"),
@@ -83,7 +82,6 @@ let package = Package(
             url: "https://github.com/skiptools/swift-sqlcipher",
             .upToNextMajor(from: "1.11.0")
         ),
-        .package(url: "https://github.com/apple/swift-crypto.git", "1.0.0" ..< "5.0.0"),
         .package(url: "https://github.com/swiftlang/swift-syntax.git", "600.0.0" ..< "610.0.0"),
         .package(url: "https://github.com/apple/swift-log.git", .upToNextMajor(from: "1.9.1")),
         .package(

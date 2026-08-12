@@ -56,7 +56,7 @@
                 let key = generate()
 
                 do {
-                    try keyring.set(key, key: fileName)
+                    try keyring.set(key, for: fileName)
                 } catch {
                     throw .providerError(error.localizedDescription)
                 }
@@ -84,7 +84,7 @@
                 guard WinCredential.store(
                     ressource: ressource,
                     username: "veindbsecret",
-                    secret: hexKey
+                    secret: key
                 ) else {
                     throw .providerError("Failed to store key.")
                 }

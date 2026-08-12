@@ -13,7 +13,6 @@
 import SQLiteDB
 import Foundation
 import ULID
-import Crypto
 import Logging
 import Atomics
 #if canImport(AppKit) || canImport(UIKit)
@@ -113,8 +112,14 @@ public actor ManagedObjectContext {
                             fileName: fileName,
                             service: service,
                             generate: {
-                                let keyData = SymmetricKey(size: .bits256)
-                                    .withUnsafeBytes { Data($0) }
+                                var generator = SystemRandomNumberGenerator()
+                                let keyParts = [
+                                    generator.next(),
+                                    generator.next(),
+                                    generator.next(),
+                                    generator.next()
+                                ]
+                                let keyData = keyParts.withUnsafeBytes { Data($0) }
                                 let hexKey = keyData.map { String(format: "%02hhx", $0) }.joined()
                                 return hexKey
                             }
