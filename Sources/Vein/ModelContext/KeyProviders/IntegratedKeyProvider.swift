@@ -41,7 +41,7 @@
 #elseif os(Linux)
     @_exported import KeyringAccess
 
-    public typealias IntegratedKeyProvider = KeychainKeyProvider
+    public typealias IntegratedKeyProvider = KeyringKeyProvider
     public struct KeyringKeyProvider: DatabaseKeyProvider {
         public static func getKey(
             fileName: String,
