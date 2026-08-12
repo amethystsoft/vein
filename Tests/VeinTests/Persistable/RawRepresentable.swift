@@ -56,7 +56,7 @@ struct PersistableTests {
             appID: "de.amethystsoft.vein.tests.persistable",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-        
+
         try runUpdate()
 
         guard

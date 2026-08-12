@@ -120,7 +120,8 @@ public actor ManagedObjectContext {
                             }
                         )
                     else {
-                        throw ManagedObjectContextError.other(message: "Failed to retrieve/save key to encrypt Database.")
+                        throw ManagedObjectContextError
+                            .other(message: "Failed to retrieve/save key to encrypt Database.")
                     }
                     try self.connection.key(key)
                 }
