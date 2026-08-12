@@ -109,6 +109,7 @@ struct EncryptionTest {
     #if os(Android)
         @Test
         func encryptionEnabledDBWithoutKeyProviderThrows() async throws {
+            let path = try prepareContainerLocation(name: "androidEncryptionTest")
             do {
                 try ModelContainer(
                     V0_0_1.self,
@@ -116,7 +117,7 @@ struct EncryptionTest {
                     at: path,
                     appID: "de.amethystsoft.vein.tests.encryption"
                 )
-            } catch {
+            } catch let error as ManagedObjectContextError {
                 #expect(error ==
                     ManagedObjectContextError
                     .other(message: "Failed to retrieve/save key to encrypt Database."))
