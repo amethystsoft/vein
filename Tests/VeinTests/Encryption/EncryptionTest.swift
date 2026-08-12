@@ -118,6 +118,7 @@ struct EncryptionTest {
                 )
             } catch {
                 #expect(error ==
+                    ManagedObjectContextError
                     .other(message: "Failed to retrieve/save key to encrypt Database."))
                 return
             }
