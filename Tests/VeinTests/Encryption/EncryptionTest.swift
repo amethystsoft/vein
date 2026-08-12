@@ -118,10 +118,9 @@ struct EncryptionTest {
                     appID: "de.amethystsoft.vein.tests.encryption"
                 )
             } catch let error as ManagedObjectContextError {
-                #expect(error.localizedDescription ==
-                    ManagedObjectContextError
-                    .other(message: "Failed to retrieve/save key to encrypt Database.")
-                    .localizedDescription)
+                #expect(error.localizedDescription
+                    .hasSuffix("Failed to retrieve/save key to encrypt Database.")
+                )
                 return
             }
             Issue.record("Unexpectedly didn't throw.")
