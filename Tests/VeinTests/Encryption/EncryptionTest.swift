@@ -20,98 +20,158 @@ import Testing
     @_spi(VeinTesting) @testable import VeinCore
 #endif
 
-#if !os(Android)
     @Suite
-    struct EncryptionTest {
-        func prepareContainerLocation(name: String) throws -> String {
-            let containerPath = FileManager.default.temporaryDirectory
-
-            let dbDir = containerPath.relativePath.appending("/veinTests/\(testID.uuidString)")
-
-            let dbPath = dbDir.appending("/\(name).sqlite3")
-
-            try FileManager.default.createDirectory(
-                atPath: dbDir,
-                withIntermediateDirectories: true
-            )
-
-            return dbPath
+struct EncryptionTest {
+    func prepareContainerLocation(name: String) throws -> String {
+        let containerPath = FileManager.default.temporaryDirectory
+        
+        let dbDir = containerPath.relativePath.appending("/veinTests/\(testID.uuidString)")
+        
+        let dbPath = dbDir.appending("/\(name).sqlite3")
+        
+        try FileManager.default.createDirectory(
+            atPath: dbDir,
+            withIntermediateDirectories: true
+        )
+        
+        return dbPath
+    }
+    
+    @Test
+    func testEncryption() async throws {
+#if os(Linux)
+        Keyring.appIdentifier.withLock { identifier in
+            identifier = "de.amethystsoft.vein.tests"
         }
-
-        @Test
-        func testEncryption() async throws {
-            #if os(Linux)
-                Keyring.appIdentifier.withLock { identifier in
-                    identifier = "de.amethystsoft.vein.tests"
-                }
-            #endif
-            let path = try prepareContainerLocation(name: "encryptionTest")
-
-            let container = try ModelContainer(
+#endif
+        let path = try prepareContainerLocation(name: "encryptionTest")
+        
+        #if !os(Android)
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: path,
+            appID: "de.amethystsoft.vein.tests.encryption"
+        )
+        #else
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: path,
+            appID: "de.amethystsoft.vein.tests.encryption",
+            keyProvider: StubKeyProvider.self
+        )
+        #endif
+        
+        let model = V0_0_1.Test(someValue: "test")
+        try container.context.insert(model)
+        try container.context.save()
+        
+#if !os(Android)
+        let newContainer = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: path,
+            appID: "de.amethystsoft.vein.tests.encryption"
+        )
+        #else
+        let newContainer = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: path,
+            appID: "de.amethystsoft.vein.tests.encryption",
+            keyProvider: StubKeyProvider.self
+        )
+        #endif
+        
+        let first = try newContainer.context.fetchAll(V0_0_1.Test.self).first
+        
+        #expect(first?.someValue == "test")
+        
+        do {
+            let unencryptedContainer = try ModelContainer(
+                V0_0_1.self,
+                migration: Migration.self,
+                at: path,
+                appID: "de.amethystsoft.vein.tests.encryption",
+                encryptionEnabled: false
+            )
+            
+            _ = try unencryptedContainer.context.fetchAll(V0_0_1.Test.self)
+            Issue.record("Didn't throw an error, db might not be encrypted")
+        } catch {
+            if case .notADatabase = error { return }
+            Issue.record("Thrown error does not match expectations: \(error.errorDescription)")
+            return
+        }
+    }
+    
+    #if os(Android)
+    @Test
+    func encryptionEnabledDBWithoutKeyProviderThrows() async throws {
+        do {
+            try ModelContainer(
                 V0_0_1.self,
                 migration: Migration.self,
                 at: path,
                 appID: "de.amethystsoft.vein.tests.encryption"
             )
+        } catch {
+            #expect(error == .other(message: "Failed to retrieve/save key to encrypt Database."))
+            return
+        }
+        Issue.record("Unexpectedly didn't throw.")
+    }
+    #endif
+}
 
-            let model = V0_0_1.Test(someValue: "test")
-            try container.context.insert(model)
-            try container.context.save()
-
-            let newContainer = try ModelContainer(
-                V0_0_1.self,
-                migration: Migration.self,
-                at: path,
-                appID: "de.amethystsoft.vein.tests.encryption"
-            )
-
-            let first = try newContainer.context.fetchAll(V0_0_1.Test.self).first
-
-            #expect(first?.someValue == "test")
-
-            do {
-                let unencryptedContainer = try ModelContainer(
-                    V0_0_1.self,
-                    migration: Migration.self,
-                    at: path,
-                    appID: "de.amethystsoft.vein.tests.encryption",
-                    encryptionEnabled: false
-                )
-
-                _ = try unencryptedContainer.context.fetchAll(V0_0_1.Test.self)
-                Issue.record("Didn't throw an error, db might not be encrypted")
-            } catch {
-                if case .notADatabase = error { return }
-                Issue.record("Thrown error does not match expectations: \(error.errorDescription)")
-                return
-            }
+fileprivate enum V0_0_1: VersionedSchema {
+    static let version = ModelVersion(0, 0, 1)
+    static let models: [any Vein.PersistentModel.Type] = [Test.self]
+    
+    @Model
+    final class Test: Identifiable {
+        var someValue: String
+        
+        @LazyField
+        var text: String?
+        
+        init(someValue: String) {
+            self.someValue = someValue
         }
     }
+}
 
-    fileprivate enum V0_0_1: VersionedSchema {
-        static let version = ModelVersion(0, 0, 1)
-        static let models: [any Vein.PersistentModel.Type] = [Test.self]
-
-        @Model
-        final class Test: Identifiable {
-            var someValue: String
-
-            @LazyField
-            var text: String?
-
-            init(someValue: String) {
-                self.someValue = someValue
-            }
-        }
+fileprivate enum Migration: SchemaMigrationPlan {
+    static var schemas: [any Vein.VersionedSchema.Type] {
+        [V0_0_1.self]
     }
-
-    fileprivate enum Migration: SchemaMigrationPlan {
-        static var schemas: [any Vein.VersionedSchema.Type] {
-            [V0_0_1.self]
-        }
-
-        static var stages: [MigrationStage] {
-            []
-        }
+    
+    static var stages: [MigrationStage] {
+        []
     }
+}
+
+#if os(Android)
+struct StubKeyProvider: DatabaseKeyProvider {
+    static var keys: [String: String]
+    static func getKey(
+        fileName: String,
+        service: String,
+        generate: (() -> String)?
+    ) throws(KeyProviderError) -> String {
+        let ressource = "\(service)+\(fileName)"
+        
+        if let key = Self.keys[ressource] {
+            return key
+        } else if let generate {
+            let key = generate()
+            
+            Self.keys[ressource] = key
+            return key
+        }
+        
+        throw .noSuchKey
+    }
+}
 #endif

@@ -56,6 +56,8 @@ struct PersistableTests {
             appID: "de.amethystsoft.vein.tests.persistable",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
+        
+        try runUpdate()
 
         guard
             let model = try container.context.fetchAll(V0_0_1.Account.self).first
@@ -79,6 +81,7 @@ struct PersistableTests {
                 let model = try updateContainer.context.fetchAll(V0_0_1.Account.self).first
             else {
                 Issue.record("Unexpectedly found no model.")
+                return
             }
 
             #expect(model.accountType == .admin)

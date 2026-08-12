@@ -71,7 +71,7 @@ extension ModelContainer {
             at path: String?,
             appID: String,
             encryptionEnabled: Bool = true,
-            keyProvider: (any DatabaseKeyProvider.Type)?,
+            keyProvider: (any DatabaseKeyProvider.Type)? = nil,
             logConfiguration: LogConfiguration? = nil
         ) throws(ManagedObjectContextError) {
             try self.init(
@@ -145,7 +145,7 @@ extension ModelContainer {
             connection: Connection,
             appID: String,
             encryptionEnabled: Bool = true,
-            keyProvider: (any DatabaseKeyProvider.Type)?,
+            keyProvider: (any DatabaseKeyProvider.Type)? = nil,
             logConfiguration: LogConfiguration? = nil
         ) throws(ManagedObjectContextError) {
             try self.init(
