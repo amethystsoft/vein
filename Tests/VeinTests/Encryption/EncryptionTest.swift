@@ -78,7 +78,7 @@ import Testing
                     encryptionEnabled: false
                 )
 
-                let results = try unencryptedContainer.context.fetchAll(V0_0_1.Test.self)
+                _ = try unencryptedContainer.context.fetchAll(V0_0_1.Test.self)
                 Issue.record("Didn't throw an error, db might not be encrypted")
             } catch {
                 if case .notADatabase = error { return }
