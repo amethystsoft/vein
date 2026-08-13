@@ -183,14 +183,14 @@
             publishToEnclosingObserver()
             didChange.send()
         }
-        
+
         func publishToEnclosingObserver() {
             let observers = enclosingObservers.mutate { $0.values }
             for publish in observers {
                 publish()
             }
         }
-        
+
         deinit {
             guard let primaryObserver else { return }
             primaryObserver.enclosingObservers.mutate { observers in

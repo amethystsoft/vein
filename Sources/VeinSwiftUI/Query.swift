@@ -165,14 +165,14 @@
             objectWillChange.send()
             results?.removeAll(where: { $0.id == model.id })
         }
-        
+
         func publishToEnclosingObserver() {
             let observers = enclosingObservers.mutate { $0.values }
             for publish in observers {
                 publish()
             }
         }
-        
+
         deinit {
             guard let primaryObserver else { return }
             primaryObserver.enclosingObservers.mutate { observers in
