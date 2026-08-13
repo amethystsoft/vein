@@ -85,9 +85,10 @@ We generally recommend not to save the same models on multiple threads concurren
 Vein is designed to be highly portable, relying on standard Swift Evolution tools, cross platform wrappers and platform specific tools (for storing encryption keys), to make usage as seemless as possible for you.
 
 - **Database & Security**: `skiptools/swift-sqlcipher` (cross platform sqlite and db level encryption)
-- **Credentials**: `kishikawakatsumi/keychainaccess` (Apple), `amethystsoft/KeyringAccess` (our own lib for storing credentials in SecretService on Linux) and a Vein internal wrapper for CredW from the WinSDK on windows. Currently we don't support db level encryption on android due to difficulties with storing keys safely caused by the way android is build.
+- **Credentials**: `kishikawakatsumi/keychainaccess` (Apple), `amethystsoft/KeyringAccess` (our own lib for storing credentials in SecretService on Linux) and a Vein internal wrapper for CredW from the WinSDK on windows. Currently we don't support db level encryption on android automatically due to difficulties with storing keys safely caused by the way android is build. You can use your own implementation of `DatabaseKeyProvider`.
 - **Metadata & Tooling**: `swiftlang/swift-syntax` (compile time macros), `apple/swift-log`, `apple/swift-atomics` (used only in a write once, read a lot place)
 - **Testing**: `typelift/SwiftCheck` for property based testing.
+- **SwiftCrossUI**: VeinSCUI depends on SwiftCrossUI. It's only used when the trait `VeinSCUI` is active.
 
 ## Sponsoring, Alternative Licensing & CLA
 

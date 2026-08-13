@@ -18,6 +18,7 @@ swift package \
   --target VeinCore \
   --target VeinSwiftUI \
   --target Vein \
+  --target VeinSCUI \
   --target ULID \
   --enable-experimental-combined-documentation \
   --output-path "$OUTPUT_DIR" \
