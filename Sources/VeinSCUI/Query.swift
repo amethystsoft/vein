@@ -73,7 +73,7 @@
 
         typealias ModelType = M
 
-        private var enclosingObservers = [UUID: () -> Void]()
+        private let enclosingObservers = Mutex([UUID: () -> Void]())
 
         var primaryObserver: QueryObserver<M>?
 
@@ -102,8 +102,10 @@
 
             if primary !== self {
                 self.primaryObserver = primary
-                primary.enclosingObservers[id] = { [weak self] in
-                    self?.didChange.send()
+                primary.enclosingObservers.mutate { observers in
+                    observers[id] = { [weak self] in
+                        self?.didChange.send()
+                    }
                 }
             } else {
                 fetchInitialResults(with: context)
@@ -183,14 +185,17 @@
         }
         
         func publishToEnclosingObserver() {
-            for publish in enclosingObservers.values {
+            let observers = enclosingObservers.mutate { $0.values }
+            for publish in observers {
                 publish()
             }
         }
         
         deinit {
             guard let primaryObserver else { return }
-            primaryObserver.enclosingObservers[id] = nil
+            primaryObserver.enclosingObservers.mutate { observers in
+                observers[id] = nil
+            }
         }
     }
 
