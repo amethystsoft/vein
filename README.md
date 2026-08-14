@@ -1,10 +1,140 @@
 # Amethyst Vein
+> Vein brings a refined, SwiftData-like developer experience to Apple, Linux, Android and Windows.
 
 [![Sponsor Vein Development](https://img.shields.io/badge/Sponsor-Mia%20Koring-DE69FF?logo=github-sponsors)](https://github.com/sponsors/miakoring)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/amethystsoft/vein/swift-test-mac.yml?label=mac)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/amethystsoft/vein/swift-test-linux.yml?label=linux)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/amethystsoft/vein/swift-test-android.yml?label=android)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/amethystsoft/vein/swift-test-windows.yml?label=windows)
+
+[Table of Contents](#table-of-contents)
+[Docs and Tutorials](https://vein.amethystsoft.de)
+
+## Example
+### Declaring Models
+```swift
+enum V0_0_1: VersionedSchema {
+    static let version = ModelVersion(0, 0, 1)
+    static let models: [any PersistentModel.Type] = [
+        Post.self,
+        Attachment.self
+    ]
+
+    @Model
+    final class Post {
+        var title: String
+        var content: String
+
+        @Relationship(
+            inverse: \Attachment.post,
+            deleteRule: .cascade
+        )
+        var attachments: [Attachment]
+
+        init(title: String, content: String) {
+            self.title = title
+            self.content = content
+        }
+    }
+
+    @Model
+    final class Attachment {
+        @Relationship
+        var post: Post?
+
+        var name: String
+        var fileType: FileType
+        var sizeMiB: Double
+
+        @LazyField
+        var data: Data?
+
+        init(name: String, fileType: FileType, data: Data) {
+            self.name = name
+            self.fileType = fileType
+            self.sizeMiB = Double(data.count) / 1024 / 1024
+            self.data = data
+        }
+
+        enum FileType: String, RawRepresentablePersistable {
+            case png
+            case jpg
+            case gif
+            case swift
+            // ...
+        }
+    }
+}
+
+typealias Post = V0_0_1.Post
+typealias Attachment = V0_0_1.Attachment
+
+enum Migration: SchemaMigrationPlan {
+    static let schemas: [VersionedSchema.Type] = [
+        V0_0_1.self
+    ]
+
+    static let stages: [MigrationStage] = []
+}
+```
+
+### Use
+
+```swift
+func setupAndUseVein() throws {
+    // Optional: Setup keyring for Linux support
+    #if os(Linux)
+        Keyring.appIdentifier.withLock { $0 = "com.example.app" }
+    #endif
+
+    let container = try ModelContainer(
+        V0_0_1.self, // Your VersionedSchema
+        migration: Migration.self, // Your SchemaMigrationPlan
+        at: "path/to/db.sqlite3", // or nil for in memory
+        appID: "com.example.app" // The id of your app
+    )
+
+    try container.migrate()
+
+    let post = Post(title: "How to use Vein?", content: "It's very easy.")
+    try container.context.insert(post)
+
+    post.content = "What did I tell you?"
+
+    try container.context.save()
+
+    let posts = try container.context.fetchAll(#Predicate<Post> { post in
+        post.title.contains("Vein")
+    }) // gives back [post]
+
+    try container.context.delete(post)
+}  
+```
+
+### Use in Views
+More here: [SwiftUI](https://vein.amethystsoft.de/tutorials/swiftui-table-of-contents) [SwiftCrossUI](https://vein.amethystsoft.de/tutorials/scui-table-of-contents)
+
+```swift
+struct ContentView: View {
+    @Query(#Predicate<Post> { post in
+        post.title.contains("Swift")
+    })
+    var posts: [Post]
+
+    @Environment(\.modelContext) var context
+
+    var body: some View {
+        Button("Add post") {
+            try? context.insert(Post(title: "New Post", content: "..."))
+            // optional here, you can save later
+            try? context.save()
+        }
+        List(posts) { post in
+            Text(post.title)
+        }
+    }
+}
+```
 
 ## Table of Contents
 - [What is Vein](#what)
