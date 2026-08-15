@@ -17,6 +17,8 @@ jobs:
         run: ./Scripts/tsan-test-release.sh
       - name: Test VeinSwiftUI
         run: IS_RUNNING_HEADLESS=1 TEST_SWIFTUI=1 ./Scripts/tsan-test-release.sh
+      - name: Test VeinSCUI
+        run: TEST_SCUI=1 ./Scripts/tsan-test-release.sh
   linux:
     runs-on: blacksmith-8vcpu-ubuntu-2404-arm
     container:
@@ -26,6 +28,49 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
         with:
           persist-credentials: false
-      - name: Test
-        # Disable encryption for testing purposes if needed
-        run: ./Scripts/tsan-test-release.sh
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y dbus-x11 gnome-keyring
+      - name: Test VeinCore
+        run: |
+          # Use dbus-run-session to wrap the test execution
+          dbus-run-session -- sh -c '
+            echo "test" | gnome-keyring-daemon --unlock --components=secrets
+            ./Scripts/tsan-test-release.sh
+          '
+      - name: Test VeinSCUI
+        run: |
+          dbus-run-session -- sh -c '
+            echo "test" | gnome-keyring-daemon --unlock --components=secrets
+            TEST_SCUI=1 ./Scripts/tsan-test-release.sh
+          '
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
+        with:
+          persist-credentials: false
+      - name: Setup Swift
+        uses: SwiftyLab/setup-swift@38f54a76b70d989321de9dc7c840618c08cf56e9 #1.14.0
+        with:
+          swift-version: "6.3.2"
+
+      - name: Test VeinCore
+        shell: bash
+        run: SHOULD_DISABLE_ENCRYPTION=1 swift test -c release --enable-experimental-prebuilts
+  android:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
+        with:
+          persist-credentials: false
+      - name: "Test Swift Package on Android"
+        uses: skiptools/swift-android-action@2044b79660f201ccef8cbce62877e4ec5409f9c8 # 2.9.5
+        with:
+          swift-version: 'nightly-6.4.x'
+          # Ubuntu runners low on space causes the emulator to fail to install
+          free-disk-space: true
+          test-env: SHOULD_DISABLE_ENCRYPTION=1
+          swift-configuration: release
