@@ -20,7 +20,7 @@ jobs:
       - name: Test VeinSCUI
         run: TEST_SCUI=1 ./Scripts/tsan-test-release.sh
   linux:
-    runs-on: blacksmith-8vcpu-ubuntu-2404-arm
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     container:
       image: swift:6.3.2-noble
     steps:
