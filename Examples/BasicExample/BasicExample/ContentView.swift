@@ -11,7 +11,6 @@
 // ===----------------------------------------------------------------------===
 
 import SwiftUI
-import Vein
 import VeinSwiftUI
 
 struct ContentView: View {
