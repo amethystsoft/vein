@@ -27,7 +27,7 @@
 
         public var wrappedValue: [M] {
             if let results = queryObserver.results {
-                return results.sorted(by: { $0.id < $1.id })
+                return results.sorted(using: sortDescriptors)
             }
             if queryObserver.results == nil && queryObserver.primaryObserver == nil {
                 queryObserver.initialize(with: context)
