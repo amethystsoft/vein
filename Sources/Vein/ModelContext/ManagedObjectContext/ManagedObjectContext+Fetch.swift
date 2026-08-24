@@ -16,7 +16,7 @@ import Foundation
 
 extension ManagedObjectContext {
     /// Returns all models matching the predicate.
-    nonisolated func _fetchAll<T: PersistentModel>(_ predicate: ModelPredicate<T>) throws(MOCError)
+    nonisolated func _fetchAll<T: PersistentModel>(_ predicate: ModelPredicate<T>, sortingBy sortDescriptors: [ModelSortDescriptor<T>]?) throws(MOCError)
         -> [T]
     {
         do {
@@ -25,7 +25,11 @@ extension ManagedObjectContext {
 
             var fieldsToLoad = eagerLoadedFields.map(\.fetchExpressible)
             fieldsToLoad.append(SQLExpression<String>("id"))
-            let select = table.select(fieldsToLoad)
+            var select = table.select(fieldsToLoad)
+            
+            if let sortDescriptors {
+                select = select.order(sortDescriptors)
+            }
 
             if modelContainer.logConfiguration.sqlQueries {
                 Self.logger.info(

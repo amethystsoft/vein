@@ -20,7 +20,7 @@ struct SortDescriptorTests {
         
         let descriptor = SortDescriptor<V0_0_1.User>(\.balance)
         
-        let sortedQuery = try descriptor.expandQuery(baseQuery)
+        let sortedQuery = try baseQuery.order(descriptor.expressible)
         
         let expectedTemplate = """
             SELECT ? FROM "V0_0_1.User" ORDER BY "balance" ASC
@@ -36,7 +36,7 @@ struct SortDescriptorTests {
         
         let descriptor = SortDescriptor<V0_0_1.User>(\.balance, order: .reverse)
         
-        let sortedQuery = try descriptor.expandQuery(baseQuery)
+        let sortedQuery = try baseQuery.order(descriptor.expressible)
         
         let expectedTemplate = """
             SELECT ? FROM "V0_0_1.User" ORDER BY "balance" DESC
@@ -52,7 +52,7 @@ struct SortDescriptorTests {
         
         let descriptor = SortDescriptor<V0_0_1.User>(\.email)
         
-        let sortedQuery = try descriptor.expandQuery(baseQuery)
+        let sortedQuery = try baseQuery.order(descriptor.expressible)
         
         let expectedTemplate = """
             SELECT ? FROM "V0_0_1.User" ORDER BY "email" ASC
@@ -68,11 +68,42 @@ struct SortDescriptorTests {
         
         let descriptor = SortDescriptor<V0_0_1.User>(\.email, order: .reverse)
         
-        let sortedQuery = try descriptor.expandQuery(baseQuery)
+        let sortedQuery = try baseQuery.order(descriptor.expressible)
         
         let expectedTemplate = """
             SELECT ? FROM "V0_0_1.User" ORDER BY "email" DESC
             """
+        
+        #expect(sortedQuery.expression.template == expectedTemplate)
+    }
+    
+    @Test
+    func multiple() async throws {
+        let table = Table(V0_0_1.User.schema)
+        let baseQuery = table.select(["*"])
+        
+        let descriptors = try [
+            SortDescriptor<V0_0_1.User>(\.email, order: .reverse),
+            SortDescriptor<V0_0_1.User>(\.balance)
+        ].map(ModelSortDescriptor.init)
+        
+        let sortedQuery = baseQuery.order(descriptors)
+        
+        let expectedTemplate = """
+            SELECT ? FROM "V0_0_1.User" ORDER BY "email" DESC, "balance" ASC
+            """
+        
+        #expect(sortedQuery.expression.template == expectedTemplate)
+    }
+    
+    @Test
+    func empty() async throws {
+        let table = Table(V0_0_1.User.schema)
+        let baseQuery = table.select(["*"])
+        
+        let sortedQuery = baseQuery.order([])
+        
+        let expectedTemplate = "SELECT ? FROM \"V0_0_1.User\""
         
         #expect(sortedQuery.expression.template == expectedTemplate)
     }
@@ -85,16 +116,12 @@ fileprivate enum V0_0_1: VersionedSchema {
     @Model
     final class User: Identifiable {
         @Field
-        var name: String
-        
-        @Field
         var email: String?
         
         @Field
         var balance: Double
         
-        init(name: String, email: String?) {
-            self.name = name
+        init(email: String?) {
             self.email = email
             self.balance = 0
         }

@@ -7,16 +7,18 @@ public enum SortDescriptorConversionError: Error {
 }
 
 extension SortDescriptor where Compared: PersistentModel {
-    func expandQuery(_ query: Table) throws(SortDescriptorConversionError) -> Table {
-        guard let keyPath else { throw .invalidKeyPath }
-        guard let information = Compared._predicateInformation(for: keyPath) else {
-            throw .noFieldInformation
+    var expressible: (any Expressible) {
+        get throws(SortDescriptorConversionError) {
+            guard let keyPath else { throw .invalidKeyPath }
+            guard let information = Compared._predicateInformation(for: keyPath) else {
+                throw .noFieldInformation
+            }
+            
+            if order == .forward {
+                return information.fetchExpressible.expression.asc
+            }
+            
+            return information.fetchExpressible.expression.desc
         }
-        
-        if order == .forward {
-            return query.order(information.fetchExpressible.expression.asc)
-        }
-        
-        return query.order(information.fetchExpressible.expression.desc)
     }
 }
