@@ -50,12 +50,16 @@ struct RealDatabaseSortDescriptorTests {
         let dbPath = try prepareContainerLocation(name: name)
         try makeTestData(name: name)
 
+        var logConfig = LogConfiguration.debug
+        logConfig.sqlQueries = true
+        
         return try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
             at: dbPath,
             appID: "de.amethystsoft.vein.RealDatabaseSortDescriptorTests",
-            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption,
+            logConfiguration: logConfig
         )
     }
 
@@ -127,7 +131,7 @@ struct RealDatabaseSortDescriptorTests {
 
         let results = try container.context.fetchAll(
             V0_0_1.User.self,
-            sortBy: [SortDescriptor<V0_0_1.User>(\.name)]
+            sortBy: [SortDescriptor<V0_0_1.User>(\.name, comparator: .lexical)]
         )
 
         #expect(results.count == 3)
@@ -141,7 +145,7 @@ struct RealDatabaseSortDescriptorTests {
 
         let results = try container.context.fetchAll(
             V0_0_1.User.self,
-            sortBy: [SortDescriptor(\.name, order: .reverse)]
+            sortBy: [SortDescriptor(\.name, comparator: .lexical, order: .reverse)]
         )
 
         #expect(results.count == 3)

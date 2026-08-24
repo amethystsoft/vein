@@ -87,6 +87,35 @@ extension FieldInformation {
                 }
         }
     }
+    
+    package func fetchExpressible(collatedBy collation: Collation) -> Expressible {
+        return switch typeName.isNull {
+            case true:
+                switch SQLiteTypeName.notNull(typeName) {
+                    case .integer: SQLExpression<Int64?>(key)
+                    case .real: SQLExpression<Double?>(key)
+                    case .text: SQLExpression<String?>(key).collate(collation)
+                    case .blob: SQLExpression<Data?>(key)
+                    case .jsonb: SQLExpression<String?>(literal: "json(\"\(key)\")")
+                    default:
+                        fatalError(
+                            "Unexpectedly found null. Check SQLiteTypeName.notNull() for logic errors"
+                        )
+                }
+            case false:
+                switch typeName {
+                    case .integer: SQLExpression<Int64>(key)
+                    case .real: SQLExpression<Double>(key)
+                    case .text: SQLExpression<String>(key).collate(collation)
+                    case .blob: SQLExpression<Data>(key)
+                    case .jsonb: SQLExpression<String>(literal: "json(\"\(key)\")")
+                    default:
+                        fatalError(
+                            "Unexpectedly found null. Check SQLiteTypeName.notNull() for logic errors"
+                        )
+                }
+        }
+    }
 
     package func addRetroactively(to schema: String, on context: ManagedObjectContext) throws {
         switch SQLiteTypeName.notNull(typeName) {
