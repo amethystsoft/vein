@@ -52,7 +52,7 @@ struct RealDatabaseSortDescriptorTests {
 
         var logConfig = LogConfiguration.debug
         logConfig.sqlQueries = true
-        
+
         return try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,

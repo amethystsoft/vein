@@ -25,16 +25,16 @@ extension SortDescriptor where Compared: PersistentModel {
             guard let information = Compared._predicateInformation(for: keyPath) else {
                 throw .noFieldInformation
             }
-            
+
             var expressible: any Expressible
-            
+
             if let stringComparator {
                 expressible = switch stringComparator {
                     case .lexical:
                         information.fetchExpressible(collatedBy: .binary)
                     #if os(Darwin)
-                    case .localizedStandard, .localized:
-                        information.fetchExpressible(collatedBy: .nocase)
+                        case .localizedStandard, .localized:
+                            information.fetchExpressible(collatedBy: .nocase)
                     #endif
                     default: information.fetchExpressible
                 }
@@ -45,7 +45,7 @@ extension SortDescriptor where Compared: PersistentModel {
             if order == .forward {
                 return expressible.expression.asc
             }
-            
+
             return expressible.expression.desc
         }
     }

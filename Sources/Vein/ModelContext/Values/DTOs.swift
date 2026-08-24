@@ -87,7 +87,7 @@ extension FieldInformation {
                 }
         }
     }
-    
+
     package func fetchExpressible(collatedBy collation: Collation) -> Expressible {
         return switch typeName.isNull {
             case true:
