@@ -25,17 +25,15 @@ extension ManagedObjectContext {
     /// Returns all models matching the predicate.
     /// Non existent tables are treated as empty state and therefore return [].
     public nonisolated func fetchAll<T: PersistentModel>(
-        _ predicate: Predicate<T>,
-        sortBy descriptors: [SortDescriptor<T>]? = nil
+        _ predicate: Predicate<T>
     ) throws(MOCError) -> [T] {
         do {
             guard
                 self.modelContainer.getSchema(for: T.typeIdentifier) != nil
             else { throw MOCError.inactiveModelTypeFetched(T.self)}
             let modelPredicate = try ModelPredicate(predicate)
-            let modelSortDescriptors = try descriptors?.map(ModelSortDescriptor.init)
-            
-            return try _fetchAll(modelPredicate, sortingBy: modelSortDescriptors)
+
+            return try _fetchAll(modelPredicate, sortingBy: nil)
         } catch let error as MOCError {
             switch error {
                 case .noSuchTable:
@@ -49,15 +47,13 @@ extension ManagedObjectContext {
     /// Non existent tables are treated as empty state and therefore return [].
     public nonisolated func fetchAll<T: PersistentModel>(
         _ modelPredicate: ModelPredicate<T>,
-        sortBy descriptors: [SortDescriptor<T>]? = nil
     ) throws(MOCError) -> [T] {
         do {
             guard
                 self.modelContainer.getSchema(for: T.typeIdentifier) != nil
             else { throw MOCError.inactiveModelTypeFetched(T.self)}
-            let modelSortDescriptors = try descriptors?.map(ModelSortDescriptor.init)
-            
-            return try _fetchAll(modelPredicate, sortingBy: modelSortDescriptors)
+
+            return try _fetchAll(modelPredicate, sortingBy: nil)
         } catch let error as MOCError {
             switch error {
                 case .noSuchTable:
@@ -66,19 +62,19 @@ extension ManagedObjectContext {
             }
         } catch { throw .other(message: error.localizedDescription)}
     }
-    
+
     /// Returns all models matching the predicate.
     /// Non existent tables are treated as empty state and therefore return [].
     public nonisolated func fetchAll<T: PersistentModel>(
         _ predicate: Predicate<T>,
-        sortBy descriptors: [ModelSortDescriptor<T>]? = nil
+        sortBy descriptors: [SortDescriptor<T>]
     ) throws(MOCError) -> [T] {
         do {
             guard
                 self.modelContainer.getSchema(for: T.typeIdentifier) != nil
-                    else { throw MOCError.inactiveModelTypeFetched(T.self)}
+            else { throw MOCError.inactiveModelTypeFetched(T.self)}
             let modelPredicate = try ModelPredicate(predicate)
-            
+
             return try _fetchAll(modelPredicate, sortingBy: descriptors)
         } catch let error as MOCError {
             switch error {
@@ -88,19 +84,19 @@ extension ManagedObjectContext {
             }
         } catch { throw .other(message: error.localizedDescription)}
     }
-    
+
     /// Returns all models matching the ``ModelPredicate``.
     /// Non existent tables are treated as empty state and therefore return [].
     public nonisolated func fetchAll<T: PersistentModel>(
         _ modelPredicate: ModelPredicate<T>,
-        sortBy descriptors: [ModelSortDescriptor<T>]? = nil
+        sortBy descriptor: [SortDescriptor<T>]
     ) throws(MOCError) -> [T] {
         do {
             guard
                 self.modelContainer.getSchema(for: T.typeIdentifier) != nil
             else { throw MOCError.inactiveModelTypeFetched(T.self)}
-            
-            return try _fetchAll(modelPredicate, sortingBy: descriptors)
+
+            return try _fetchAll(modelPredicate, sortingBy: descriptor)
         } catch let error as MOCError {
             switch error {
                 case .noSuchTable:
@@ -113,19 +109,18 @@ extension ManagedObjectContext {
     /// Returns all models of a model type.
     /// Non existent tables are treated as empty state and therefore return [].
     public nonisolated func fetchAll<T: PersistentModel>(
-        _ modelType: T.Type,
-        sortBy descriptors: [SortDescriptor<T>]? = nil
+        _ modelType: T.Type
     ) throws(MOCError) -> [T] {
-        try fetchAll(#Predicate<T>{ _ in true }, sortBy: descriptors)
+        try fetchAll(#Predicate<T>{ _ in true })
     }
-    
+
     /// Returns all models of a model type.
     /// Non existent tables are treated as empty state and therefore return [].
     public nonisolated func fetchAll<T: PersistentModel>(
         _ modelType: T.Type,
-        sortBy descriptors: [ModelSortDescriptor<T>]? = nil
+        sortBy descriptor: [SortDescriptor<T>]
     ) throws(MOCError) -> [T] {
-        try fetchAll(#Predicate<T>{ _ in true }, sortBy: descriptors)
+        try fetchAll(#Predicate<T>{ _ in true }, sortBy: descriptor)
     }
 
     /// Inserts an unmanaged model into the context.

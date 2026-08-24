@@ -23,6 +23,8 @@
         @StateObject var queryObserver: QueryObserver<M>
         @Environment(\.modelContext) var context
 
+        let sortDescriptors: [SortDescriptor<M>]
+
         public var wrappedValue: [M] {
             if let results = queryObserver.results {
                 return results.sorted(by: { $0.id < $1.id })
@@ -31,17 +33,39 @@
                 queryObserver.initialize(with: context)
             }
             return (queryObserver.primaryObserver?.results ?? queryObserver.results ?? [])
-                .sorted(by: { $0.id < $1.id })
+                .sorted(using: sortDescriptors)
         }
 
         public init(_ predicate: ModelPredicate<M> = ModelPredicate<M>.all) {
             self._queryObserver = StateObject(wrappedValue: QueryObserver<M>(predicate))
+            self.sortDescriptors = [SortDescriptor<M>(\.id)]
         }
 
         public init(_ predicate: Predicate<M>) {
             do {
                 let modelPredicate = try ModelPredicate(predicate)
                 self._queryObserver = StateObject(wrappedValue: QueryObserver(modelPredicate))
+                self.sortDescriptors = [SortDescriptor<M>(\.id)]
+            } catch {
+                fatalError(
+                    "Creating ModelPredicate from predicate '\(predicate.expression)' failed with: \(error.localizedDescription)"
+                )
+            }
+        }
+
+        public init(
+            _ predicate: ModelPredicate<M> = ModelPredicate<M>.all,
+            sortBy descriptors: [SortDescriptor<M>]
+        ) {
+            self._queryObserver = StateObject(wrappedValue: QueryObserver<M>(predicate))
+            self.sortDescriptors = descriptors
+        }
+
+        public init(_ predicate: Predicate<M>, sortBy descriptors: [SortDescriptor<M>]) {
+            do {
+                let modelPredicate = try ModelPredicate(predicate)
+                self._queryObserver = StateObject(wrappedValue: QueryObserver(modelPredicate))
+                self.sortDescriptors = descriptors
             } catch {
                 fatalError(
                     "Creating ModelPredicate from predicate '\(predicate.expression)' failed with: \(error.localizedDescription)"

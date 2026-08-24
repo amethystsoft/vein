@@ -14,6 +14,7 @@
     import SwiftCrossUI
     import Vein
     import Logging
+    import Foundation
 
     @MainActor
     @propertyWrapper
@@ -35,6 +36,7 @@
         public typealias WrappedType = [M]
         var queryObserver: QueryObserver<M>
         var context: ManagedObjectContext?
+        let sortDescriptors: [SortDescriptor<M>]
 
         public var wrappedValue: [M] {
             if let results = queryObserver.results {
@@ -47,17 +49,39 @@
                 queryObserver.initialize(with: context)
             }
             return (queryObserver.primaryObserver?.results ?? queryObserver.results ?? [])
-                .sorted(by: { $0.id < $1.id })
+                .sorted(using: sortDescriptors)
         }
 
         public init(_ predicate: ModelPredicate<M> = ModelPredicate<M>.all) {
             self.queryObserver = QueryObserver<M>(predicate)
+            self.sortDescriptors = [SortDescriptor<M>(\.id)]
         }
 
         public init(_ predicate: Predicate<M>) {
             do {
                 let modelPredicate = try ModelPredicate(predicate)
                 self.queryObserver = QueryObserver(modelPredicate)
+                self.sortDescriptors = [SortDescriptor<M>(\.id)]
+            } catch {
+                fatalError(
+                    "Creating ModelPredicate from predicate '\(predicate.expression)' failed with: \(error.localizedDescription)"
+                )
+            }
+        }
+
+        public init(
+            _ predicate: ModelPredicate<M> = ModelPredicate<M>.all,
+            sortBy descriptors: [SortDescriptor<M>]
+        ) {
+            self.queryObserver = QueryObserver<M>(predicate)
+            self.sortDescriptors = descriptors
+        }
+
+        public init(_ predicate: Predicate<M>, sortBy descriptors: [SortDescriptor<M>]) {
+            do {
+                let modelPredicate = try ModelPredicate(predicate)
+                self.queryObserver = QueryObserver(modelPredicate)
+                self.sortDescriptors = descriptors
             } catch {
                 fatalError(
                     "Creating ModelPredicate from predicate '\(predicate.expression)' failed with: \(error.localizedDescription)"
