@@ -10,6 +10,7 @@
 //
 // ===----------------------------------------------------------------------===
 
+/// A structure for configuring Vein's runtime behavior.
 public struct ModelConfiguration: Sendable {
     /// Whether to clean up stale identity map entries on ``ManagedObjectContext/save()``.
     public var cleanStaleIdentityMapEntriesOnSave: Bool = true
