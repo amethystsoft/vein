@@ -76,7 +76,7 @@ public actor ManagedObjectContext {
     nonisolated let saveLock = NSLock()
 
     // MARK: - Ensure single row - single instance
-    nonisolated(unsafe) let identityMap: ThreadSafeIdentityMap
+    @_spi(VeinTesting) public nonisolated let identityMap: ThreadSafeIdentityMap
 
     // MARK: - UI change notification
     nonisolated let registeredQueries = Mutex(
