@@ -26,16 +26,16 @@ extension ManagedObjectContext {
 @_spi(VeinTesting) public nonisolated final class ThreadSafeIdentityMap: @unchecked Sendable {
     private let lock = NSLock()
     private var cache = [ObjectIdentifier: [ULID: WeakModel]]()
-    
+
     private var task: Task<Void, Never>?
-    
+
     init(cleanWithTimeout seconds: UInt16?) {
         if let seconds {
             self.task = Task.detached(priority: .utility) { @Sendable [weak self] in
                 while !Task.isCancelled {
                     do {
                         try await Task.sleep(for: .seconds(seconds))
-                        
+
                         guard let self else { break }
                         self.compact()
                     } catch {
@@ -132,19 +132,19 @@ extension ManagedObjectContext {
             }
         }
     }
-    
+
     func dump() -> [ObjectIdentifier: [ULID: WeakModel]] {
         return lock.withLock {
             cache
         }
     }
-    
+
     func setToNil(type: ObjectIdentifier, id: ULID) {
         lock.withLock {
             cache[type]?[id]?.wrappedValue = nil
         }
     }
-    
+
     deinit {
         self.task?.cancel()
     }

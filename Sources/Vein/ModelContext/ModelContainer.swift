@@ -46,7 +46,7 @@ public final class ModelContainer: @unchecked Sendable {
 
     /// The structure providing and storing the database key if encryption is enabled.
     public let keyProvider: (any DatabaseKeyProvider.Type)?
-    
+
     let modelConfiguration: ModelConfiguration
 
     /// Manages the schema and storage for a Vein database.

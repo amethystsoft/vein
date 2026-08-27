@@ -370,7 +370,7 @@ extension ManagedObjectContext {
         var touchesCopy = WriteCacheDictionary()
         var deletesCopy = WriteCacheDictionary()
         var primitiveStateCopy = [ObjectIdentifier: [ULID: PrimitiveState]]()
-        
+
         defer {
             if modelContainer.modelConfiguration.cleanStaleIdentityMapEntriesOnSave {
                 identityMap.compact()
