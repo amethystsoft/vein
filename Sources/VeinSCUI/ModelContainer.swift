@@ -24,6 +24,7 @@ extension ModelContainer {
     ///   - encryptionEnabled: Whether to apply DB-level encryption.
     ///   - keyProvider: The structure providing and storing the database key if encryption is enabled.
     ///   - logConfiguration: What information to log.
+    ///   - modelConfiguration: Additional configuration of the `ManagedObjectContext`.
     ///
     /// - Note: `Keyring.appIdentifier` is a global, one-time configuration for the
     ///   underlying `KeyringAccess` library, typically set once per process or environment.
@@ -51,7 +52,8 @@ extension ModelContainer {
             appID: String,
             encryptionEnabled: Bool = true,
             keyProvider: (any DatabaseKeyProvider.Type)? = Vein.IntegratedKeyProvider.self,
-            logConfiguration: LogConfiguration? = nil
+            logConfiguration: LogConfiguration? = nil,
+            modelConfiguration: ModelConfiguration = ModelConfiguration.default
         ) throws(ManagedObjectContextError) {
             try self.init(
                 versionedSchema,
@@ -61,7 +63,8 @@ extension ModelContainer {
                 encryptionEnabled: encryptionEnabled,
                 keyProvider: keyProvider,
                 logConfiguration: logConfiguration,
-                _notifyBeforeChange: false
+                _notifyBeforeChange: false,
+                modelConfiguration: modelConfiguration
             )
         }
     #else
@@ -72,7 +75,8 @@ extension ModelContainer {
             appID: String,
             encryptionEnabled: Bool = true,
             keyProvider: (any DatabaseKeyProvider.Type)? = nil,
-            logConfiguration: LogConfiguration? = nil
+            logConfiguration: LogConfiguration? = nil,
+            modelConfiguration: ModelConfiguration = ModelConfiguration.default
         ) throws(ManagedObjectContextError) {
             try self.init(
                 versionedSchema,
@@ -82,7 +86,8 @@ extension ModelContainer {
                 encryptionEnabled: encryptionEnabled,
                 keyProvider: keyProvider,
                 logConfiguration: logConfiguration,
-                _notifyBeforeChange: false
+                _notifyBeforeChange: false,
+                modelConfiguration: modelConfiguration
             )
         }
     #endif
@@ -98,6 +103,7 @@ extension ModelContainer {
     ///   - encryptionEnabled: Whether to apply DB-level encryption.
     ///   - keyProvider: The structure providing and storing the database key if encryption is enabled.
     ///   - logConfiguration: What information to log.
+    ///   - modelConfiguration: Additional configuration of the `ManagedObjectContext`.
     ///
     /// - Note: `Keyring.appIdentifier` is a global, one-time configuration for the
     ///   underlying `KeyringAccess` library, typically set once per process or environment.
@@ -125,7 +131,8 @@ extension ModelContainer {
             appID: String,
             encryptionEnabled: Bool = true,
             keyProvider: (any DatabaseKeyProvider.Type)? = Vein.IntegratedKeyProvider.self,
-            logConfiguration: LogConfiguration? = nil
+            logConfiguration: LogConfiguration? = nil,
+            modelConfiguration: ModelConfiguration = ModelConfiguration.default
         ) throws(ManagedObjectContextError) {
             try self.init(
                 versionedSchema,
@@ -135,7 +142,8 @@ extension ModelContainer {
                 encryptionEnabled: encryptionEnabled,
                 keyProvider: keyProvider,
                 logConfiguration: logConfiguration,
-                _notifyBeforeChange: false
+                _notifyBeforeChange: false,
+                modelConfiguration: modelConfiguration
             )
         }
     #else
@@ -146,7 +154,8 @@ extension ModelContainer {
             appID: String,
             encryptionEnabled: Bool = true,
             keyProvider: (any DatabaseKeyProvider.Type)? = nil,
-            logConfiguration: LogConfiguration? = nil
+            logConfiguration: LogConfiguration? = nil,
+            modelConfiguration: ModelConfiguration = ModelConfiguration.default
         ) throws(ManagedObjectContextError) {
             try self.init(
                 versionedSchema,
@@ -156,7 +165,8 @@ extension ModelContainer {
                 encryptionEnabled: encryptionEnabled,
                 keyProvider: keyProvider,
                 logConfiguration: logConfiguration,
-                _notifyBeforeChange: false
+                _notifyBeforeChange: false,
+                modelConfiguration: modelConfiguration
             )
         }
     #endif

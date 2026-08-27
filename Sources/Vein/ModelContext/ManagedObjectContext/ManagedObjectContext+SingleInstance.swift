@@ -23,9 +23,20 @@ extension ManagedObjectContext {
     }
 }
 
-nonisolated final class ThreadSafeIdentityMap {
+nonisolated final class ThreadSafeIdentityMap: @unchecked Sendable {
     private let lock = NSLock()
     private var cache = [ObjectIdentifier: [ULID: WeakModel]]()
+    
+    private var task: Task<Void, Never>?
+    
+    init(cleanWithTimeout seconds: UInt16?) {
+        if let seconds {
+            self.task = Task.detached(priority: .background) { @Sendable [weak self] in
+                try? await Task.sleep(for: .seconds(seconds))
+                self?.compact()
+            }
+        }
+    }
 
     func getAll<T: PersistentModel>(of type: T.Type) -> [T] {
         return lock.withLock {
@@ -112,6 +123,10 @@ nonisolated final class ThreadSafeIdentityMap {
                 }
             }
         }
+    }
+    
+    deinit {
+        self.task?.cancel()
     }
 }
 

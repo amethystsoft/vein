@@ -46,6 +46,8 @@ public final class ModelContainer: @unchecked Sendable {
 
     /// The structure providing and storing the database key if encryption is enabled.
     public let keyProvider: (any DatabaseKeyProvider.Type)?
+    
+    let modelConfiguration: ModelConfiguration
 
     /// Manages the schema and storage for a Vein database.
     ///
@@ -87,7 +89,8 @@ public final class ModelContainer: @unchecked Sendable {
         encryptionEnabled: Bool,
         keyProvider: (any DatabaseKeyProvider.Type)?,
         logConfiguration: LogConfiguration?,
-        _notifyBeforeChange: Bool
+        _notifyBeforeChange: Bool,
+        modelConfiguration: ModelConfiguration
     ) throws(ManagedObjectContextError) {
         if ManagedObjectContext.callBeforeChange.load(ordering: .acquiring) == 3 {
             ManagedObjectContext.callBeforeChange.store(
@@ -107,6 +110,7 @@ public final class ModelContainer: @unchecked Sendable {
         self.encryptionEnabled = encryptionEnabled
         self.keyProvider = keyProvider
         self.appID = appID
+        self.modelConfiguration = modelConfiguration
 
         guard migration.schemas.contains(where: { $0.self == versionedSchema }) else {
             throw ManagedObjectContextError.schemaNotRegisteredOnMigrationPlan(
@@ -196,7 +200,8 @@ public final class ModelContainer: @unchecked Sendable {
         encryptionEnabled: Bool,
         keyProvider: (any DatabaseKeyProvider.Type)?,
         logConfiguration: LogConfiguration?,
-        _notifyBeforeChange: Bool
+        _notifyBeforeChange: Bool,
+        modelConfiguration: ModelConfiguration
     ) throws(ManagedObjectContextError) {
         if ManagedObjectContext.callBeforeChange.load(ordering: .acquiring) == 3 {
             ManagedObjectContext.callBeforeChange.store(
@@ -217,6 +222,7 @@ public final class ModelContainer: @unchecked Sendable {
         self.encryptionEnabled = encryptionEnabled
         self.keyProvider = keyProvider
         self.appID = appID
+        self.modelConfiguration = modelConfiguration
 
         guard migration.schemas.contains(where: { $0.self == versionedSchema }) else {
             throw ManagedObjectContextError.schemaNotRegisteredOnMigrationPlan(

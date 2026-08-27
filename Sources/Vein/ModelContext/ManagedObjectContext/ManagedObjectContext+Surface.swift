@@ -370,6 +370,12 @@ extension ManagedObjectContext {
         var touchesCopy = WriteCacheDictionary()
         var deletesCopy = WriteCacheDictionary()
         var primitiveStateCopy = [ObjectIdentifier: [ULID: PrimitiveState]]()
+        
+        defer {
+            if modelContainer.modelConfiguration.cleanStaleIdentityMapEntriesOnSave {
+                identityMap.compact()
+            }
+        }
 
         writeCache.mutate { inserts, touches, deletes, primitiveState in
             insertsCopy = inserts
@@ -428,7 +434,6 @@ extension ManagedObjectContext {
                             try _writeUpdate(model)
                         }
                     }
-
                 }
             } catch {
                 // Re-add changes in case of rollback

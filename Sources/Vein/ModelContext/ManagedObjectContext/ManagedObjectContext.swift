@@ -38,6 +38,8 @@ public actor ManagedObjectContext {
     package nonisolated let connection: SQLiteDB.Connection
     public nonisolated unowned let modelContainer: ModelContainer
     public static let keyLock = NSLock()
+    
+    private var identityMapCleanupTask: Task<Void, Never>? = nil
 
     @TaskLocal static var isSettingInternalMetdata = false
 
@@ -74,7 +76,7 @@ public actor ManagedObjectContext {
     nonisolated let saveLock = NSLock()
 
     // MARK: - Ensure single row - single instance
-    nonisolated(unsafe) let identityMap = ThreadSafeIdentityMap()
+    nonisolated(unsafe) let identityMap: ThreadSafeIdentityMap
 
     // MARK: - UI change notification
     nonisolated let registeredQueries = Mutex(
@@ -92,6 +94,13 @@ public actor ManagedObjectContext {
         modelContainer: ModelContainer
     ) throws(ManagedObjectContextError) {
         self.modelContainer = modelContainer
+        
+        self.identityMap = ThreadSafeIdentityMap(
+            cleanWithTimeout: modelContainer
+                .modelConfiguration
+                .cleanStaleIdentityMapEntriesTimeoutSeconds
+        )
+        
         do {
             self.connection = try Connection(path)
             // That stuff can take 15s with TSAN enabled and compiled with Onone.
@@ -145,6 +154,12 @@ public actor ManagedObjectContext {
         modelContainer: ModelContainer
     ) throws(ManagedObjectContextError) {
         self.modelContainer = modelContainer
+        self.identityMap = ThreadSafeIdentityMap(
+            cleanWithTimeout: modelContainer
+                .modelConfiguration
+                .cleanStaleIdentityMapEntriesTimeoutSeconds
+        )
+        
         do {
             self.connection = try Connection(.inMemory)
         } catch let error as SQLiteDB.Result {
@@ -160,6 +175,11 @@ public actor ManagedObjectContext {
     ) {
         self.modelContainer = modelContainer
         self.connection = connection
+        self.identityMap = ThreadSafeIdentityMap(
+            cleanWithTimeout: modelContainer
+                .modelConfiguration
+                .cleanStaleIdentityMapEntriesTimeoutSeconds
+        )
     }
 
     /// Retrieves the hex-encoded encryption key used to secure the database.
