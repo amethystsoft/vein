@@ -16,6 +16,10 @@
     import Logging
     import Foundation
 
+#if VeinFilter
+import VeinFilter
+#endif
+
     @MainActor
     @propertyWrapper
     public class Query<M: PersistentModel>: @MainActor ObservableProperty {
@@ -56,7 +60,8 @@
             self.queryObserver = QueryObserver<M>(predicate)
             self.sortDescriptors = [SortDescriptor<M>(\.id)]
         }
-
+        
+        @available(macOS 14, iOS 16, tvOS 16, *)
         public init(_ predicate: Predicate<M>) {
             do {
                 let modelPredicate = try ModelPredicate(predicate)

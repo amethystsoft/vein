@@ -18,6 +18,7 @@ public enum SortDescriptorConversionError: Error {
     case noFieldInformation
 }
 
+@available(macOS 14, iOS 16, tvOS 16, *)
 extension SortDescriptor where Compared: PersistentModel {
     var expressible: (any Expressible) {
         get throws(SortDescriptorConversionError) {

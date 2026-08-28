@@ -11,6 +11,7 @@
 // ===----------------------------------------------------------------------===
 
 import Foundation
+import SQLiteDB
 
 package typealias WriteCacheDictionary = [ObjectIdentifier: [ULID: any PersistentModel]]
 
@@ -24,6 +25,7 @@ extension ManagedObjectContext {
 
     /// Returns all models matching the predicate.
     /// Non existent tables are treated as empty state and therefore return [].
+    @available(macOS 14, iOS 16, tvOS 16, *)
     public nonisolated func fetchAll<T: PersistentModel>(
         _ predicate: Predicate<T>
     ) throws(MOCError) -> [T] {
@@ -65,6 +67,7 @@ extension ManagedObjectContext {
 
     /// Returns all models matching the predicate.
     /// Non existent tables are treated as empty state and therefore return [].
+    @available(macOS 14, iOS 16, tvOS 16, *)
     public nonisolated func fetchAll<T: PersistentModel>(
         _ predicate: Predicate<T>,
         sortBy descriptors: [SortDescriptor<T>]
@@ -111,7 +114,7 @@ extension ManagedObjectContext {
     public nonisolated func fetchAll<T: PersistentModel>(
         _ modelType: T.Type
     ) throws(MOCError) -> [T] {
-        try fetchAll(#Predicate<T>{ _ in true })
+        try fetchAll(ModelPredicate<T>(runtimeFilter: { _ in true }, sql: SQLExpression<Bool>(value: true)))
     }
 
     /// Returns all models of a model type.
@@ -120,7 +123,7 @@ extension ManagedObjectContext {
         _ modelType: T.Type,
         sortBy descriptor: [SortDescriptor<T>]
     ) throws(MOCError) -> [T] {
-        try fetchAll(#Predicate<T>{ _ in true }, sortBy: descriptor)
+        try fetchAll(ModelPredicate<T>(runtimeFilter: { _ in true }, sql: SQLExpression<Bool>(value: true)), sortBy: descriptor)
     }
 
     /// Inserts an unmanaged model into the context.

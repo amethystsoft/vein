@@ -28,7 +28,7 @@ extension ManagedObjectContext {
             fieldsToLoad.append(SQLExpression<String>("id"))
             var select = table.select(fieldsToLoad)
 
-            if let sortDescriptors {
+            if #available(macOS 14, iOS 16, tvOS 16, *), let sortDescriptors {
                 select = try select.order(sortDescriptors.map { try $0.expressible })
             }
 
@@ -112,8 +112,13 @@ extension ManagedObjectContext {
                     predicate.runtimeFilter(model)
                 { models.append(model) }
             }
-
-            return models.sorted(using: sortDescriptors ?? [SortDescriptor<T>(\.id)])
+            if #available(macOS 14, iOS 16, tvOS 16, *) {
+                return models.sorted(using: sortDescriptors ?? [SortDescriptor<T>(\.id)])
+            } else if let sortDescriptors {
+                return models.sorted(using: sortDescriptors)
+            } else {
+                return models.sorted { $0.id < $1.id }
+            }
         } catch let error as ManagedObjectContextError {
             throw error
         } catch let error as SQLiteDB.Result {

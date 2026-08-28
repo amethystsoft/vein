@@ -40,12 +40,17 @@ var veinDependencies: [Target.Dependency] = [
         name: "SwiftCrossUI",
         package: "swift-cross-ui",
         condition: .when(traits: ["VeinSCUI"])
+    ),
+    .product(
+        name: "VeinFilter",
+        package: "vein-filter",
+        condition: .when(traits: ["VeinFilter"])
     )
 ]
 
 let package = Package(
     name: "amethyst-vein",
-    platforms: [.macOS(.v14), .iOS(.v17), .tvOS(.v17), .macCatalyst(.v17), .visionOS(.v1)],
+    platforms: [.macOS(.v13), .iOS(.v16), .tvOS(.v16), .macCatalyst(.v16), .visionOS(.v1)],
     products: [
         .library(
             name: "Vein",
@@ -73,7 +78,8 @@ let package = Package(
         ),
     ],
     traits: [
-        .trait(name: "VeinSCUI")
+        .trait(name: "VeinSCUI"),
+        .trait(name: "VeinFilter"),
     ],
     dependencies: [
         // SQLite >= 3.45.0 is required to support JSONB.
@@ -95,7 +101,8 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-atomics.git", .upToNextMajor(from: "1.3.1")),
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.1.0"),
         .package(url: "https://github.com/typelift/SwiftCheck", .upToNextMinor(from: "0.12.0")),
-        .package(url: "https://github.com/moreSwift/swift-cross-ui", .upToNextMinor(from: "0.8.0"))
+        .package(url: "https://github.com/moreSwift/swift-cross-ui", .upToNextMinor(from: "0.8.0")),
+        .package(url: "https://github.com/amethystsoft/vein-filter.git", .upToNextMajor(from: "1.0.0")),
     ],
     targets: [
         .target(
