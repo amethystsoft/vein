@@ -14,10 +14,8 @@ import Foundation
 import SQLiteDB
 
 /// An Error that occured while converting a Predicate to an SQL query.
-@available(macOS 14, iOS 16, tvOS 16, *)
 public enum PredicateConversionError: Error {
     case incompatiblePredicate
-    case unexpectedComparisonOperator(PredicateExpressions.ComparisonOperator)
     case missingFieldInformation(String)
     case unexpectedUnsupportedRelationship(String)
     case unsupportedContainsType(ContainsPart)
@@ -36,8 +34,6 @@ extension PredicateConversionError: LocalizedError {
         switch self {
             case .incompatiblePredicate:
                 "Incompatible predicate"
-            case .unexpectedComparisonOperator(let comparisonOperator):
-                "Unexpected comparison operator: \(comparisonOperator)"
             case .missingFieldInformation(let string):
                 "Missing field information: \(string)"
             case .unexpectedUnsupportedRelationship(let string):
@@ -87,8 +83,7 @@ extension Predicate {
 /// The protocol used to convert parts of a Predicate to SQL.
 ///
 /// You can add conformances yourself, but I would ask to contribute them back to improve the Predicate experience for everyone.
-@available(macOS 14, iOS 16, tvOS 16, *)
-public protocol SQLiteExpressibleBuilder: PredicateExpression {
+public protocol SQLiteExpressibleBuilder {
     associatedtype Representation: ColumnType
     func asSQLiteExpression() throws(PredicateConversionError)
         -> SQLExpression<Representation.SQLiteType>
@@ -208,7 +203,7 @@ extension PredicateExpressions.Comparison: SQLiteExpressibleBuilder where
             case .greaterThan: return SQLExpression<Bool>(left > right)
             case .greaterThanOrEqual: return SQLExpression<Bool>(left >= right)
             @unknown default:
-                throw .unexpectedComparisonOperator(op)
+                fatalError("Encountered unsupported comparison operator: \(op)")
         }
     }
 }

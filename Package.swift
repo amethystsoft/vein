@@ -80,6 +80,7 @@ let package = Package(
     traits: [
         .trait(name: "VeinSCUI"),
         .trait(name: "VeinFilter"),
+        .default(enabledTraits: ["VeinFilter"])
     ],
     dependencies: [
         // SQLite >= 3.45.0 is required to support JSONB.

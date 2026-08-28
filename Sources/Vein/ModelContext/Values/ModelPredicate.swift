@@ -51,17 +51,17 @@ public struct ModelPredicate<T: PersistentModel>: Sendable, Hashable, AnyPredica
     }
     
     #if VeinFilter
-    public init(_ predicate: VeinFilter.Filter1<T>) throws {
+    public init(_ filter: VeinFilter.Filter1<T>) throws {
         runtimeFilter = { model in
             do {
-                return try predicate.evaluate(model)
+                return try filter.evaluate(model)
             } catch {
                 fatalError(
                     "Filtering models of type \(T.self) failed: \(error.localizedDescription)"
                 )
             }
         }
-        sql = try predicate.toSQLiteFilter()
+        sql = try filter.toSQLiteFilter()
         self.identity = sql.template + sql.bindings.description
     }
     #endif
