@@ -67,7 +67,7 @@ struct SortRuleTests {
         let sortedQuery = try baseQuery.order(descriptor.expressible)
 
         let expectedTemplate = """
-            SELECT ? FROM "V0_0_1.User" ORDER BY "email" ASC
+            SELECT ? FROM "V0_0_1.User" ORDER BY ("email" COLLATE NOCASE) ASC
             """
 
         #expect(sortedQuery.expression.template == expectedTemplate)
