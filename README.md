@@ -80,7 +80,7 @@ enum Migration: SchemaMigrationPlan {
 
 ### Use
 
-> [!NOTE]
+> [!IMPORTANT]
 > Using Vein with macOS 13 or iOS, tvOS or macCatalyst 16 requires the "VeinFilter" trait to be enabled.
 > Then you can use `#Filter` instead of `#Predicate`
 
