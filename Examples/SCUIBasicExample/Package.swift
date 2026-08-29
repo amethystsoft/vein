@@ -16,7 +16,7 @@ let package = Package(
             url: "https://github.com/moreSwift/swift-cross-ui.git",
             .upToNextMinor(from: "0.8.0")
         ),
-        .package(path: "../../", traits: ["VeinSCUI"]),
+        .package(path: "../../", traits: ["VeinSCUI", "VeinFilter"]),
     ],
     targets: [
         .executableTarget(
