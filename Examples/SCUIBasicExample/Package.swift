@@ -14,7 +14,7 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/moreSwift/swift-cross-ui.git",
-            .upToNextMinor(from: "0.8.0")
+            "0.8.0"..."0.9.0"
         ),
         .package(path: "../../", traits: ["VeinSCUI", "VeinFilter"]),
     ],
