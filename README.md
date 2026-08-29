@@ -80,6 +80,10 @@ enum Migration: SchemaMigrationPlan {
 
 ### Use
 
+> [!NOTE]
+> Using Vein with macOS 13 or iOS, tvOS or macCatalyst 16 requires the "VeinFilter" trait to be enabled.
+> Then you can use `#Filter` instead of `#Predicate`
+
 ```swift
 func setupAndUseVein() throws {
     // Optional: Setup keyring for Linux support

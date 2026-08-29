@@ -8,12 +8,13 @@ import SwiftUI
 @testable import VeinSwiftUI
 #endif
 
+@MainActor
 fileprivate func apiCoverage() {
-    let query = Query(#Predicate<Test> { test in test.flag })
-    let sortedQuery = Query(#Predicate<Test> { test in test.flag }, sortBy: [SortRule(\.flag)])
+    let query = Query(#Predicate<Test> { test in test.flag == 0 })
+    let sortedQuery = Query(#Predicate<Test> { test in test.flag == 0 }, sortBy: [SortRule(\.flag)])
     
-    let query1 = Query(#Filter<Test> { test in test.flag })
-    let sortedQuery1 = Query(#Filter<Test> { test in test.flag }, sortBy: [SortRule(\.flag)])
+    let query1 = Query(#Filter<Test> { test in test.flag == 0})
+    let sortedQuery1 = Query(#Filter<Test> { test in test.flag == 0 }, sortBy: [SortRule(\.flag)])
 }
 
 fileprivate typealias Test = V0_0_1.Test
@@ -25,9 +26,9 @@ fileprivate enum V0_0_1: VersionedSchema {
     @Model
     final class Test: Identifiable {
         @Field
-        var flag: Bool
+        var flag: Int
         
-        init(flag: Bool) {
+        init(flag: Int) {
             self.flag = flag
         }
     }
