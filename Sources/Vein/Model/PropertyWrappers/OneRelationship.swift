@@ -19,7 +19,7 @@ import Logging
 @propertyWrapper
 public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unchecked Sendable {
     #if VeinSCUI
-        public let didChange = Publisher()
+        public let didChange = Mutex(Publisher())
     #endif
 
     static var logger: Logger { .init(label: "Vein.OneRelationship") }
@@ -146,7 +146,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
             _withObservationNotification({
                 model?.notifyOfChanges()
                 #if VeinSCUI
-                    didChange.send()
+                didChange.mutate { $0.send() }
                 #endif
             }) {
                 lock.withLock {
@@ -204,7 +204,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         _withObservationNotification({
             target.notifyOfChanges()
             #if VeinSCUI
-                inverseField.didChange.send()
+            inverseField.didChange.mutate { $0.send() }
             #endif
         }) {
 
@@ -240,7 +240,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
                 VeinNotificationGuard.$isProcessing.withValue(true) {
                     model?.notifyOfChanges()
                     #if VeinSCUI
-                        self?.didChange.send()
+                        self?.didChange.mutate { $0.send() }
                     #endif
                 }
             }
@@ -368,5 +368,5 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
 }
 
 #if VeinSCUI
-    extension _OneRelationship: PublishedMarkerProtocol, SwiftCrossUI.ObservableObject {}
+    extension _OneRelationship: PublishedMarkerProtocol, @MainActor SwiftCrossUI.ObservableObject {}
 #endif

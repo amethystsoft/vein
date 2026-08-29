@@ -35,7 +35,7 @@ public struct ModelPredicate<T: PersistentModel>: Sendable, Hashable, AnyPredica
         self.identity = sql.template + sql.bindings.description
     }
     
-    @available(macOS 14, iOS 16, tvOS 16, *)
+    @available(macOS 14, iOS 17, tvOS 17, macCatalyst 17, *)
     public init(_ predicate: Foundation.Predicate<T>) throws {
         runtimeFilter = { model in
             do {

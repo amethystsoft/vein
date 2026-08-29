@@ -23,7 +23,7 @@ import Logging
 #endif
 
 @Suite
-struct RealDatabaseSortDescriptorTests {
+struct RealDatabaseSortRuleTests {
     func prepareContainerLocation(name: String) throws -> String {
         let containerPath = FileManager.default.temporaryDirectory
 
@@ -57,9 +57,9 @@ struct RealDatabaseSortDescriptorTests {
             V0_0_1.self,
             migration: Migration.self,
             at: dbPath,
-            appID: "de.amethystsoft.vein.RealDatabaseSortDescriptorTests",
+            appID: "de.amethystsoft.vein.RealDatabaseSortRuleTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption,
-            logConfiguration: logConfig
+            //logConfiguration: logConfig
         )
     }
 
@@ -71,7 +71,7 @@ struct RealDatabaseSortDescriptorTests {
             V0_0_1.self,
             migration: Migration.self,
             at: dbPath,
-            appID: "de.amethystsoft.vein.RealDatabaseSortDescriptorTests",
+            appID: "de.amethystsoft.vein.RealDatabaseSortRuleTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         // Seed users
@@ -103,7 +103,7 @@ struct RealDatabaseSortDescriptorTests {
 
         let results = try container.context.fetchAll(
             V0_0_1.User.self,
-            sortBy: [SortDescriptor<V0_0_1.User>(\.balance)]
+            sortBy: [SortRule<V0_0_1.User>(\.balance)]
         )
 
         #expect(results.count == 3)
@@ -117,7 +117,7 @@ struct RealDatabaseSortDescriptorTests {
 
         let results = try container.context.fetchAll(
             V0_0_1.User.self,
-            sortBy: [SortDescriptor(\.balance, order: .reverse)]
+            sortBy: [SortRule(\.balance, order: .descending)]
         )
 
         #expect(results.count == 3)
@@ -131,7 +131,7 @@ struct RealDatabaseSortDescriptorTests {
 
         let results = try container.context.fetchAll(
             V0_0_1.User.self,
-            sortBy: [SortDescriptor<V0_0_1.User>(\.name, comparator: .lexical)]
+            sortBy: [SortRule<V0_0_1.User>(\.name, comparator: .lexical)]
         )
 
         #expect(results.count == 3)
@@ -145,7 +145,7 @@ struct RealDatabaseSortDescriptorTests {
 
         let results = try container.context.fetchAll(
             V0_0_1.User.self,
-            sortBy: [SortDescriptor(\.name, comparator: .lexical, order: .reverse)]
+            sortBy: [SortRule(\.name, comparator: .lexical, order: .descending)]
         )
 
         #expect(results.count == 3)
@@ -159,7 +159,7 @@ struct RealDatabaseSortDescriptorTests {
 
         let results = try container.context.fetchAll(
             V0_0_1.User.self,
-            sortBy: [SortDescriptor<V0_0_1.User>(\.somethingOptional)]
+            sortBy: [SortRule<V0_0_1.User>(\.somethingOptional)]
         )
 
         #expect(results.count == 3)
@@ -174,13 +174,84 @@ struct RealDatabaseSortDescriptorTests {
 
         let results = try container.context.fetchAll(
             V0_0_1.User.self,
-            sortBy: [SortDescriptor(\.somethingOptional, order: .reverse)]
+            sortBy: [SortRule(\.somethingOptional, order: .descending)]
         )
 
         #expect(results.count == 3)
         #expect(results[0].somethingOptional == "has_value")
         #expect(results[1].somethingOptional == nil)
         #expect(results[2].somethingOptional == nil)
+    }
+    
+    @Test
+    func testCaseSensitivity() async throws {
+        let dbPath = try prepareContainerLocation(name: "CaseSensitivity")
+        
+        let container = try setup(at: dbPath)
+        
+        let caseInsensitiveSorted = try container.context.fetchAll(
+            V0_0_1.User.self,
+            sortBy: [SortRule(\.name)]
+        )
+        
+        #expect(caseInsensitiveSorted[0].name == "apple")
+        #expect(caseInsensitiveSorted[1].name == "Banana")
+        #expect(caseInsensitiveSorted[2].name == "cherry")
+        
+        let caseInsensitiveSortedReverse = try container.context.fetchAll(
+            V0_0_1.User.self,
+            sortBy: [SortRule(\.name, order: .descending)]
+        )
+        
+        #expect(caseInsensitiveSortedReverse[2].name == "apple")
+        #expect(caseInsensitiveSortedReverse[1].name == "Banana")
+        #expect(caseInsensitiveSortedReverse[0].name == "cherry")
+        
+        let caseSensitiveSorted = try container.context.fetchAll(
+            V0_0_1.User.self,
+            sortBy: [SortRule(\.name, comparator: .lexical)]
+        )
+        
+        #expect(caseSensitiveSorted[0].name == "Banana")
+        #expect(caseSensitiveSorted[1].name == "apple")
+        #expect(caseSensitiveSorted[2].name == "cherry")
+        
+        let caseSensitiveSortedReverse = try container.context.fetchAll(
+            V0_0_1.User.self,
+            sortBy: [SortRule(\.name, comparator: .lexical, order: .descending)]
+        )
+        
+        #expect(caseSensitiveSortedReverse[2].name == "Banana")
+        #expect(caseSensitiveSortedReverse[1].name == "apple")
+        #expect(caseSensitiveSortedReverse[0].name == "cherry")
+        
+        func setup(at path: String) throws -> ModelContainer {
+            let setupContainer = try ModelContainer(
+                V0_0_1.self,
+                migration: Migration.self,
+                at: dbPath,
+                appID: "de.amethystsoft.vein.RealDatabaseSortRuleTests",
+                encryptionEnabled: false
+            )
+            
+            let model1 = V0_0_1.User(name: "apple", email: "", birthday: .now)
+            let model2 = V0_0_1.User(name: "Banana", email: "", birthday: .now)
+            let model3 = V0_0_1.User(name: "cherry", email: "", birthday: .now)
+            
+            try setupContainer.context.insert(model1)
+            try setupContainer.context.insert(model2)
+            try setupContainer.context.insert(model3)
+            
+            try setupContainer.context.save()
+            
+            return try ModelContainer(
+                V0_0_1.self,
+                migration: Migration.self,
+                connection: setupContainer.getConnection(),
+                appID: "de.amethystsoft.vein.RealDatabaseSortRuleTests",
+                encryptionEnabled: false
+            )
+        }
     }
 }
 

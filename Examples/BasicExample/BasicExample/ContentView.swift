@@ -20,7 +20,7 @@ struct ContentView: View {
     @Environment(\.modelContext) var context
 
     init(predicate: Predicate<Test> = #Predicate<Test> { _ in true }) {
-        self._testItems = Query<Test>(predicate, sortBy: [SortDescriptor<Test>(\.randomValue)])
+        self._testItems = Query<Test>(predicate, sortBy: [SortRule<Test>(\.randomValue)])
     }
 
     var body: some View {

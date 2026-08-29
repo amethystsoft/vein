@@ -1,5 +1,5 @@
 #if VeinFilter
-    import VeinFilter
+    @_exported import VeinFilter
     import SQLiteDB
 
 extension Filter1 {
@@ -20,10 +20,9 @@ extension Filter1 {
         return result as? SQLExpression<Bool>
     }
     
-    private func openAndResolveRoot<E: StandardFilterExpression<
-        Bool
-    >>(_ expression: E) throws(PredicateConversionError)
-    -> SQLExpression<Bool>?
+    private func openAndResolveRoot<
+        E: StandardFilterExpression<Bool>
+    >(_ expression: E) throws(PredicateConversionError) -> SQLExpression<Bool>?
     {
         // If the concrete underlying node conforms to SQLiteExpressibleBuilder, pass it to the next step
         if let builder = expression as? any SQLiteExpressibleBuilder {

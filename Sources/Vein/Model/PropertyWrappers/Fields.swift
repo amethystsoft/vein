@@ -24,7 +24,7 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
     public typealias WrappedType = T?
 
     #if VeinSCUI
-        public let didChange = Publisher()
+        public let didChange = Mutex(Publisher())
     #endif
 
     private let lock = NSLock()
@@ -114,7 +114,7 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
             if !suppressUIUpdates {
                 model?.notifyOfChanges()
                 #if VeinSCUI
-                    didChange.send()
+                    didChange.mutate { $0.send() }
                 #endif
             }
         } block: {
@@ -178,7 +178,8 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
 @propertyWrapper
 public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
     #if VeinSCUI
-        public let didChange = Publisher()
+    @MainActor
+        public let didChange = Mutex(Publisher())
     #endif
 
     public typealias WrappedType = T
@@ -236,7 +237,7 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
         _withObservationNotification({
             model?.notifyOfChanges()
             #if VeinSCUI
-                didChange.send()
+            didChange.mutate { $0.send() }
             #endif
         }) {
             lock.withLock {

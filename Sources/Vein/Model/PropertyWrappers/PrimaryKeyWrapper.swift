@@ -25,7 +25,7 @@ import Logging
 @propertyWrapper
 public class PrimaryKey: PersistedField, @unchecked Sendable {
     #if VeinSCUI
-        public var didChange = Publisher()
+        public let didChange = Mutex(Publisher())
     #endif
     static let logger = Logger(label: "Vein PrimaryKey")
     public typealias WrappedType = ULID

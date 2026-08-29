@@ -9,7 +9,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 //
 // ===----------------------------------------------------------------------===
-
+#if VeinFilter
 import Foundation
 import Testing
 import Logging
@@ -23,7 +23,7 @@ import Logging
 #endif
 
 @Suite
-struct RealDatabasePredicateTests {
+struct RealDatabaseFilterTests {
     func prepareContainerLocation(name: String) throws -> String {
         let containerPath = FileManager.default.temporaryDirectory
 
@@ -54,7 +54,7 @@ struct RealDatabasePredicateTests {
             V0_0_1.self,
             migration: Migration.self,
             at: dbPath,
-            appID: "de.amethystsoft.vein.RealDatabasePredicateTests",
+            appID: "de.amethystsoft.vein.RealDatabaseFilterTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
     }
@@ -67,7 +67,7 @@ struct RealDatabasePredicateTests {
             V0_0_1.self,
             migration: Migration.self,
             at: dbPath,
-            appID: "de.amethystsoft.vein.RealDatabasePredicateTests",
+            appID: "de.amethystsoft.vein.RealDatabaseFilterTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
         // Seed users
@@ -97,7 +97,7 @@ struct RealDatabasePredicateTests {
     func testFieldEqualsField() async throws {
         let container = try makeContainer(name: "FieldEqualsField")
 
-        let results = try container.context.fetchAll(#Predicate<V0_0_1.User> { user in
+        let results = try container.context.fetchAll(#Filter<V0_0_1.User> { user in
             user.email == user.name
         })
 
@@ -109,7 +109,7 @@ struct RealDatabasePredicateTests {
     func testFieldEqualsValue() async throws {
         let container = try makeContainer(name: "FieldEqualsValue")
 
-        let results = try container.context.fetchAll(#Predicate<V0_0_1.User> { user in
+        let results = try container.context.fetchAll(#Filter<V0_0_1.User> { user in
             user.email == "mia@example.com"
         })
 
@@ -121,7 +121,7 @@ struct RealDatabasePredicateTests {
     func testFieldDoesntEqualValue() async throws {
         let container = try makeContainer(name: "FieldDoesntEqualValue")
 
-        let results = try container.context.fetchAll(#Predicate<V0_0_1.User> { user in
+        let results = try container.context.fetchAll(#Filter<V0_0_1.User> { user in
             user.email != "mia@example.com"
         })
 
@@ -132,7 +132,7 @@ struct RealDatabasePredicateTests {
     func testStringFieldContainsValue() async throws {
         let container = try makeContainer(name: "StringFieldContainsValue")
 
-        let results = try container.context.fetchAll(#Predicate<V0_0_1.User> { user in
+        let results = try container.context.fetchAll(#Filter<V0_0_1.User> { user in
             user.email.contains("example")
         })
 
@@ -144,7 +144,7 @@ struct RealDatabasePredicateTests {
     func testDoubleFieldCompare() async throws {
         let container = try makeContainer(name: "DoubleFieldCompare")
 
-        let results = try container.context.fetchAll(#Predicate<V0_0_1.User> { user in
+        let results = try container.context.fetchAll(#Filter<V0_0_1.User> { user in
             user.balance > 100.0
         })
 
@@ -156,7 +156,7 @@ struct RealDatabasePredicateTests {
     func testNegativeDoubleFieldCompare() async throws {
         let container = try makeContainer(name: "NegativeDoubleFieldCompare")
 
-        let results = try container.context.fetchAll(#Predicate<V0_0_1.User> { user in
+        let results = try container.context.fetchAll(#Filter<V0_0_1.User> { user in
             user.balance >= -10.0
         })
 
@@ -167,7 +167,7 @@ struct RealDatabasePredicateTests {
     func testDoubleFieldGreaterThanOrEqualToDoubleField() async throws {
         let container = try makeContainer(name: "DoubleFieldGreaterThanOrEqualToDoubleField")
 
-        let results = try container.context.fetchAll(#Predicate<V0_0_1.User> { user in
+        let results = try container.context.fetchAll(#Filter<V0_0_1.User> { user in
             user.balance >= -user.pendingTransactionValue
         })
 
@@ -178,7 +178,7 @@ struct RealDatabasePredicateTests {
     func testAnd() async throws {
         let container = try makeContainer(name: "And")
 
-        let results = try container.context.fetchAll(#Predicate<V0_0_1.User> { user in
+        let results = try container.context.fetchAll(#Filter<V0_0_1.User> { user in
             user.balance > 10.0 && user.somethingOptional != nil
         })
 
@@ -190,32 +190,18 @@ struct RealDatabasePredicateTests {
     func testIsNil() async throws {
         let container = try makeContainer(name: "IsNil")
 
-        let results = try container.context.fetchAll(#Predicate<V0_0_1.User> { user in
+        let results = try container.context.fetchAll(#Filter<V0_0_1.User> { user in
             user.somethingOptional == nil
         })
 
         #expect(results.count == 2)
     }
 
-    #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
-        @Test
-        func testCaseInsensitiveContains() async throws {
-            let container = try makeContainer(name: "CaseInsensitiveContains")
-
-            let results = try container.context.fetchAll(#Predicate<V0_0_1.User> { user in
-                user.name.localizedStandardContains("mia")
-            })
-
-            #expect(results.count == 1)
-            #expect(results.first?.name == "Mia")
-        }
-    #endif
-
     @Test
     func testStartsWithString() async throws {
         let container = try makeContainer(name: "StartsWith")
 
-        let results = try container.context.fetchAll(#Predicate<V0_0_1.User> { user in
+        let results = try container.context.fetchAll(#Filter<V0_0_1.User> { user in
             user.name.starts(with: "M")
         })
 
@@ -227,7 +213,7 @@ struct RealDatabasePredicateTests {
     func testSortRule() async throws {
         let container = try makeContainer(name: "StartsWithAndSortRule")
         
-        let results = try container.context.fetchAll(#Predicate<V0_0_1.User> { _ in
+        let results = try container.context.fetchAll(#Filter<V0_0_1.User> { _ in
             true
         }, sortBy: [SortRule(\.balance)])
         
@@ -279,3 +265,4 @@ fileprivate enum Migration: SchemaMigrationPlan {
 
     static var stages: [MigrationStage] { [] }
 }
+#endif

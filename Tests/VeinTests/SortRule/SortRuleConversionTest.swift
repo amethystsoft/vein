@@ -24,13 +24,13 @@ import SQLiteDB
 #endif
 
 @Suite
-struct SortDescriptorTests {
+struct SortRuleTests {
     @Test
     func ascending() async throws {
         let table = Table(V0_0_1.User.schema)
         let baseQuery = table.select(["*"])
 
-        let descriptor = SortDescriptor<V0_0_1.User>(\.balance)
+        let descriptor = SortRule<V0_0_1.User>(\.balance)
 
         let sortedQuery = try baseQuery.order(descriptor.expressible)
 
@@ -46,7 +46,7 @@ struct SortDescriptorTests {
         let table = Table(V0_0_1.User.schema)
         let baseQuery = table.select(["*"])
 
-        let descriptor = SortDescriptor<V0_0_1.User>(\.balance, order: .reverse)
+        let descriptor = SortRule<V0_0_1.User>(\.balance, order: .descending)
 
         let sortedQuery = try baseQuery.order(descriptor.expressible)
 
@@ -62,7 +62,7 @@ struct SortDescriptorTests {
         let table = Table(V0_0_1.User.schema)
         let baseQuery = table.select(["*"])
 
-        let descriptor = SortDescriptor<V0_0_1.User>(\.email)
+        let descriptor = SortRule<V0_0_1.User>(\.email)
 
         let sortedQuery = try baseQuery.order(descriptor.expressible)
 
@@ -78,12 +78,12 @@ struct SortDescriptorTests {
         let table = Table(V0_0_1.User.schema)
         let baseQuery = table.select(["*"])
 
-        let descriptor = SortDescriptor<V0_0_1.User>(\.email, order: .reverse)
+        let descriptor = SortRule<V0_0_1.User>(\.email, order: .descending)
 
         let sortedQuery = try baseQuery.order(descriptor.expressible)
 
         let expectedTemplate = """
-            SELECT ? FROM "V0_0_1.User" ORDER BY "email" DESC
+            SELECT ? FROM "V0_0_1.User" ORDER BY ("email" COLLATE NOCASE) DESC
             """
 
         #expect(sortedQuery.expression.template == expectedTemplate)
@@ -95,14 +95,14 @@ struct SortDescriptorTests {
         let baseQuery = table.select(["*"])
 
         let descriptors = try [
-            SortDescriptor<V0_0_1.User>(\.email, order: .reverse),
-            SortDescriptor<V0_0_1.User>(\.balance)
+            SortRule<V0_0_1.User>(\.email, order: .descending),
+            SortRule<V0_0_1.User>(\.balance)
         ].map { try $0.expressible }
 
         let sortedQuery = baseQuery.order(descriptors)
 
         let expectedTemplate = """
-            SELECT ? FROM "V0_0_1.User" ORDER BY "email" DESC, "balance" ASC
+            SELECT ? FROM "V0_0_1.User" ORDER BY ("email" COLLATE NOCASE) DESC, "balance" ASC
             """
 
         #expect(sortedQuery.expression.template == expectedTemplate)

@@ -58,10 +58,17 @@ struct SortedFetch {
 
             let results = try container.context.fetchAll(
                 Test.self,
-                sortBy: [SortDescriptor<Test>(\.someValue)]
+                sortBy: [SortRule<Test>(\.someValue)]
             )
 
             #expect(results.isSortedBy(\.someValue))
+            
+            let resultByID = try container.context.fetchAll(
+                Test.self,
+                sortBy: [SortRule(\.id)]
+            )
+            
+            #expect(resultByID.isSortedBy(\.id))
         }
     }
 }

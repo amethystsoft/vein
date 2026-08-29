@@ -28,7 +28,7 @@ public enum PredicateConversionError: Error {
     }
 }
 
-@available(macOS 14, iOS 16, tvOS 16, *)
+@available(macOS 14, iOS 17, tvOS 17, macCatalyst 17, *)
 extension PredicateConversionError: LocalizedError {
     public var errorDescription: String? {
         switch self {
@@ -48,7 +48,7 @@ extension PredicateConversionError: LocalizedError {
     }
 }
 
-@available(macOS 14, iOS 16, tvOS 16, *)
+@available(macOS 14, iOS 17, tvOS 17, macCatalyst 17, *)
 extension Predicate {
     public func toSQLiteFilter() throws -> SQLExpression<Bool> {
         let rootExpression: any StandardPredicateExpression<Bool> = self.expression
@@ -89,7 +89,7 @@ public protocol SQLiteExpressibleBuilder {
         -> SQLExpression<Representation.SQLiteType>
 }
 
-@available(macOS 14, iOS 16, tvOS 16, *)
+@available(macOS 14, iOS 17, tvOS 17, macCatalyst 17, *)
 extension PredicateExpressions.Variable: SQLiteExpressibleBuilder {
     public typealias Representation = Bool
 
@@ -98,7 +98,7 @@ extension PredicateExpressions.Variable: SQLiteExpressibleBuilder {
     }
 }
 
-@available(macOS 14, iOS 16, tvOS 16, *)
+@available(macOS 14, iOS 17, tvOS 17, macCatalyst 17, *)
 extension PredicateExpressions.Value: SQLiteExpressibleBuilder where Output: Persistable {
     public typealias Representation = Output.PersistentRepresentation
     public func asSQLiteExpression() -> SQLExpression<Representation.SQLiteType> {
@@ -106,7 +106,7 @@ extension PredicateExpressions.Value: SQLiteExpressibleBuilder where Output: Per
     }
 }
 
-@available(macOS 14, iOS 16, tvOS 16, *)
+@available(macOS 14, iOS 17, tvOS 17, macCatalyst 17, *)
 extension PredicateExpressions.KeyPath: SQLiteExpressibleBuilder where
     Root: SQLiteExpressibleBuilder,
     Root.Output: PersistentModel,
@@ -129,7 +129,7 @@ extension PredicateExpressions.KeyPath: SQLiteExpressibleBuilder where
     }
 }
 
-@available(macOS 14, iOS 16, tvOS 16, *)
+@available(macOS 14, iOS 17, tvOS 17, macCatalyst 17, *)
 extension PredicateExpressions.Equal: SQLiteExpressibleBuilder where
     LHS: SQLiteExpressibleBuilder,
     RHS: SQLiteExpressibleBuilder,
@@ -155,7 +155,7 @@ extension PredicateExpressions.Equal: SQLiteExpressibleBuilder where
     }
 }
 
-@available(macOS 14, iOS 16, tvOS 16, *)
+@available(macOS 14, iOS 17, tvOS 17, macCatalyst 17, *)
 extension PredicateExpressions.NotEqual: SQLiteExpressibleBuilder where
     LHS: SQLiteExpressibleBuilder,
     RHS: SQLiteExpressibleBuilder,
@@ -181,7 +181,7 @@ extension PredicateExpressions.NotEqual: SQLiteExpressibleBuilder where
     }
 }
 
-@available(macOS 14, iOS 16, tvOS 16, *)
+@available(macOS 14, iOS 17, tvOS 17, macCatalyst 17, *)
 extension PredicateExpressions.Comparison: SQLiteExpressibleBuilder where
     LHS: SQLiteExpressibleBuilder,
     RHS: SQLiteExpressibleBuilder,
@@ -208,7 +208,7 @@ extension PredicateExpressions.Comparison: SQLiteExpressibleBuilder where
     }
 }
 
-@available(macOS 14, iOS 16, tvOS 16, *)
+@available(macOS 14, iOS 17, tvOS 17, macCatalyst 17, *)
 extension PredicateExpressions.UnaryMinus: SQLiteExpressibleBuilder where
     Wrapped: SQLiteExpressibleBuilder,
     Wrapped.Output: Persistable
@@ -223,7 +223,7 @@ extension PredicateExpressions.UnaryMinus: SQLiteExpressibleBuilder where
     }
 }
 
-@available(macOS 14, iOS 16, tvOS 16, *)
+@available(macOS 14, iOS 17, tvOS 17, macCatalyst 17, *)
 extension PredicateExpressions.Negation: SQLiteExpressibleBuilder where
     Wrapped: SQLiteExpressibleBuilder
 {
@@ -239,7 +239,7 @@ extension PredicateExpressions.Negation: SQLiteExpressibleBuilder where
     }
 }
 
-@available(macOS 14, iOS 16, tvOS 16, *)
+@available(macOS 14, iOS 17, tvOS 17, macCatalyst 17, *)
 extension PredicateExpressions.Conjunction: SQLiteExpressibleBuilder where
     LHS: SQLiteExpressibleBuilder,
     RHS: SQLiteExpressibleBuilder,
@@ -260,7 +260,7 @@ extension PredicateExpressions.Conjunction: SQLiteExpressibleBuilder where
     }
 }
 
-@available(macOS 14, iOS 16, tvOS 16, *)
+@available(macOS 14, iOS 17, tvOS 17, macCatalyst 17, *)
 extension PredicateExpressions.Disjunction: SQLiteExpressibleBuilder where
     LHS: SQLiteExpressibleBuilder,
     RHS: SQLiteExpressibleBuilder,
@@ -281,7 +281,7 @@ extension PredicateExpressions.Disjunction: SQLiteExpressibleBuilder where
     }
 }
 
-@available(macOS 14, iOS 16, tvOS 16, *)
+@available(macOS 14, iOS 17, tvOS 17, macCatalyst 17, *)
 extension PredicateExpressions.NilLiteral: SQLiteExpressibleBuilder where
     Wrapped: Persistable
 {
@@ -295,7 +295,7 @@ extension PredicateExpressions.NilLiteral: SQLiteExpressibleBuilder where
     }
 }
 
-@available(macOS 14, iOS 16, tvOS 16, *)
+@available(macOS 14, iOS 17, tvOS 17, macCatalyst 17, *)
 extension PredicateExpressions.SequenceStartsWith: SQLiteExpressibleBuilder where
     Base: SQLiteExpressibleBuilder,
     Prefix: SQLiteExpressibleBuilder,
@@ -318,7 +318,7 @@ extension PredicateExpressions.SequenceStartsWith: SQLiteExpressibleBuilder wher
 }
 
 #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
-    @available(macOS 14, iOS 16, tvOS 16, *)
+    @available(macOS 14, iOS 17, tvOS 17, macCatalyst 17, *)
     extension PredicateExpressions.StringLocalizedStandardContains: SQLiteExpressibleBuilder where
         Root: SQLiteExpressibleBuilder,
         Other: SQLiteExpressibleBuilder,
@@ -348,7 +348,7 @@ extension PredicateExpressions.SequenceStartsWith: SQLiteExpressibleBuilder wher
     }
 #endif
 
-@available(macOS 14, iOS 16, tvOS 16, *)
+@available(macOS 14, iOS 17, tvOS 17, macCatalyst 17, *)
 extension PredicateExpressions.CollectionContainsCollection: SQLiteExpressibleBuilder where
     Base: SQLiteExpressibleBuilder,
     Other: SQLiteExpressibleBuilder,

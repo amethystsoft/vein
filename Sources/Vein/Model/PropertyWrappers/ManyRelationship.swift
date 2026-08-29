@@ -20,7 +20,7 @@ import Logging
 @propertyWrapper
 public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unchecked Sendable {
     #if VeinSCUI
-        public let didChange = Publisher()
+        public let didChange = Mutex(Publisher())
     #endif
 
     static var logger: Logger { .init(label: "Vein.ManyRelationship") }
@@ -139,7 +139,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                 }
             }
             #if VeinSCUI
-                didChange.send()
+            didChange.mutate { $0.send() }
             #endif
         } block: {
             lock.withLock {
@@ -181,7 +181,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
             _withObservationNotification({
                 matchingField?.model?.notifyOfChanges()
                 #if VeinSCUI
-                    matchingField?.didChange.send()
+                    matchingField?.didChange.mutate { $0.send() }
                 #endif
             }) {
                 if let manyField = matchingField as? (any ManyRelationship) {
@@ -215,7 +215,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                     VeinNotificationGuard.$isProcessing.withValue(true) {
                         target.notifyOfChanges()
                         #if VeinSCUI
-                            matchingField?.didChange.send()
+                            matchingField?.didChange.mutate { $0.send() }
                         #endif
                     }
                 }
@@ -264,7 +264,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                 VeinNotificationGuard.$isProcessing.withValue(true) {
                     model?.notifyOfChanges()
                     #if VeinSCUI
-                        self?.didChange.send()
+                        self?.didChange.mutate { $0.send() }
                     #endif
                 }
             }
@@ -384,5 +384,5 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
 }
 
 #if VeinSCUI
-    extension _ManyRelationship: PublishedMarkerProtocol, SwiftCrossUI.ObservableObject {}
+    extension _ManyRelationship: PublishedMarkerProtocol, @MainActor SwiftCrossUI.ObservableObject {}
 #endif
