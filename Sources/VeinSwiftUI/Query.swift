@@ -52,22 +52,22 @@
                 )
             }
         }
-        
+
         #if VeinFilter
-        public init(
-            _ predicate: Filter1<M>,
-            sortBy descriptors: [SortRule<M>] = [SortRule<M>(\.id)]
-        ) {
-            do {
-                let modelPredicate = try ModelPredicate(predicate)
-                self._queryObserver = StateObject(wrappedValue: QueryObserver(modelPredicate))
-                self.sortDescriptors = descriptors
-            } catch {
-                fatalError(
-                    "Creating ModelPredicate from predicate '\(predicate.expression)' failed with: \(error.localizedDescription)"
-                )
+            public init(
+                _ predicate: Filter1<M>,
+                sortBy descriptors: [SortRule<M>] = [SortRule<M>(\.id)]
+            ) {
+                do {
+                    let modelPredicate = try ModelPredicate(predicate)
+                    self._queryObserver = StateObject(wrappedValue: QueryObserver(modelPredicate))
+                    self.sortDescriptors = descriptors
+                } catch {
+                    fatalError(
+                        "Creating ModelPredicate from predicate '\(predicate.expression)' failed with: \(error.localizedDescription)"
+                    )
+                }
             }
-        }
         #endif
 
         public init(

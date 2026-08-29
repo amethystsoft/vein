@@ -178,7 +178,6 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
 @propertyWrapper
 public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
     #if VeinSCUI
-    @MainActor
         public let didChange = Mutex(Publisher())
     #endif
 
@@ -237,7 +236,7 @@ public final class Field<T: Persistable>: PersistedField, @unchecked Sendable {
         _withObservationNotification({
             model?.notifyOfChanges()
             #if VeinSCUI
-            didChange.mutate { $0.send() }
+                didChange.mutate { $0.send() }
             #endif
         }) {
             lock.withLock {

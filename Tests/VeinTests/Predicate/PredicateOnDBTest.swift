@@ -27,7 +27,8 @@ struct RealDatabasePredicateTests {
     func prepareContainerLocation(name: String) throws -> String {
         let containerPath = FileManager.default.temporaryDirectory
 
-        let dbDir = containerPath.relativePath.appending("/veinTests/\(testID.uuidString)/Predicate")
+        let dbDir = containerPath.relativePath
+            .appending("/veinTests/\(testID.uuidString)/Predicate")
 
         let dbPath = dbDir.appending("/\(name).sqlite3")
 
@@ -222,15 +223,15 @@ struct RealDatabasePredicateTests {
         #expect(results.count == 1)
         #expect(results.first?.name == "Mia")
     }
-    
+
     @Test
     func testSortRule() async throws {
         let container = try makeContainer(name: "StartsWithAndSortRule")
-        
+
         let results = try container.context.fetchAll(#Predicate<V0_0_1.User> { _ in
             true
         }, sortBy: [SortRule(\.balance)])
-        
+
         #expect(results.count == 3)
         #expect(results[0].name == "matching")
         #expect(results[1].name == "Charlie")

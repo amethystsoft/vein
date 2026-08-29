@@ -16,9 +16,9 @@
     import Logging
     import Foundation
 
-#if VeinFilter
-import VeinFilter
-#endif
+    #if VeinFilter
+        import VeinFilter
+    #endif
 
     @MainActor
     @propertyWrapper
@@ -55,7 +55,7 @@ import VeinFilter
             return (queryObserver.primaryObserver?.results ?? queryObserver.results ?? [])
                 .sorted(using: sortDescriptors)
         }
-        
+
         @available(macOS 14, iOS 17, tvOS 17, macCatalyst 17, *)
         public init(
             _ predicate: Predicate<M>,
@@ -71,22 +71,22 @@ import VeinFilter
                 )
             }
         }
-        
+
         #if VeinFilter
-        public init(
-            _ predicate: Filter1<M>,
-            sortBy rules: [SortRule<M>] = [SortRule<M>(\.id)]
-        ) {
-            do {
-                let modelPredicate = try ModelPredicate(predicate)
-                self.queryObserver = QueryObserver(modelPredicate)
-                self.sortDescriptors = rules
-            } catch {
-                fatalError(
-                    "Creating ModelPredicate from predicate '\(predicate.expression)' failed with: \(error.localizedDescription)"
-                )
+            public init(
+                _ predicate: Filter1<M>,
+                sortBy rules: [SortRule<M>] = [SortRule<M>(\.id)]
+            ) {
+                do {
+                    let modelPredicate = try ModelPredicate(predicate)
+                    self.queryObserver = QueryObserver(modelPredicate)
+                    self.sortDescriptors = rules
+                } catch {
+                    fatalError(
+                        "Creating ModelPredicate from predicate '\(predicate.expression)' failed with: \(error.localizedDescription)"
+                    )
+                }
             }
-        }
         #endif
 
         public init(

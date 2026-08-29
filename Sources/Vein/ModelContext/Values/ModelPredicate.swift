@@ -14,7 +14,7 @@
 import ULID
 import Foundation
 #if VeinFilter
-import VeinFilter
+    import VeinFilter
 #endif
 
 /// A predicate for fetching models.
@@ -34,7 +34,7 @@ public struct ModelPredicate<T: PersistentModel>: Sendable, Hashable, AnyPredica
         self.sql = sql
         self.identity = sql.template + sql.bindings.description
     }
-    
+
     @available(macOS 14, iOS 17, tvOS 17, macCatalyst 17, *)
     public init(_ predicate: Foundation.Predicate<T>) throws {
         runtimeFilter = { model in
@@ -49,23 +49,23 @@ public struct ModelPredicate<T: PersistentModel>: Sendable, Hashable, AnyPredica
         sql = try predicate.toSQLiteFilter()
         self.identity = sql.template + sql.bindings.description
     }
-    
+
     #if VeinFilter
-    public init(_ filter: VeinFilter.Filter1<T>) throws {
-        runtimeFilter = { model in
-            do {
-                return try filter.evaluate(model)
-            } catch {
-                fatalError(
-                    "Filtering models of type \(T.self) failed: \(error.localizedDescription)"
-                )
+        public init(_ filter: VeinFilter.Filter1<T>) throws {
+            runtimeFilter = { model in
+                do {
+                    return try filter.evaluate(model)
+                } catch {
+                    fatalError(
+                        "Filtering models of type \(T.self) failed: \(error.localizedDescription)"
+                    )
+                }
             }
+            sql = try filter.toSQLiteFilter()
+            self.identity = sql.template + sql.bindings.description
         }
-        sql = try filter.toSQLiteFilter()
-        self.identity = sql.template + sql.bindings.description
-    }
     #endif
-    
+
     public static func == (
         lhs: borrowing ModelPredicate<T>,
         rhs: borrowing ModelPredicate<T>

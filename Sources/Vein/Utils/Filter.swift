@@ -1,272 +1,283 @@
+// ===----------------------------------------------------------------------===
+//
+// This source file is part of the Amethyst Vein open source project
+//
+// Copyright (c) 2026 Mia Koring.
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+//
+// ===----------------------------------------------------------------------===
+
 #if VeinFilter
     @_exported import VeinFilter
     import SQLiteDB
 
-extension Filter1 {
-    public func toSQLiteFilter() throws -> SQLExpression<Bool> {
-        let rootExpression: any StandardFilterExpression<Bool> = self.expression
-        
-        guard let sqliteExpression = try openAndResolveRoot(rootExpression) else {
-            throw PredicateConversionError.incompatiblePredicate
+    extension Filter1 {
+        public func toSQLiteFilter() throws -> SQLExpression<Bool> {
+            let rootExpression: any StandardFilterExpression<Bool> = self.expression
+
+            guard let sqliteExpression = try openAndResolveRoot(rootExpression) else {
+                throw PredicateConversionError.incompatiblePredicate
+            }
+
+            return sqliteExpression
         }
-        
-        return sqliteExpression
+
+        private func openAndCastToFilter<T: SQLiteExpressibleBuilder>(_ builder: T) throws(
+            PredicateConversionError
+        ) -> SQLExpression<Bool>? {
+            let result = try builder.asSQLiteExpression()
+            return result as? SQLExpression<Bool>
+        }
+
+        private func openAndResolveRoot<
+            E: StandardFilterExpression<Bool>
+        >(_ expression: E) throws(PredicateConversionError) -> SQLExpression<Bool>? {
+            // If the concrete underlying node conforms to SQLiteExpressibleBuilder, pass it to the next step
+            if let builder = expression as? any SQLiteExpressibleBuilder {
+                return try openAndCastToFilter(builder)
+            }
+            return nil
+        }
     }
-    
-    private func openAndCastToFilter<T: SQLiteExpressibleBuilder>(_ builder: T) throws(
-        PredicateConversionError
-    ) -> SQLExpression<Bool>? {
-        let result = try builder.asSQLiteExpression()
-        return result as? SQLExpression<Bool>
+
+    extension FilterExpressions.Variable: SQLiteExpressibleBuilder {
+        public typealias Representation = Bool
+
+        public func asSQLiteExpression() -> SQLExpression<Bool> {
+            return SQLExpression<Bool>("")
+        }
     }
-    
-    private func openAndResolveRoot<
-        E: StandardFilterExpression<Bool>
-    >(_ expression: E) throws(PredicateConversionError) -> SQLExpression<Bool>?
+
+    extension FilterExpressions.Value: SQLiteExpressibleBuilder where Output: Persistable {
+        public typealias Representation = Output.PersistentRepresentation
+        public func asSQLiteExpression() -> SQLExpression<Representation.SQLiteType> {
+            return self.value.asPersistentRepresentation.sqlExpression
+        }
+    }
+
+    extension FilterExpressions.KeyPath: SQLiteExpressibleBuilder where
+        Root: SQLiteExpressibleBuilder,
+        Root.Output: PersistentModel,
+        Output: Persistable
     {
-        // If the concrete underlying node conforms to SQLiteExpressibleBuilder, pass it to the next step
-        if let builder = expression as? any SQLiteExpressibleBuilder {
-            return try openAndCastToFilter(builder)
+        public typealias Representation = Output.PersistentRepresentation
+
+        public func asSQLiteExpression() throws(PredicateConversionError)
+            -> SQLExpression<Representation.SQLiteType>
+        {
+            guard let information = Root.Output._predicateInformation(for: keyPath) else {
+                throw .missingFieldInformation("\(keyPath)")
+            }
+            guard information.relationshipToType == nil else {
+                throw .unexpectedUnsupportedRelationship(
+                    "\(keyPath) is a relationship. Filtering by relationships is currently unsupported."
+                )
+            }
+            return SQLExpression<Representation.SQLiteType>(information.key)
         }
-        return nil
     }
-}
 
-extension FilterExpressions.Variable: SQLiteExpressibleBuilder {
-    public typealias Representation = Bool
-    
-    public func asSQLiteExpression() -> SQLExpression<Bool> {
-        return SQLExpression<Bool>("")
-    }
-}
-
-extension FilterExpressions.Value: SQLiteExpressibleBuilder where Output: Persistable {
-    public typealias Representation = Output.PersistentRepresentation
-    public func asSQLiteExpression() -> SQLExpression<Representation.SQLiteType> {
-        return self.value.asPersistentRepresentation.sqlExpression
-    }
-}
-
-extension FilterExpressions.KeyPath: SQLiteExpressibleBuilder where
-Root: SQLiteExpressibleBuilder,
-Root.Output: PersistentModel,
-Output: Persistable
-{
-    public typealias Representation = Output.PersistentRepresentation
-    
-    public func asSQLiteExpression() throws(PredicateConversionError)
-    -> SQLExpression<Representation.SQLiteType>
+    extension FilterExpressions.Equal: SQLiteExpressibleBuilder where
+        LHS: SQLiteExpressibleBuilder,
+        RHS: SQLiteExpressibleBuilder,
+        LHS.Output: Persistable,
+        RHS.Output: Persistable
     {
-        guard let information = Root.Output._predicateInformation(for: keyPath) else {
-            throw .missingFieldInformation("\(keyPath)")
-        }
-        guard information.relationshipToType == nil else {
-            throw .unexpectedUnsupportedRelationship(
-                "\(keyPath) is a relationship. Filtering by relationships is currently unsupported."
+        public typealias Representation = Bool
+
+        public func asSQLiteExpression() throws(PredicateConversionError) -> SQLExpression<Bool> {
+            let left = try self.lhs.asSQLiteExpression()
+            let right = try self.rhs.asSQLiteExpression()
+
+            if right.template == "NULL" {
+                return SQLExpression<Bool>("(\(left.template) IS NULL)", left.bindings)
+            } else if left.template == "NULL" {
+                return SQLExpression<Bool>("(\(right.template) IS NULL)", right.bindings)
+            }
+
+            return SQLExpression<Bool>(
+                "(\(left.template) = \(right.template))",
+                left.bindings + right.bindings
             )
         }
-        return SQLExpression<Representation.SQLiteType>(information.key)
     }
-}
 
-extension FilterExpressions.Equal: SQLiteExpressibleBuilder where
-LHS: SQLiteExpressibleBuilder,
-RHS: SQLiteExpressibleBuilder,
-LHS.Output: Persistable,
-RHS.Output: Persistable
-{
-    public typealias Representation = Bool
-    
-    public func asSQLiteExpression() throws(PredicateConversionError) -> SQLExpression<Bool> {
-        let left = try self.lhs.asSQLiteExpression()
-        let right = try self.rhs.asSQLiteExpression()
-        
-        if right.template == "NULL" {
-            return SQLExpression<Bool>("(\(left.template) IS NULL)", left.bindings)
-        } else if left.template == "NULL" {
-            return SQLExpression<Bool>("(\(right.template) IS NULL)", right.bindings)
-        }
-        
-        return SQLExpression<Bool>(
-            "(\(left.template) = \(right.template))",
-            left.bindings + right.bindings
-        )
-    }
-}
+    extension FilterExpressions.NotEqual: SQLiteExpressibleBuilder where
+        LHS: SQLiteExpressibleBuilder,
+        RHS: SQLiteExpressibleBuilder,
+        LHS.Output: Persistable,
+        RHS.Output: Persistable
+    {
+        public typealias Representation = Bool
 
-extension FilterExpressions.NotEqual: SQLiteExpressibleBuilder where
-LHS: SQLiteExpressibleBuilder,
-RHS: SQLiteExpressibleBuilder,
-LHS.Output: Persistable,
-RHS.Output: Persistable
-{
-    public typealias Representation = Bool
-    
-    public func asSQLiteExpression() throws(PredicateConversionError) -> SQLExpression<Bool> {
-        let left = try self.lhs.asSQLiteExpression()
-        let right = try self.rhs.asSQLiteExpression()
-        
-        if right.template == "NULL" {
-            return SQLExpression<Bool>("(\(left.template) IS NOT NULL)", left.bindings)
-        } else if left.template == "NULL" {
-            return SQLExpression<Bool>("(\(right.template) IS NOT NULL)", right.bindings)
-        }
-        
-        return SQLExpression<Bool>(
-            "(\(left.template) != \(right.template))",
-            left.bindings + right.bindings
-        )
-    }
-}
+        public func asSQLiteExpression() throws(PredicateConversionError) -> SQLExpression<Bool> {
+            let left = try self.lhs.asSQLiteExpression()
+            let right = try self.rhs.asSQLiteExpression()
 
-extension FilterExpressions.Comparison: SQLiteExpressibleBuilder where
-LHS: SQLiteExpressibleBuilder,
-RHS: SQLiteExpressibleBuilder,
-LHS.Output: Persistable,
-LHS.Output == RHS.Output,
-LHS.Representation == RHS.Representation,
-LHS.Representation.SQLiteType: SQLiteDB.Value,
-LHS.Representation.SQLiteType.Datatype: Comparable
-{
-    public typealias Representation = Bool
-    
-    public func asSQLiteExpression() throws(PredicateConversionError) -> SQLExpression<Bool> {
-        let left = try self.lhs.asSQLiteExpression()
-        let right = try self.rhs.asSQLiteExpression()
-        
-        switch op {
-            case .lessThan: return SQLExpression<Bool>(left < right)
-            case .lessThanOrEqual: return SQLExpression<Bool>(left <= right)
-            case .greaterThan: return SQLExpression<Bool>(left > right)
-            case .greaterThanOrEqual: return SQLExpression<Bool>(left >= right)
-            @unknown default:
-                fatalError("Encountered unsupported comparison operator: \(op)")
+            if right.template == "NULL" {
+                return SQLExpression<Bool>("(\(left.template) IS NOT NULL)", left.bindings)
+            } else if left.template == "NULL" {
+                return SQLExpression<Bool>("(\(right.template) IS NOT NULL)", right.bindings)
+            }
+
+            return SQLExpression<Bool>(
+                "(\(left.template) != \(right.template))",
+                left.bindings + right.bindings
+            )
         }
     }
-}
 
-extension FilterExpressions.UnaryMinus: SQLiteExpressibleBuilder where
-Wrapped: SQLiteExpressibleBuilder,
-Wrapped.Output: Persistable
-{
-    public typealias Representation = Wrapped.Output.PersistentRepresentation
-    
-    public func asSQLiteExpression() throws(PredicateConversionError)
-    -> SQLExpression<Representation.SQLiteType>
+    extension FilterExpressions.Comparison: SQLiteExpressibleBuilder where
+        LHS: SQLiteExpressibleBuilder,
+        RHS: SQLiteExpressibleBuilder,
+        LHS.Output: Persistable,
+        LHS.Output == RHS.Output,
+        LHS.Representation == RHS.Representation,
+        LHS.Representation.SQLiteType: SQLiteDB.Value,
+        LHS.Representation.SQLiteType.Datatype: Comparable
     {
-        let value = try self.wrapped.asSQLiteExpression()
-        return SQLExpression("(-\(value.template))", value.bindings)
-    }
-}
+        public typealias Representation = Bool
 
-extension FilterExpressions.Negation: SQLiteExpressibleBuilder where
-Wrapped: SQLiteExpressibleBuilder
-{
-    public typealias Representation = Wrapped.Output.PersistentRepresentation
-    
-    public func asSQLiteExpression() throws(PredicateConversionError)
-    -> SQLExpression<Representation.SQLiteType>
-    {
-        guard let value = try self.wrapped.asSQLiteExpression() as? SQLExpression<Bool> else {
-            throw .notOperatorRequiresBoolExpression
+        public func asSQLiteExpression() throws(PredicateConversionError) -> SQLExpression<Bool> {
+            let left = try self.lhs.asSQLiteExpression()
+            let right = try self.rhs.asSQLiteExpression()
+
+            switch op {
+                case .lessThan: return SQLExpression<Bool>(left < right)
+                case .lessThanOrEqual: return SQLExpression<Bool>(left <= right)
+                case .greaterThan: return SQLExpression<Bool>(left > right)
+                case .greaterThanOrEqual: return SQLExpression<Bool>(left >= right)
+                @unknown default:
+                    fatalError("Encountered unsupported comparison operator: \(op)")
+            }
         }
-        return value == SQLExpression<Bool.SQLiteType>(value: false)
     }
-}
 
-extension FilterExpressions.Conjunction: SQLiteExpressibleBuilder where
-LHS: SQLiteExpressibleBuilder,
-RHS: SQLiteExpressibleBuilder,
-LHS.Output == Bool,
-RHS.Output == Bool,
-LHS.Representation == Bool,
-RHS.Representation == Bool
-{
-    public typealias Representation = Bool
-    
-    public func asSQLiteExpression() throws(PredicateConversionError)
-    -> SQLExpression<Bool.SQLiteType>
+    extension FilterExpressions.UnaryMinus: SQLiteExpressibleBuilder where
+        Wrapped: SQLiteExpressibleBuilder,
+        Wrapped.Output: Persistable
     {
-        let left = try SQLExpression<Bool>(self.lhs.asSQLiteExpression())
-        let right = try SQLExpression<Bool>(self.rhs.asSQLiteExpression())
-        
-        return SQLExpression<Bool.SQLiteType>(left && right)
-    }
-}
+        public typealias Representation = Wrapped.Output.PersistentRepresentation
 
-extension FilterExpressions.Disjunction: SQLiteExpressibleBuilder where
-LHS: SQLiteExpressibleBuilder,
-RHS: SQLiteExpressibleBuilder,
-LHS.Output == Bool,
-RHS.Output == Bool,
-LHS.Representation == Bool,
-RHS.Representation == Bool
-{
-    public typealias Representation = Bool
-    
-    public func asSQLiteExpression() throws(PredicateConversionError)
-    -> SQLExpression<Bool.SQLiteType>
+        public func asSQLiteExpression() throws(PredicateConversionError)
+            -> SQLExpression<Representation.SQLiteType>
+        {
+            let value = try self.wrapped.asSQLiteExpression()
+            return SQLExpression("(-\(value.template))", value.bindings)
+        }
+    }
+
+    extension FilterExpressions.Negation: SQLiteExpressibleBuilder where
+        Wrapped: SQLiteExpressibleBuilder
     {
-        let left = try SQLExpression<Bool>(self.lhs.asSQLiteExpression())
-        let right = try SQLExpression<Bool>(self.rhs.asSQLiteExpression())
-        
-        return SQLExpression<Bool.SQLiteType>(left || right)
-    }
-}
+        public typealias Representation = Wrapped.Output.PersistentRepresentation
 
-extension FilterExpressions.NilLiteral: SQLiteExpressibleBuilder where
-Wrapped: Persistable
-{
-    public typealias Representation = Wrapped?.PersistentRepresentation
-    
-    /// DO NOT USE, JUST EXISTS FOR CONFORMANCE
-    public func asSQLiteExpression() throws(PredicateConversionError)
-    -> SQLExpression<Representation.SQLiteType>
+        public func asSQLiteExpression() throws(PredicateConversionError)
+            -> SQLExpression<Representation.SQLiteType>
+        {
+            guard let value = try self.wrapped.asSQLiteExpression() as? SQLExpression<Bool> else {
+                throw .notOperatorRequiresBoolExpression
+            }
+            return value == SQLExpression<Bool.SQLiteType>(value: false)
+        }
+    }
+
+    extension FilterExpressions.Conjunction: SQLiteExpressibleBuilder where
+        LHS: SQLiteExpressibleBuilder,
+        RHS: SQLiteExpressibleBuilder,
+        LHS.Output == Bool,
+        RHS.Output == Bool,
+        LHS.Representation == Bool,
+        RHS.Representation == Bool
     {
-        .init(literal: "NULL")
-    }
-}
+        public typealias Representation = Bool
 
-extension FilterExpressions.SequenceStartsWith: SQLiteExpressibleBuilder where
-Base: SQLiteExpressibleBuilder,
-Prefix: SQLiteExpressibleBuilder,
-Base.Output == String,
-Prefix.Output == Base.Output
-{
-    public typealias Representation = Bool
-    
-    public func asSQLiteExpression() throws(PredicateConversionError) -> SQLExpression<Bool> {
-        guard let base = try self.base.asSQLiteExpression() as? SQLExpression<String>
-                else { throw .unsupportedStartsWithType(.base) }
-        guard let other = try self.prefix.asSQLiteExpression() as? SQLExpression<String>
-                else { throw .unsupportedStartsWithType(.parameter) }
-        
-        return SQLExpression<Bool>(
-            "instr(\(base.template), \(other.template)) = 1",
-            base.bindings + other.bindings
-        )
-    }
-}
+        public func asSQLiteExpression() throws(PredicateConversionError)
+            -> SQLExpression<Bool.SQLiteType>
+        {
+            let left = try SQLExpression<Bool>(self.lhs.asSQLiteExpression())
+            let right = try SQLExpression<Bool>(self.rhs.asSQLiteExpression())
 
-extension FilterExpressions.CollectionContainsCollection: SQLiteExpressibleBuilder where
-Base: SQLiteExpressibleBuilder,
-Other: SQLiteExpressibleBuilder,
-Base.Output == String,
-Other.Output == Base.Output
-{
-    public typealias Representation = Bool
-    
-    public func asSQLiteExpression() throws(PredicateConversionError) -> SQLExpression<Bool> {
-        guard let base = try self.base.asSQLiteExpression() as? SQLExpression<String>
-                else { throw .unsupportedContainsType(.base) }
-        guard let other = try self.other.asSQLiteExpression() as? SQLExpression<String>
-                else { throw .unsupportedContainsType(.parameter) }
-        
-        return SQLExpression<Bool>(
-            "instr(\(base.template), \(other.template)) > 0",
-            base.bindings + other.bindings
-        )
+            return SQLExpression<Bool.SQLiteType>(left && right)
+        }
     }
-}
+
+    extension FilterExpressions.Disjunction: SQLiteExpressibleBuilder where
+        LHS: SQLiteExpressibleBuilder,
+        RHS: SQLiteExpressibleBuilder,
+        LHS.Output == Bool,
+        RHS.Output == Bool,
+        LHS.Representation == Bool,
+        RHS.Representation == Bool
+    {
+        public typealias Representation = Bool
+
+        public func asSQLiteExpression() throws(PredicateConversionError)
+            -> SQLExpression<Bool.SQLiteType>
+        {
+            let left = try SQLExpression<Bool>(self.lhs.asSQLiteExpression())
+            let right = try SQLExpression<Bool>(self.rhs.asSQLiteExpression())
+
+            return SQLExpression<Bool.SQLiteType>(left || right)
+        }
+    }
+
+    extension FilterExpressions.NilLiteral: SQLiteExpressibleBuilder where
+        Wrapped: Persistable
+    {
+        public typealias Representation = Wrapped?.PersistentRepresentation
+
+        /// DO NOT USE, JUST EXISTS FOR CONFORMANCE
+        public func asSQLiteExpression() throws(PredicateConversionError)
+            -> SQLExpression<Representation.SQLiteType>
+        {
+            .init(literal: "NULL")
+        }
+    }
+
+    extension FilterExpressions.SequenceStartsWith: SQLiteExpressibleBuilder where
+        Base: SQLiteExpressibleBuilder,
+        Prefix: SQLiteExpressibleBuilder,
+        Base.Output == String,
+        Prefix.Output == Base.Output
+    {
+        public typealias Representation = Bool
+
+        public func asSQLiteExpression() throws(PredicateConversionError) -> SQLExpression<Bool> {
+            guard let base = try self.base.asSQLiteExpression() as? SQLExpression<String>
+            else { throw .unsupportedStartsWithType(.base) }
+            guard let other = try self.prefix.asSQLiteExpression() as? SQLExpression<String>
+            else { throw .unsupportedStartsWithType(.parameter) }
+
+            return SQLExpression<Bool>(
+                "instr(\(base.template), \(other.template)) = 1",
+                base.bindings + other.bindings
+            )
+        }
+    }
+
+    extension FilterExpressions.CollectionContainsCollection: SQLiteExpressibleBuilder where
+        Base: SQLiteExpressibleBuilder,
+        Other: SQLiteExpressibleBuilder,
+        Base.Output == String,
+        Other.Output == Base.Output
+    {
+        public typealias Representation = Bool
+
+        public func asSQLiteExpression() throws(PredicateConversionError) -> SQLExpression<Bool> {
+            guard let base = try self.base.asSQLiteExpression() as? SQLExpression<String>
+            else { throw .unsupportedContainsType(.base) }
+            guard let other = try self.other.asSQLiteExpression() as? SQLExpression<String>
+            else { throw .unsupportedContainsType(.parameter) }
+
+            return SQLExpression<Bool>(
+                "instr(\(base.template), \(other.template)) > 0",
+                base.bindings + other.bindings
+            )
+        }
+    }
 
 #endif

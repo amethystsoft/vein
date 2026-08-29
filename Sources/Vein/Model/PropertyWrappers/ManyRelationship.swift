@@ -139,7 +139,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                 }
             }
             #if VeinSCUI
-            didChange.mutate { $0.send() }
+                didChange.mutate { $0.send() }
             #endif
         } block: {
             lock.withLock {
@@ -384,5 +384,5 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
 }
 
 #if VeinSCUI
-    extension _ManyRelationship: PublishedMarkerProtocol, @MainActor SwiftCrossUI.ObservableObject {}
+    extension _ManyRelationship: PublishedMarkerProtocol, SwiftCrossUI.ObservableObject {}
 #endif

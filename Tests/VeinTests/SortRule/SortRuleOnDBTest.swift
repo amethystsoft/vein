@@ -59,7 +59,7 @@ struct RealDatabaseSortRuleTests {
             at: dbPath,
             appID: "de.amethystsoft.vein.RealDatabaseSortRuleTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption,
-            //logConfiguration: logConfig
+            // logConfiguration: logConfig
         )
     }
 
@@ -182,49 +182,49 @@ struct RealDatabaseSortRuleTests {
         #expect(results[1].somethingOptional == nil)
         #expect(results[2].somethingOptional == nil)
     }
-    
+
     @Test
     func testCaseSensitivity() async throws {
         let dbPath = try prepareContainerLocation(name: "CaseSensitivity")
-        
+
         let container = try setup(at: dbPath)
-        
+
         let caseInsensitiveSorted = try container.context.fetchAll(
             V0_0_1.User.self,
             sortBy: [SortRule(\.name)]
         )
-        
+
         #expect(caseInsensitiveSorted[0].name == "apple")
         #expect(caseInsensitiveSorted[1].name == "Banana")
         #expect(caseInsensitiveSorted[2].name == "cherry")
-        
+
         let caseInsensitiveSortedReverse = try container.context.fetchAll(
             V0_0_1.User.self,
             sortBy: [SortRule(\.name, order: .descending)]
         )
-        
+
         #expect(caseInsensitiveSortedReverse[2].name == "apple")
         #expect(caseInsensitiveSortedReverse[1].name == "Banana")
         #expect(caseInsensitiveSortedReverse[0].name == "cherry")
-        
+
         let caseSensitiveSorted = try container.context.fetchAll(
             V0_0_1.User.self,
             sortBy: [SortRule(\.name, comparator: .lexical)]
         )
-        
+
         #expect(caseSensitiveSorted[0].name == "Banana")
         #expect(caseSensitiveSorted[1].name == "apple")
         #expect(caseSensitiveSorted[2].name == "cherry")
-        
+
         let caseSensitiveSortedReverse = try container.context.fetchAll(
             V0_0_1.User.self,
             sortBy: [SortRule(\.name, comparator: .lexical, order: .descending)]
         )
-        
+
         #expect(caseSensitiveSortedReverse[2].name == "Banana")
         #expect(caseSensitiveSortedReverse[1].name == "apple")
         #expect(caseSensitiveSortedReverse[0].name == "cherry")
-        
+
         func setup(at path: String) throws -> ModelContainer {
             let setupContainer = try ModelContainer(
                 V0_0_1.self,
@@ -233,17 +233,17 @@ struct RealDatabaseSortRuleTests {
                 appID: "de.amethystsoft.vein.RealDatabaseSortRuleTests",
                 encryptionEnabled: false
             )
-            
+
             let model1 = V0_0_1.User(name: "apple", email: "", birthday: .now)
             let model2 = V0_0_1.User(name: "Banana", email: "", birthday: .now)
             let model3 = V0_0_1.User(name: "cherry", email: "", birthday: .now)
-            
+
             try setupContainer.context.insert(model1)
             try setupContainer.context.insert(model2)
             try setupContainer.context.insert(model3)
-            
+
             try setupContainer.context.save()
-            
+
             return try ModelContainer(
                 V0_0_1.self,
                 migration: Migration.self,

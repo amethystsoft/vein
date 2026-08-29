@@ -31,7 +31,7 @@ public struct SortRule<Compared: PersistentModel>: Sendable {
     let stringComparator: StringComparator?
     let order: Order
     let comparator: @Sendable (Compared, Compared) -> ComparisonResult
-    
+
     public init<F: Persistable & Comparable>(
         _ keyPath: any KeyPath<Compared, F> & Sendable,
         order: Order = .ascending
@@ -47,7 +47,7 @@ public struct SortRule<Compared: PersistentModel>: Sendable {
             return .orderedSame
         }
     }
-    
+
     public init<F: Persistable & Comparable>(
         _ keyPath: any KeyPath<Compared, F?> & Sendable,
         order: Order = .ascending
@@ -55,26 +55,26 @@ public struct SortRule<Compared: PersistentModel>: Sendable {
         self.keyPath = keyPath
         self.order = order
         self.stringComparator = nil
-        
+
         self.comparator = { lhs, rhs in
             let lVal = lhs[keyPath: keyPath]
             let rVal = rhs[keyPath: keyPath]
-            
+
             if lVal == nil && rVal == nil { return .orderedSame }
             if lVal == nil && rVal != nil { return .orderedAscending.with(order: order) }
             if lVal != nil && rVal == nil { return .orderedDescending.with(order: order) }
-            
+
             guard let lVal, let rVal else {
                 // unreachable (in theory)
                 fatalError("Unexpectedly found nil value in \(#file):\(#line)")
             }
-            
+
             if lVal < rVal { return .orderedAscending.with(order: order) }
             if lVal > rVal { return .orderedDescending.with(order: order) }
             return .orderedSame
         }
     }
-    
+
     public init(
         _ keyPath: KeyPath<Compared, String> & Sendable,
         comparator: StringComparator = .caseInsensitive,
@@ -83,21 +83,21 @@ public struct SortRule<Compared: PersistentModel>: Sendable {
         self.keyPath = keyPath
         self.order = order
         self.stringComparator = comparator
-        
+
         self.comparator = { lhs, rhs in
             let lVal = lhs[keyPath: keyPath]
             let rVal = rhs[keyPath: keyPath]
-            
+
             if comparator.kind == .caseInsensitive {
                 return lVal.caseInsensitiveCompare(rVal).with(order: order)
             }
-            
+
             if lVal < rVal { return .orderedAscending.with(order: order) }
             if lVal > rVal { return .orderedDescending.with(order: order) }
             return .orderedSame
         }
     }
-    
+
     public init(
         _ keyPath: KeyPath<Compared, String?> & Sendable,
         comparator: StringComparator = .caseInsensitive,
@@ -106,42 +106,42 @@ public struct SortRule<Compared: PersistentModel>: Sendable {
         self.keyPath = keyPath
         self.order = order
         self.stringComparator = comparator
-        
+
         self.comparator = { lhs, rhs in
             let lVal = lhs[keyPath: keyPath]
             let rVal = rhs[keyPath: keyPath]
-            
+
             if lVal == nil && rVal == nil { return .orderedSame }
             if lVal == nil && rVal != nil { return .orderedAscending.with(order: order) }
             if lVal != nil && rVal == nil { return .orderedDescending.with(order: order) }
-            
+
             guard let lVal, let rVal else {
                 // unreachable (in theory)
                 fatalError("Unexpectedly found nil value in \(#file):\(#line)")
             }
-            
+
             if comparator.kind == .caseInsensitive {
                 return lVal.caseInsensitiveCompare(rVal).with(order: order)
             }
-        
+
             if lVal < rVal { return .orderedAscending.with(order: order) }
             if lVal > rVal { return .orderedDescending.with(order: order) }
             return .orderedSame
         }
     }
-    
+
     public func compare(lhs: Compared, rhs: Compared) -> ComparisonResult {
         comparator(lhs, rhs)
     }
-    
+
     public struct StringComparator: Equatable, Sendable {
         enum Kind: Sendable {
             case lexical
             case caseInsensitive
         }
-        
+
         var kind: Kind
-        
+
         public static var lexical: Self { Self(kind: .lexical)}
         public static var caseInsensitive: Self { Self(kind: .caseInsensitive)}
     }
@@ -158,9 +158,9 @@ extension SortRule {
             guard let information = Compared._predicateInformation(for: keyPath) else {
                 throw .noFieldInformation("\(keyPath)")
             }
-            
+
             var expressible: any Expressible
-            
+
             if let stringComparator {
                 expressible = switch stringComparator.kind {
                     case .lexical:
@@ -171,11 +171,11 @@ extension SortRule {
             } else {
                 expressible = information.fetchExpressible
             }
-            
+
             if order == .ascending {
                 return expressible.expression.asc
             }
-            
+
             return expressible.expression.desc
         }
     }
@@ -186,7 +186,7 @@ extension Sequence where Element: PersistentModel {
         return sorted { lhs, rhs in
             for descriptor in descriptors {
                 let result = descriptor.compare(lhs: lhs, rhs: rhs)
-                
+
                 if result != .orderedSame {
                     return result == .orderedAscending
                 }
@@ -207,7 +207,7 @@ extension ComparisonResult {
             case .orderedDescending:
                 .orderedAscending
             case .orderedSame:
-                    .orderedSame
+                .orderedSame
         }
     }
 }

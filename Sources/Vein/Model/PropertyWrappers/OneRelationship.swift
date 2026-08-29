@@ -146,7 +146,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
             _withObservationNotification({
                 model?.notifyOfChanges()
                 #if VeinSCUI
-                didChange.mutate { $0.send() }
+                    didChange.mutate { $0.send() }
                 #endif
             }) {
                 lock.withLock {
@@ -204,7 +204,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         _withObservationNotification({
             target.notifyOfChanges()
             #if VeinSCUI
-            inverseField.didChange.mutate { $0.send() }
+                inverseField.didChange.mutate { $0.send() }
             #endif
         }) {
 

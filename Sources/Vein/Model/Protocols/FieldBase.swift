@@ -27,7 +27,7 @@ public protocol FieldBase {
     var wasTouched: Bool { get }
 
     #if VeinSCUI
-    var didChange: Mutex<SwiftCrossUI.Publisher> { get }
+        var didChange: Mutex<SwiftCrossUI.Publisher> { get }
     #endif
 
     var _persistableValue: WrappedType { get set }

@@ -102,7 +102,10 @@ let package = Package(
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.1.0"),
         .package(url: "https://github.com/typelift/SwiftCheck", .upToNextMinor(from: "0.12.0")),
         .package(url: "https://github.com/moreSwift/swift-cross-ui", .upToNextMinor(from: "0.8.0")),
-        .package(url: "https://github.com/amethystsoft/vein-filter.git", .upToNextMajor(from: "1.0.0")),
+        .package(
+            url: "https://github.com/amethystsoft/vein-filter.git",
+            .upToNextMajor(from: "1.0.0")
+        ),
     ],
     targets: [
         .target(

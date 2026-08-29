@@ -209,7 +209,7 @@
                 at: nil,
                 appID: "de.amethystsoft.vein.swiftui.query",
                 encryptionEnabled: ProcessInfo.shouldEnableEncryption,
-                //logConfiguration: logConfiguration
+                // logConfiguration: logConfiguration
             )
 
             let context = container.context!

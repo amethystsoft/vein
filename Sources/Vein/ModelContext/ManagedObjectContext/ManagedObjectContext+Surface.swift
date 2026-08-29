@@ -14,7 +14,7 @@ import Foundation
 import SQLiteDB
 
 #if VeinFilter
-import VeinFilter
+    import VeinFilter
 #endif
 
 package typealias WriteCacheDictionary = [ObjectIdentifier: [ULID: any PersistentModel]]
@@ -48,26 +48,26 @@ extension ManagedObjectContext {
             }
         } catch { throw .other(message: error.localizedDescription)}
     }
-    
+
     #if VeinFilter
-    public nonisolated func fetchAll<T: PersistentModel>(
-        _ predicate: Filter1<T>
-    ) throws(MOCError) -> [T] {
-        do {
-            guard
-                self.modelContainer.getSchema(for: T.typeIdentifier) != nil
-                    else { throw MOCError.inactiveModelTypeFetched(T.self)}
-            let modelPredicate = try ModelPredicate(predicate)
-            
-            return try _fetchAll(modelPredicate, sortingBy: nil)
-        } catch let error as MOCError {
-            switch error {
-                case .noSuchTable:
-                    return []
-                default: throw error
-            }
-        } catch { throw .other(message: error.localizedDescription)}
-    }
+        public nonisolated func fetchAll<T: PersistentModel>(
+            _ predicate: Filter1<T>
+        ) throws(MOCError) -> [T] {
+            do {
+                guard
+                    self.modelContainer.getSchema(for: T.typeIdentifier) != nil
+                else { throw MOCError.inactiveModelTypeFetched(T.self)}
+                let modelPredicate = try ModelPredicate(predicate)
+
+                return try _fetchAll(modelPredicate, sortingBy: nil)
+            } catch let error as MOCError {
+                switch error {
+                    case .noSuchTable:
+                        return []
+                    default: throw error
+                }
+            } catch { throw .other(message: error.localizedDescription)}
+        }
     #endif
 
     /// Returns all models matching the ``ModelPredicate``.
@@ -112,27 +112,27 @@ extension ManagedObjectContext {
             }
         } catch { throw .other(message: error.localizedDescription)}
     }
-    
+
     #if VeinFilter
-    public nonisolated func fetchAll<T: PersistentModel>(
-        _ predicate: Filter1<T>,
-        sortBy descriptors: [SortRule<T>]
-    ) throws(MOCError) -> [T] {
-        do {
-            guard
-                self.modelContainer.getSchema(for: T.typeIdentifier) != nil
-                    else { throw MOCError.inactiveModelTypeFetched(T.self)}
-            let modelPredicate = try ModelPredicate(predicate)
-            
-            return try _fetchAll(modelPredicate, sortingBy: descriptors)
-        } catch let error as MOCError {
-            switch error {
-                case .noSuchTable:
-                    return []
-                default: throw error
-            }
-        } catch { throw .other(message: error.localizedDescription)}
-    }
+        public nonisolated func fetchAll<T: PersistentModel>(
+            _ predicate: Filter1<T>,
+            sortBy descriptors: [SortRule<T>]
+        ) throws(MOCError) -> [T] {
+            do {
+                guard
+                    self.modelContainer.getSchema(for: T.typeIdentifier) != nil
+                else { throw MOCError.inactiveModelTypeFetched(T.self)}
+                let modelPredicate = try ModelPredicate(predicate)
+
+                return try _fetchAll(modelPredicate, sortingBy: descriptors)
+            } catch let error as MOCError {
+                switch error {
+                    case .noSuchTable:
+                        return []
+                    default: throw error
+                }
+            } catch { throw .other(message: error.localizedDescription)}
+        }
     #endif
 
     /// Returns all models matching the ``ModelPredicate``.
@@ -161,7 +161,10 @@ extension ManagedObjectContext {
     public nonisolated func fetchAll<T: PersistentModel>(
         _ modelType: T.Type
     ) throws(MOCError) -> [T] {
-        try fetchAll(ModelPredicate<T>(runtimeFilter: { _ in true }, sql: SQLExpression<Bool>(value: true)))
+        try fetchAll(ModelPredicate<T>(
+            runtimeFilter: { _ in true },
+            sql: SQLExpression<Bool>(value: true)
+        ))
     }
 
     /// Returns all models of a model type.
@@ -170,7 +173,10 @@ extension ManagedObjectContext {
         _ modelType: T.Type,
         sortBy descriptor: [SortRule<T>]
     ) throws(MOCError) -> [T] {
-        try fetchAll(ModelPredicate<T>(runtimeFilter: { _ in true }, sql: SQLExpression<Bool>(value: true)), sortBy: descriptor)
+        try fetchAll(
+            ModelPredicate<T>(runtimeFilter: { _ in true }, sql: SQLExpression<Bool>(value: true)),
+            sortBy: descriptor
+        )
     }
 
     /// Inserts an unmanaged model into the context.

@@ -27,7 +27,7 @@ extension ManagedObjectContext {
             var fieldsToLoad = eagerLoadedFields.map(\.fetchExpressible)
             fieldsToLoad.append(SQLExpression<String>("id"))
             var select = table.select(fieldsToLoad)
-            
+
             if let sortDescriptors {
                 select = try select.order(sortDescriptors.map { try $0.expressible })
             }
