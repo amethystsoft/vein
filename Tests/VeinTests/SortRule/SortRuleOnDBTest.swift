@@ -229,7 +229,7 @@ struct RealDatabaseSortRuleTests {
             let setupContainer = try ModelContainer(
                 V0_0_1.self,
                 migration: Migration.self,
-                at: dbPath,
+                at: path,
                 appID: "de.amethystsoft.vein.RealDatabaseSortRuleTests",
                 encryptionEnabled: false
             )

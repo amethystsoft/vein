@@ -233,9 +233,7 @@ struct RealDatabasePredicateTests {
         }, sortBy: [SortRule(\.balance)])
 
         #expect(results.count == 3)
-        #expect(results[0].name == "matching")
-        #expect(results[1].name == "Charlie")
-        #expect(results[2].name == "Mia")
+        #expect(results.map(\.name) == ["matching", "Charlie", "Mia"])
     }
 }
 

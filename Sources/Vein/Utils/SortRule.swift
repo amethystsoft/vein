@@ -18,7 +18,7 @@ public enum SortRuleConversionError: Error {
 }
 
 extension SortRuleConversionError: LocalizedError {
-    public var localizedDescription: String {
+    public var errorDescription: String? {
         switch self {
             case .noFieldInformation(let keyPath):
                 return "No field information for key path: \(keyPath)"
@@ -101,7 +101,7 @@ public struct SortRule<Compared: PersistentModel>: Sendable {
     public init(
         _ keyPath: KeyPath<Compared, String?> & Sendable,
         comparator: StringComparator = .caseInsensitive,
-        order: Order
+        order: Order = .ascending
     ) {
         self.keyPath = keyPath
         self.order = order
