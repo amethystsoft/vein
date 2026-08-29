@@ -368,5 +368,5 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
 }
 
 #if VeinSCUI
-    extension _OneRelationship: PublishedMarkerProtocol, @MainActor SwiftCrossUI.ObservableObject {}
+    extension _OneRelationship: PublishedMarkerProtocol, SwiftCrossUI.ObservableObject {}
 #endif
