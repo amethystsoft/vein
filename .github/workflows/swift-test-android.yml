@@ -23,3 +23,5 @@ jobs:
           # Ubuntu runners low on space causes the emulator to fail to install
           free-disk-space: true
           test-env: SHOULD_DISABLE_ENCRYPTION=1
+          swift-build-flags: '--traits VeinFilter'
+          swift-test-flags: '--traits VeinFilter'

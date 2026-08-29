@@ -27,7 +27,7 @@ struct RealDatabaseFilterTests {
     func prepareContainerLocation(name: String) throws -> String {
         let containerPath = FileManager.default.temporaryDirectory
 
-        let dbDir = containerPath.relativePath.appending("/veinTests/\(testID.uuidString)")
+        let dbDir = containerPath.relativePath.appending("/veinTests/\(testID.uuidString)/Filter")
 
         let dbPath = dbDir.appending("/\(name).sqlite3")
 
