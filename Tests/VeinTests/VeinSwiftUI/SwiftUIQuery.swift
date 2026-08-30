@@ -29,34 +29,34 @@
 
             let modelPredicate = try ModelPredicate(#Predicate<Test> {_ in true })
             let queryObserver = QueryObserver<Test>(modelPredicate)
-            
+
             await Task.yield()
-            
+
             queryObserver.initialize(with: container.context)
-            
+
             #expect(
                 container
                     .context
                     .registeredQueries
                     .value[ObjectIdentifier(Test.self)]?
                     .count
-                == 1
+                    == 1
             )
-            
+
             await Task.yield()
-            
+
             #expect(queryObserver.results == models)
 
             try container.context.delete(models.first!)
-            
+
             await Task.yield()
 
             #expect(queryObserver.results == Array(models[1...]))
 
             try container.context.insert(models.first!)
-            
+
             await Task.yield()
-            
+
             // We need the sortrule here, as the stuff is sorted on the query level, not queryObserver.
             #expect(queryObserver.results?.sorted(using: [SortRule(\.id)]) == models)
         }
@@ -65,33 +65,33 @@
         func filteredQueryIntegrationWithSwiftUI() async throws {
             let (container, initialModels) = try seed()
             let models = initialModels.filter { $0.someValue.contains("i")}
-            
+
             let modelPredicate = try ModelPredicate(#Predicate<Test> { model in
                 model.someValue.contains("i")
             })
             let queryObserver = QueryObserver<Test>(modelPredicate)
-            
+
             await Task.yield()
-            
+
             queryObserver.initialize(with: container.context)
 
             #expect(queryObserver.results == models)
 
             try container.context.delete(models.first!)
-            
+
             await Task.yield()
 
             #expect(queryObserver.results == Array(models[1...]))
 
             try container.context.insert(models.first!)
-            
+
             await Task.yield()
-            
+
             // We need the sortrule here, as the stuff is sorted on the query level, not queryObserver.
             #expect(queryObserver.results?.sorted(using: [SortRule(\.id)]) == models)
 
             models.first!.someValue = "no letter you're look'n for here"
-            
+
             await Task.yield()
 
             #expect(queryObserver.results == Array(models[1...]))

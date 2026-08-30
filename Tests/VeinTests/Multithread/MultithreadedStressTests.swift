@@ -31,13 +31,13 @@ struct MultithreadedStressTests {
             appID: "de.amethystsoft.vein.tests.multithreaded.identity",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-        
+
         let model = V0_0_1.Person(name: "Mia", email: "mia@example.com")
         try container.context.insert(model)
         if save {
             try container.context.save()
         }
-        
+
         try await withThrowingTaskGroup(of: Void.self) { group in
             for _ in 0..<100 {
                 group.addTask {
@@ -86,9 +86,15 @@ struct MultithreadedStressTests {
 
         let finalResults = try container.context.fetchAll(V0_0_1.Person.self)
         #expect(finalResults.count == 100)
-        
+
         for i in 0..<100 {
-            #expect(finalResults.contains { $0.email == "person\(i)@example.com" && $0.name == "Person \(i)"})
+            #expect(
+                finalResults
+                    .contains {
+                        $0.email == "person\(i)@example.com"
+                            && $0.name == "Person \(i)"
+                    }
+            )
         }
     }
 
@@ -112,9 +118,10 @@ struct MultithreadedStressTests {
             for _ in 0..<50 {
                 group.addTask {
                     try? await Task.sleep(nanoseconds: UInt64.random(in: 10_000...50_000))
-                    let results = try container.context.fetchAll(#Predicate<V0_0_1.Person> { person in
-                        person.name == "Alice"
-                    })
+                    let results = try container.context
+                        .fetchAll(#Predicate<V0_0_1.Person> { person in
+                            person.name == "Alice"
+                        })
                     #expect(results.count == 1)
                 }
             }
@@ -122,7 +129,10 @@ struct MultithreadedStressTests {
             for _ in 0..<50 {
                 group.addTask {
                     try? await Task.sleep(nanoseconds: UInt64.random(in: 10_000...50_000))
-                    let results = try container.context.fetchAll(V0_0_1.Person.self, sortBy: [SortRule(\.name)])
+                    let results = try container.context.fetchAll(
+                        V0_0_1.Person.self,
+                        sortBy: [SortRule(\.name)]
+                    )
                     #expect(results.count == 2)
                 }
             }
@@ -143,7 +153,7 @@ struct MultithreadedStressTests {
 
         let model = V0_0_1.Person(name: "Original", email: "original@example.com")
         try container.context.insert(model)
-        
+
         if save {
             try container.context.save()
         }
@@ -164,7 +174,7 @@ struct MultithreadedStressTests {
                     try? await Task.sleep(nanoseconds: UInt64.random(in: 10_000...50_000))
                     let fetched = try container.context.fetchAll(V0_0_1.Person.self)
                     guard let first = fetched.first else { return }
-                    
+
                     // Both are valid as read write order is non deterministic.
                     #expect(first.name == "Original" || first.name.hasPrefix("Updated"))
                 }
@@ -172,7 +182,7 @@ struct MultithreadedStressTests {
 
             try await group.waitForAll()
         }
-        
+
         #expect(model.name.hasPrefix("Updated"))
     }
 
@@ -190,7 +200,7 @@ struct MultithreadedStressTests {
             let p = V0_0_1.Person(name: "Person \(i)", email: "p\(i)@example.com")
             try container.context.insert(p)
         }
-        
+
         if save {
             try container.context.save()
         }
@@ -231,7 +241,7 @@ struct MultithreadedStressTests {
             }
             try await group.waitForAll()
         }
-        
+
         if save {
             try container.context.save()
         }
@@ -262,7 +272,7 @@ struct MultithreadedStressTests {
             }
             try await group.waitForAll()
         }
-        
+
         if save {
             try container.context.save()
         }
@@ -297,7 +307,7 @@ struct MultithreadedStressTests {
             }
             try await group.waitForAll()
         }
-        
+
         if save {
             try container.context.save()
         }
@@ -332,7 +342,7 @@ struct MultithreadedStressTests {
             }
             try await group.waitForAll()
         }
-        
+
         try container.context.save()
 
         let posts = try container.context.fetchAll(V0_0_1.Post.self)
@@ -346,7 +356,11 @@ struct MultithreadedStressTests {
 fileprivate enum V0_0_1: VersionedSchema {
     static let version = ModelVersion(0, 0, 1)
     static let models: [any Vein.PersistentModel.Type] = [
-        Person.self, Profile.self, Post.self, Comment.self, Tag.self
+        Person.self,
+        Profile.self,
+        Post.self,
+        Comment.self,
+        Tag.self
     ]
 
     @Model
