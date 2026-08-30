@@ -102,6 +102,7 @@ extension ManagedObjectContext {
                     predicate.runtimeFilter(model)
                 {
                     models.append(model)
+                    resultIDs.insert(model.id)
                 }
             }
 

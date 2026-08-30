@@ -203,16 +203,154 @@ struct MultithreadedStressTests {
             try await group.waitForAll()
         }
     }
+
+    @Test(arguments: [true, false])
+    func concurrentLazyFieldReadWrite(_ save: Bool) async throws {
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.tests.multithreaded.lazy",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+        )
+
+        let model = V0_0_1.Person(name: "Mia", email: "mia@example.com")
+        try container.context.insert(model)
+
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            for i in 0..<100 {
+                group.addTask {
+                    try? await Task.sleep(nanoseconds: UInt64.random(in: 10_000...50_000))
+                    _ = model.notes
+                    model.notes = "Note \(i)"
+                }
+            }
+            try await group.waitForAll()
+        }
+        
+        if save {
+            try container.context.save()
+        }
+        let fetched = try container.context.fetchAll(V0_0_1.Person.self).first
+        #expect(fetched?.notes?.hasPrefix("Note ") == true)
+    }
+
+    @Test(arguments: [true, false])
+    func concurrentOneToOneRelationship(_ save: Bool) async throws {
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.tests.multithreaded.oneToOne",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+        )
+
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            for i in 0..<50 {
+                group.addTask {
+                    try? await Task.sleep(nanoseconds: UInt64.random(in: 10_000...50_000))
+                    let person = V0_0_1.Person(name: "Person \(i)", email: "person\(i)@example.com")
+                    let profile = V0_0_1.Profile(bio: "Bio \(i)")
+                    try container.context.insert(person)
+                    try container.context.insert(profile)
+                    person.profile = profile
+                }
+            }
+            try await group.waitForAll()
+        }
+        
+        if save {
+            try container.context.save()
+        }
+
+        let people = try container.context.fetchAll(V0_0_1.Person.self)
+        let profiles = try container.context.fetchAll(V0_0_1.Profile.self)
+        #expect(people.count == 50)
+        #expect(profiles.count == 50)
+        #expect(people.allSatisfy { $0.profile != nil })
+    }
+
+    @Test(arguments: [true, false])
+    func concurrentOneToManyRelationship(_ save: Bool) async throws {
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.tests.multithreaded.oneToMany",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+        )
+
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            for i in 0..<50 {
+                group.addTask {
+                    try? await Task.sleep(nanoseconds: UInt64.random(in: 10_000...50_000))
+                    let post = V0_0_1.Post(title: "Post \(i)")
+                    let comment = V0_0_1.Comment(text: "Comment \(i)")
+                    try container.context.insert(post)
+                    try container.context.insert(comment)
+                    post.comments.append(comment)
+                }
+            }
+            try await group.waitForAll()
+        }
+        
+        if save {
+            try container.context.save()
+        }
+
+        let posts = try container.context.fetchAll(V0_0_1.Post.self)
+        let comments = try container.context.fetchAll(V0_0_1.Comment.self)
+        #expect(posts.count == 50)
+        #expect(comments.count == 50)
+        #expect(posts.allSatisfy { $0.comments.count == 1 })
+    }
+
+    @Test(arguments: [true, false])
+    func concurrentManyToManyRelationship(_ save: Bool) async throws {
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.tests.multithreaded.manyToMany",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+        )
+
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            for i in 0..<50 {
+                group.addTask {
+                    try? await Task.sleep(nanoseconds: UInt64.random(in: 10_000...50_000))
+                    let post = V0_0_1.Post(title: "Post \(i)")
+                    let tag = V0_0_1.Tag(name: "Tag \(i)")
+                    try container.context.insert(post)
+                    try container.context.insert(tag)
+                    post.tags.append(tag)
+                }
+            }
+            try await group.waitForAll()
+        }
+        
+        try container.context.save()
+
+        let posts = try container.context.fetchAll(V0_0_1.Post.self)
+        let tags = try container.context.fetchAll(V0_0_1.Tag.self)
+        #expect(posts.count == 50)
+        #expect(tags.count == 50)
+        #expect(posts.allSatisfy { $0.tags.count == 1 })
+    }
 }
 
 fileprivate enum V0_0_1: VersionedSchema {
     static let version = ModelVersion(0, 0, 1)
-    static let models: [any Vein.PersistentModel.Type] = [Person.self, Post.self, Tag.self]
+    static let models: [any Vein.PersistentModel.Type] = [
+        Person.self, Profile.self, Post.self, Comment.self, Tag.self
+    ]
 
     @Model
     final class Person: Identifiable {
         @Field var name: String
         @Field var email: String
+        @LazyField var notes: String?
+        @Relationship(inverse: \Profile.person) var profile: Profile?
         init(name: String, email: String) {
             self.name = name
             self.email = email
@@ -220,12 +358,30 @@ fileprivate enum V0_0_1: VersionedSchema {
     }
 
     @Model
+    final class Profile: Identifiable {
+        @Field var bio: String
+        @Relationship var person: Person?
+        init(bio: String) {
+            self.bio = bio
+        }
+    }
+
+    @Model
     final class Post: Identifiable {
         @Relationship var tags: [Tag]
+        @Relationship(inverse: \Comment.post) var comments: [Comment]
         @Field var title: String
         init(title: String) {
             self.title = title
-            self.tags = []
+        }
+    }
+
+    @Model
+    final class Comment: Identifiable {
+        @Relationship var post: Post?
+        @Field var text: String
+        init(text: String) {
+            self.text = text
         }
     }
 
