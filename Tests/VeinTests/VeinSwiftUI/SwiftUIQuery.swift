@@ -16,188 +16,85 @@
     import SQLiteDB
     import SwiftUI
     @testable import Vein
-    @_spi(VeinTesting) import VeinSwiftUI
+    @_spi(VeinTesting) @testable import VeinSwiftUI
 
     fileprivate typealias Test = V0_0_1.Test
 
-    @MainActor
-    struct QueryTestView: SwiftUI.View {
-        @Query(#Predicate<Test> { _ in true })
-        fileprivate var tests: [Test]
-
-        fileprivate let onRender: ([Test]) -> Void
-
-        var body: some SwiftUI.View {
-            Text("Count: \(tests.count)")
-                .onAppear {
-                    onRender(tests)
-                }
-                .onChange(of: tests) { _, newValue in
-                    onRender(newValue)
-                }
-        }
-    }
-
-    @MainActor
-    struct FilteredQueryTestView: SwiftUI.View {
-        @Query(#Predicate<Test> { test in test.someValue.contains("i") })
-        fileprivate var tests: [Test]
-
-        fileprivate let onRender: ([Test]) -> Void
-
-        var body: some SwiftUI.View {
-            Text("Count: \(tests.count)")
-                .onAppear {
-                    onRender(tests)
-                }
-                .onChange(of: tests) { _, newValue in
-                    onRender(newValue)
-                }
-        }
-    }
-
-    @Suite(.disabled(if: ProcessInfo.isRunningHeadless))
+    @Suite
     @MainActor
     struct QueryTests {
         @Test(.timeLimit(.minutes(1)))
         func queryIntegrationWithSwiftUI() async throws {
             let (container, models) = try seed()
 
-            let (stream, continuation) = AsyncStream.makeStream(of: [V0_0_1.Test].self)
-
-            let view = VeinContainer {
-                QueryTestView { updatedTests in
-                    continuation.yield(updatedTests)
-                }
-            }
-            .modelContainer(container)
-
-            let hostingController = NSHostingController(rootView: view)
-            hostingController.view.layoutSubtreeIfNeeded()
-
-            var iterator = stream.makeAsyncIterator()
-
-            guard let initialResults = await iterator.next() else {
-                Issue.record("Expected initial results")
-                return
-            }
-            #expect(initialResults == models)
+            let modelPredicate = try ModelPredicate(#Predicate<Test> {_ in true })
+            let queryObserver = QueryObserver<Test>(modelPredicate)
+            
+            await Task.yield()
+            
+            queryObserver.initialize(with: container.context)
+            
+            #expect(
+                container
+                    .context
+                    .registeredQueries
+                    .value[ObjectIdentifier(Test.self)]?
+                    .count
+                == 1
+            )
+            
+            await Task.yield()
+            
+            #expect(queryObserver.results == models)
 
             try container.context.delete(models.first!)
+            
+            await Task.yield()
 
-            guard let resultAfterDelete = await iterator.next() else {
-                Issue.record("Expected updated results after delete")
-                return
-            }
-            #expect(resultAfterDelete == Array(models[1...]))
+            #expect(queryObserver.results == Array(models[1...]))
 
             try container.context.insert(models.first!)
-
-            guard let resultsAfterReinsert = await iterator.next() else {
-                Issue.record("Expected updated results after reinsert")
-                return
-            }
-            #expect(resultsAfterReinsert == models)
-
-            continuation.finish()
+            
+            await Task.yield()
+            
+            // We need the sortrule here, as the stuff is sorted on the query level, not queryObserver.
+            #expect(queryObserver.results?.sorted(using: [SortRule(\.id)]) == models)
         }
 
         @Test(.timeLimit(.minutes(1)))
         func filteredQueryIntegrationWithSwiftUI() async throws {
             let (container, initialModels) = try seed()
             let models = initialModels.filter { $0.someValue.contains("i")}
+            
+            let modelPredicate = try ModelPredicate(#Predicate<Test> { model in
+                model.someValue.contains("i")
+            })
+            let queryObserver = QueryObserver<Test>(modelPredicate)
+            
+            await Task.yield()
+            
+            queryObserver.initialize(with: container.context)
 
-            let (stream, continuation) = AsyncStream.makeStream(of: [V0_0_1.Test].self)
-
-            let view = VeinContainer {
-                FilteredQueryTestView { updatedTests in
-                    continuation.yield(updatedTests)
-                }
-            }
-            .modelContainer(container)
-
-            let hostingController = NSHostingController(rootView: view)
-            hostingController.view.layoutSubtreeIfNeeded()
-
-            var iterator = stream.makeAsyncIterator()
-
-            guard let initialResults = await iterator.next() else {
-                Issue.record("Expected initial results")
-                return
-            }
-            #expect(initialResults == models)
+            #expect(queryObserver.results == models)
 
             try container.context.delete(models.first!)
+            
+            await Task.yield()
 
-            guard let resultAfterDelete = await iterator.next() else {
-                Issue.record("Expected updated results after delete")
-                return
-            }
-            #expect(resultAfterDelete == Array(models[1...]))
+            #expect(queryObserver.results == Array(models[1...]))
 
             try container.context.insert(models.first!)
-
-            guard let resultsAfterReinsert = await iterator.next() else {
-                Issue.record("Expected updated results after reinsert")
-                return
-            }
-            #expect(resultsAfterReinsert == models)
+            
+            await Task.yield()
+            
+            // We need the sortrule here, as the stuff is sorted on the query level, not queryObserver.
+            #expect(queryObserver.results?.sorted(using: [SortRule(\.id)]) == models)
 
             models.first!.someValue = "no letter you're look'n for here"
+            
+            await Task.yield()
 
-            // Not sure why this is needed, but in an app it works without,
-            // so it's probably fine for now.
-            // Credits to https://gist.github.com/25A0/ba7d9bc7724cf157bc6c0e7909906aee
-            //                  `````             `               ```                 ```````
-            // ```          `````````````````````````````      ```````````         ````````````
-            // ``` ``````` ```````````````  `````````` ````````````````       ``` ```` `````
-            // ```````````` ```       ````` ++.   .#@@@@  ````````   ````` ``  ```   ``````````
-            // ``````` `````   ```````   :@@@@@@@@@@@@@@@@@@@@@@::::::,:,,::::   `````` .@@:
-            // ```` ;@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@,,:`````````.::@@@@##@@@@@@@@@@
-            // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@#';,,@@@@@@@@@@@@@@@:::`````````.: @@@@@@@@@@@@@@@@
-            // @@@@@@@@@@@@                      @@@@@@@@@@@@@@@:::`` ``````,:`@@@@@@@@@@@@@@@@
-            // @@@@@@@@@@@@ @@@@@@@@@@@@@@@@@@   @@@@@@@@@@@@@@@,::```` ````:: @@@@@@@@@@@@@@@@
-            // @@@@@@ #@@@@ @@@@@@@@#@@@@@@@@@   @@@@@@@@@@@@@@@:::`````` ``,, @@@@@@@@@@@@@@@@
-            // @@@@@   @@@@ @@@@@`  @@@@@@@ :;;  @@@@@@@@@@@@@@@:::`````````:, @@@@@@@@@@ @@@@@
-            // @@@@     @@@ @@@`   +@@@ @@ ;;;:.  ;,#@@@@@@@@@@@:::````` `` :: @@@@@@@@@@  ;@@@
-            // @@@      @@@ @@`    @@@@  @@:    :;;:#@@@@@@@@@@@:,:,,,,,,.`:::+@@@@@@@@@@+  #@@
-            // @@      `@@@ @      @@@    ;;;;;;;;`.::: @@@@@@@@`:::::::::::: @@@@@@@@@@@@   @@
-            // @@       @@@    '   @@:     ;;;:. ::;;;; ,`+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'   @@
-            // +   '   @@@   '';   @  ;'  @ ::;.`::;.@@    @@@@@@@@@@@@@@@@@@@,@@@@@@@@@    #
-            //     '   @,@   '''      '''   :.@++@ : @    .@@@@@@@@@@@@@@@@@  @@@@@@@@@
-            //     '  @@ ., '''''    ''     ;@,   @ .#@    `      .@@@@@@@:  `@@@@@@@@   ;
-            //    `'  @@  `'''''''; ''      ;@    @`;:.;;;;:       @@@@@@  `  @@@@@@@   ''
-            // '    '  @@   ;'''''''''       :.@@@# ::;:;;;;::     @@@@@#  ',  .@@@@@`  `''.  '
-            // ''  ''  @'    '''''''';      ;;;;;;;;;:.``;::::;;..@'@@@   ' ......` @   ;''' ''
-            // '''''  .@     '''''''.,,   `::;;;;;:;:;;;: @@++#@@@  @@   '' ':   .' ++  '''''''
-            // '''''   @     '''''';.,, , :;;::;::;;;;;;; @@@@@@@   @ ` '''`'++++++ ''@@@@@@@@@
-            // '''''   `     ''''''',,, , ::: : :;;;;;;::, @@@@@+      ''@@ '++++++ ,@@@@@@@@@@
-            // ''''',     '  ''''';;.,, , :::.: :;;;;;;;::,@@@@@,  ;  :@@@@ ;++++'+ @@@@@@@@@@@
-            // ''''''     '  ;;;;;;' ,, ,,,::;.:`;;;:;;;:.;'@@@@;  '' ''@@@@@@@@@@@@@@@@@@@@@@@
-            // '''''';   ''  ;;;;;;; ,,,,. ,:::`:,     ,`;` `@@@#  ;''''''''''+''''''''''''''''
-            // '''''''. '''  ::::,,'; ,,,,,, `:::::` :: ,,`;:@'@#  .'''''''''''''''''''''''''''
-            // '''' ''';'';  ;;;;''';;; ,,,,,,,,,,,, :;;`  :;:: +  `''''''''+''+''  ''''''''''
-            // '''':'''''';  ;;;;  '';;'   ````      :;::` `  @@   ''''''''    ``   ````````
-            // '''';'''''''  ,;;   ;;;;;;;`,,.....   ``       `    '''  '''         ```````
-            // ''''''''''''   ;     ;';;;;.,,.;;''   ,,;.   ;;;  '': ; ''''         ``````    ;
-            // '':''.'''''''     ,  ';' '';,,.;;;;   ,,;,   ;;';;;;;' `.;'`        `````     .'
-            // ''.'' ''`' '''    '   '  ;;;,,.;;;'   ,,;;   ;;;;;;;;;;;;   ` .'    ````      ''
-            // ''''':'';''''''   ''     ;;;,,.;;;;   ,,;;   ;;;;;;;';;`     '''    ``       '''
-            // '''''',''`':''''; '''`   ;;;` ;;;;;'; ,,;;  ';;;;;;;;:     :''''           ;''''
-            // ''''''''''''''''''''''' ``;'';;;;;;;;';;;;;;;;;;;;;;'   ` ;''''';        '''''''
-            // ''''''''''''''''''''''', ;;;;;;;;;;;';;;;;;;;;;;;;;'      '''''''',    '''''''''
-            // '''''''''''''''''''''; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;'     ''''''''''':`''''''''''
-            // TODO: investigate why an extra layoutSubtreeIfNeeded() is required here
-            // after editing a model that drops out of the predicate filter.
-            hostingController.view.layoutSubtreeIfNeeded()
-
-            guard let resultsAfterEdit = await iterator.next() else {
-                Issue.record("Expected updated results after editing model")
-                return
-            }
-            #expect(resultsAfterEdit == Array(models[1...]))
-
-            continuation.finish()
+            #expect(queryObserver.results == Array(models[1...]))
         }
 
         private func seed() throws -> (ModelContainer, [Test]) {

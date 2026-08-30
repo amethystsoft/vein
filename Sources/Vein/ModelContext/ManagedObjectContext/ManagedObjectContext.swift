@@ -82,10 +82,6 @@ public actor ManagedObjectContext {
     nonisolated let registeredQueries = Mutex(
         [ObjectIdentifier: [String: WeakQueryObserver]]()
     )
-    nonisolated let pendingNotifications = Mutex(
-        [ObjectIdentifier: [AnyObject]]()
-    )
-    nonisolated let notificationTask = Mutex(Task<Void, Never>?.none)
 
     // MARK: - Initializers
     /// Connects to database at `path`, creates a new one if it doesn't exist

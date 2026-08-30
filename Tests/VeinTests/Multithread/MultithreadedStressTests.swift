@@ -164,12 +164,16 @@ struct MultithreadedStressTests {
                     try? await Task.sleep(nanoseconds: UInt64.random(in: 10_000...50_000))
                     let fetched = try container.context.fetchAll(V0_0_1.Person.self)
                     guard let first = fetched.first else { return }
-                    #expect(first.name.hasPrefix("Updated"))
+                    
+                    // Both are valid as read write order is non deterministic.
+                    #expect(first.name == "Original" || first.name.hasPrefix("Updated"))
                 }
             }
 
             try await group.waitForAll()
         }
+        
+        #expect(model.name.hasPrefix("Updated"))
     }
 
     @Test(arguments: [true, false])

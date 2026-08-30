@@ -229,7 +229,22 @@ extension ManagedObjectContext {
 
         identityMap.startTracking(model)
 
-        scheduleNotification(model)
+        guard
+            let observers = registeredQueries.value[model.typeIdentifier],
+            !observers.isEmpty
+        else { return }
+        
+        let matches = observers.values
+            .compactMap(\.query)
+            .compactMap {
+                $0.doesMatch(model) ? $0: nil
+            }
+        
+        Task { @MainActor in
+            for query in matches {
+                query.appendAny([model])
+            }
+        }
     }
 
     nonisolated func _prepareForChange(of model: any PersistentModel) -> [Int] {
