@@ -303,5 +303,448 @@ import SwiftSyntaxMacroExpansion
                 }
             )
         }
+        
+        @Test
+        func writingToRelationshipUsingSelfDiagnoses() throws {
+            assertMacroExpansion(
+                """
+                @Model
+                final class Test {
+                    @Relationship
+                    var doNotUseInInit: Test?
+                
+                    init() {
+                        self.doNotUseInInit = nil
+                    }
+                }
+                """,
+                expandedSource: #"""
+                final class Test {
+                    @Vein._OneRelationship()
+                    var doNotUseInInit: Test?
+                
+                    init() {
+                        self.doNotUseInInit = nil
+                    }
+                
+                    /// The primary ID of the object.
+                    /// Gets  used to reference models in relationships.
+                    /// Immutable after insertion into the context.
+                    @Vein.PrimaryKey
+                    var id: Vein.ULID
+                
+                    @Vein.LazyField(suppressUIUpdates: true)
+                    var _updatedAt: Foundation.Date?
+                
+                    @Vein.LazyField(suppressUIUpdates: true)
+                    var _clientID: String?
+                
+                    @Vein.LazyField(suppressUIUpdates: true)
+                    var _isDeleted: Bool? = false
+                
+                    @Vein.LazyField(suppressUIUpdates: true)
+                    var _isSynced: Bool? = false
+                
+                    required init(id: Vein.ULID, fields: [String: Vein.SQLiteValue]) {
+                        self.id = id
+                        
+                        self._doNotUseInInit._persistableValue = try! ULID?.init(
+                            fromPersistent: ULID?.PersistentRepresentation.decode(
+                                sqliteValue: fields["doNotUseInInit"]!
+                            )
+                        )!
+                        _setupFields()
+                    }
+                
+                    let _observers = Vein.Mutex(Vein._ReferenceCountedObservers())
+                
+                    /// Sets required properties for @Field values.
+                    /// Gets generated automatically by @Model.
+                    public func _setupFields() {
+                        self.__clientID._model = self
+                        self.__clientID._key = "_clientID"
+                        self.__isDeleted._model = self
+                        self.__isDeleted._key = "_isDeleted"
+                        self.__isSynced._model = self
+                        self.__isSynced._key = "_isSynced"
+                        self.__updatedAt._model = self
+                        self.__updatedAt._key = "_updatedAt"
+                        self._doNotUseInInit._model = self
+                        self._doNotUseInInit._key = "doNotUseInInit"
+                        self._id._model = self
+                    }
+                
+                    let _context = Vein.Mutex<Vein.ManagedObjectContext?>(nil)
+                
+                    /// Whether a model is prepared to be deleted.
+                    ///
+                    /// Reading this variable is safe, but it should never be set outside of Vein.
+                    var _isPreparedForDeletion = false
+                
+                    var _fields: [any Vein.FieldBase] {
+                        [
+                            self._id,
+                            self.__clientID,
+                            self.__isDeleted,
+                            self.__isSynced,
+                            self.__updatedAt,
+                            self._doNotUseInInit
+                        ]
+                    }
+                
+                    var _relationships: [any Vein.PersistedRelationship] {
+                        [
+                            self._doNotUseInInit
+                        ]
+                    }
+                
+                    static let _inverseFields = {
+                        var map = [ObjectIdentifier: [String: String]]()
+                        
+                        return map
+                    }()
+                
+                    static func _predicateInformation(for keyPath: PartialKeyPath<Test>) -> Vein.FieldInformation? {
+                        switch keyPath {
+                            case \._clientID: Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false)
+                            case \._isDeleted: Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false)
+                            case \._isSynced: Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false)
+                            case \._updatedAt: Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false)
+                            case \.doNotUseInInit: Vein.FieldInformation(ULID?.sqliteTypeName, "doNotUseInInit", true, Test.self)
+                            case \.id: Vein.FieldInformation(ULID.sqliteTypeName, "id", true)
+                            default: nil
+                        }
+                    }
+                
+                    static let _fieldInformation: [Vein.FieldInformation] = [
+                        Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false),
+                        Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false),
+                        Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false),
+                        Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false),
+                        Vein.FieldInformation(ULID?.sqliteTypeName, "doNotUseInInit", true, Test.self)
+                    ]
+                
+                    var notifyOfChanges: () -> Void {
+                        return {
+                        }
+                    }
+                }
+                
+                extension Test: Vein.PersistentModel, @unchecked Sendable {
+                    static let schema = "Test"
+                    static var version: Vein.ModelVersion {
+                        Test.version
+                    }
+                }
+                """#,
+                diagnostics: [
+                    DiagnosticSpec(message: "Illegal assignment to relationship property in initializer. Relationships require the model to be managed by a context.", line: 7, column: 9 )
+                ],
+                macroSpecs: testMacros,
+                failureHandler: { spec in
+                    Issue.record("\(spec.message)")
+                }
+            )
+        }
+        
+        @Test
+        func writingToRelationshipWithoutSelfDiagnoses() throws {
+            assertMacroExpansion(
+                """
+                @Model
+                final class Test {
+                    @Relationship
+                    var doNotUseInInit: Test?
+                
+                    init() {
+                        doNotUseInInit = nil
+                    }
+                }
+                """,
+                expandedSource: #"""
+                final class Test {
+                    @Vein._OneRelationship()
+                    var doNotUseInInit: Test?
+                
+                    init() {
+                        doNotUseInInit = nil
+                    }
+                
+                    /// The primary ID of the object.
+                    /// Gets  used to reference models in relationships.
+                    /// Immutable after insertion into the context.
+                    @Vein.PrimaryKey
+                    var id: Vein.ULID
+                
+                    @Vein.LazyField(suppressUIUpdates: true)
+                    var _updatedAt: Foundation.Date?
+                
+                    @Vein.LazyField(suppressUIUpdates: true)
+                    var _clientID: String?
+                
+                    @Vein.LazyField(suppressUIUpdates: true)
+                    var _isDeleted: Bool? = false
+                
+                    @Vein.LazyField(suppressUIUpdates: true)
+                    var _isSynced: Bool? = false
+                
+                    required init(id: Vein.ULID, fields: [String: Vein.SQLiteValue]) {
+                        self.id = id
+                        
+                        self._doNotUseInInit._persistableValue = try! ULID?.init(
+                            fromPersistent: ULID?.PersistentRepresentation.decode(
+                                sqliteValue: fields["doNotUseInInit"]!
+                            )
+                        )!
+                        _setupFields()
+                    }
+                
+                    let _observers = Vein.Mutex(Vein._ReferenceCountedObservers())
+                
+                    /// Sets required properties for @Field values.
+                    /// Gets generated automatically by @Model.
+                    public func _setupFields() {
+                        self.__clientID._model = self
+                        self.__clientID._key = "_clientID"
+                        self.__isDeleted._model = self
+                        self.__isDeleted._key = "_isDeleted"
+                        self.__isSynced._model = self
+                        self.__isSynced._key = "_isSynced"
+                        self.__updatedAt._model = self
+                        self.__updatedAt._key = "_updatedAt"
+                        self._doNotUseInInit._model = self
+                        self._doNotUseInInit._key = "doNotUseInInit"
+                        self._id._model = self
+                    }
+                
+                    let _context = Vein.Mutex<Vein.ManagedObjectContext?>(nil)
+                
+                    /// Whether a model is prepared to be deleted.
+                    ///
+                    /// Reading this variable is safe, but it should never be set outside of Vein.
+                    var _isPreparedForDeletion = false
+                
+                    var _fields: [any Vein.FieldBase] {
+                        [
+                            self._id,
+                            self.__clientID,
+                            self.__isDeleted,
+                            self.__isSynced,
+                            self.__updatedAt,
+                            self._doNotUseInInit
+                        ]
+                    }
+                
+                    var _relationships: [any Vein.PersistedRelationship] {
+                        [
+                            self._doNotUseInInit
+                        ]
+                    }
+                
+                    static let _inverseFields = {
+                        var map = [ObjectIdentifier: [String: String]]()
+                        
+                        return map
+                    }()
+                
+                    static func _predicateInformation(for keyPath: PartialKeyPath<Test>) -> Vein.FieldInformation? {
+                        switch keyPath {
+                            case \._clientID: Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false)
+                            case \._isDeleted: Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false)
+                            case \._isSynced: Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false)
+                            case \._updatedAt: Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false)
+                            case \.doNotUseInInit: Vein.FieldInformation(ULID?.sqliteTypeName, "doNotUseInInit", true, Test.self)
+                            case \.id: Vein.FieldInformation(ULID.sqliteTypeName, "id", true)
+                            default: nil
+                        }
+                    }
+                
+                    static let _fieldInformation: [Vein.FieldInformation] = [
+                        Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false),
+                        Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false),
+                        Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false),
+                        Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false),
+                        Vein.FieldInformation(ULID?.sqliteTypeName, "doNotUseInInit", true, Test.self)
+                    ]
+                
+                    var notifyOfChanges: () -> Void {
+                        return {
+                        }
+                    }
+                }
+                
+                extension Test: Vein.PersistentModel, @unchecked Sendable {
+                    static let schema = "Test"
+                    static var version: Vein.ModelVersion {
+                        Test.version
+                    }
+                }
+                """#,
+                diagnostics: [
+                    DiagnosticSpec(message: "Illegal assignment to relationship property in initializer. Relationships require the model to be managed by a context.", line: 7, column: 9 )
+                ],
+                macroSpecs: testMacros,
+                failureHandler: { spec in
+                    Issue.record("\(spec.message)")
+                }
+            )
+        }
+        
+        @Test
+        func diagnosesOnlyThingsHittingSelf() throws {
+            assertMacroExpansion(
+                """
+                @Model
+                final class Test {
+                    @Relationship
+                    var doNotUseInInit: Test?
+                
+                    init() {
+                        if true {
+                            var doNotUseInInit = 1
+                            doNotUseInInit = 2
+                            self.doNotUseInInit = nil
+                        }
+                        self.doNotUseInInit = nil
+                        doNotUseInInit = nil
+                    }
+                }
+                """,
+                expandedSource: #"""
+                final class Test {
+                    @Vein._OneRelationship()
+                    var doNotUseInInit: Test?
+                
+                    init() {
+                        if true {
+                            var doNotUseInInit = 1
+                            doNotUseInInit = 2
+                            self.doNotUseInInit = nil
+                        }
+                        self.doNotUseInInit = nil
+                        doNotUseInInit = nil
+                    }
+                
+                    /// The primary ID of the object.
+                    /// Gets  used to reference models in relationships.
+                    /// Immutable after insertion into the context.
+                    @Vein.PrimaryKey
+                    var id: Vein.ULID
+                
+                    @Vein.LazyField(suppressUIUpdates: true)
+                    var _updatedAt: Foundation.Date?
+                
+                    @Vein.LazyField(suppressUIUpdates: true)
+                    var _clientID: String?
+                
+                    @Vein.LazyField(suppressUIUpdates: true)
+                    var _isDeleted: Bool? = false
+                
+                    @Vein.LazyField(suppressUIUpdates: true)
+                    var _isSynced: Bool? = false
+                
+                    required init(id: Vein.ULID, fields: [String: Vein.SQLiteValue]) {
+                        self.id = id
+                        
+                        self._doNotUseInInit._persistableValue = try! ULID?.init(
+                            fromPersistent: ULID?.PersistentRepresentation.decode(
+                                sqliteValue: fields["doNotUseInInit"]!
+                            )
+                        )!
+                        _setupFields()
+                    }
+                
+                    let _observers = Vein.Mutex(Vein._ReferenceCountedObservers())
+                
+                    /// Sets required properties for @Field values.
+                    /// Gets generated automatically by @Model.
+                    public func _setupFields() {
+                        self.__clientID._model = self
+                        self.__clientID._key = "_clientID"
+                        self.__isDeleted._model = self
+                        self.__isDeleted._key = "_isDeleted"
+                        self.__isSynced._model = self
+                        self.__isSynced._key = "_isSynced"
+                        self.__updatedAt._model = self
+                        self.__updatedAt._key = "_updatedAt"
+                        self._doNotUseInInit._model = self
+                        self._doNotUseInInit._key = "doNotUseInInit"
+                        self._id._model = self
+                    }
+                
+                    let _context = Vein.Mutex<Vein.ManagedObjectContext?>(nil)
+                
+                    /// Whether a model is prepared to be deleted.
+                    ///
+                    /// Reading this variable is safe, but it should never be set outside of Vein.
+                    var _isPreparedForDeletion = false
+                
+                    var _fields: [any Vein.FieldBase] {
+                        [
+                            self._id,
+                            self.__clientID,
+                            self.__isDeleted,
+                            self.__isSynced,
+                            self.__updatedAt,
+                            self._doNotUseInInit
+                        ]
+                    }
+                
+                    var _relationships: [any Vein.PersistedRelationship] {
+                        [
+                            self._doNotUseInInit
+                        ]
+                    }
+                
+                    static let _inverseFields = {
+                        var map = [ObjectIdentifier: [String: String]]()
+                        
+                        return map
+                    }()
+                
+                    static func _predicateInformation(for keyPath: PartialKeyPath<Test>) -> Vein.FieldInformation? {
+                        switch keyPath {
+                            case \._clientID: Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false)
+                            case \._isDeleted: Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false)
+                            case \._isSynced: Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false)
+                            case \._updatedAt: Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false)
+                            case \.doNotUseInInit: Vein.FieldInformation(ULID?.sqliteTypeName, "doNotUseInInit", true, Test.self)
+                            case \.id: Vein.FieldInformation(ULID.sqliteTypeName, "id", true)
+                            default: nil
+                        }
+                    }
+                
+                    static let _fieldInformation: [Vein.FieldInformation] = [
+                        Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false),
+                        Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false),
+                        Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false),
+                        Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false),
+                        Vein.FieldInformation(ULID?.sqliteTypeName, "doNotUseInInit", true, Test.self)
+                    ]
+                
+                    var notifyOfChanges: () -> Void {
+                        return {
+                        }
+                    }
+                }
+                
+                extension Test: Vein.PersistentModel, @unchecked Sendable {
+                    static let schema = "Test"
+                    static var version: Vein.ModelVersion {
+                        Test.version
+                    }
+                }
+                """#,
+                diagnostics: [
+                    DiagnosticSpec(message: "Illegal assignment to relationship property in initializer. Relationships require the model to be managed by a context.", line: 10, column: 13),
+                    DiagnosticSpec(message: "Illegal assignment to relationship property in initializer. Relationships require the model to be managed by a context.", line: 12, column: 9),
+                    DiagnosticSpec(message: "Illegal assignment to relationship property in initializer. Relationships require the model to be managed by a context.", line: 13, column: 9)
+                ],
+                macroSpecs: testMacros,
+                failureHandler: { spec in
+                    Issue.record("\(spec.message)")
+                }
+            )
+        }
     }
 #endif

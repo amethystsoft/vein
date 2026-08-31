@@ -105,7 +105,7 @@ let package = Package(
         .package(
             url: "https://github.com/amethystsoft/vein-filter.git",
             .upToNextMajor(from: "1.0.0")
-        ),
+        )
     ],
     targets: [
         .target(
@@ -193,7 +193,7 @@ let package = Package(
                     name: "SwiftCheck",
                     package: "SwiftCheck",
                     condition: .when(platforms: [.macOS, .linux])
-                )
+                ),
             ] + veinAPIToTestDependencies,
             swiftSettings: testSwiftSettings
         ),

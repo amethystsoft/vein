@@ -49,6 +49,11 @@ public struct ModelMacroBase {
         lazyFields["_isSynced"] = "Bool?"
 
         let eagerFields = fieldVariables.fields()
+        
+        classDecl.ensureNotSettingToRelationshipInInit(
+            in: context,
+            relationshipPropertyNames: Array(relationshipFields.keys)
+        )
 
         // MARK: - Setup Fields & _fields accessor
         var allFieldNames = Array(eagerFields.keys) + Array(relationshipFields.keys)
@@ -296,10 +301,10 @@ public struct ModelMacroBase {
     }
 }
 
-public struct DebugDiag: DiagnosticMessage {
+public struct ErrorDiag: DiagnosticMessage {
     public let message: String
-    public var diagnosticID: MessageID { .init(domain: "VeinMacros", id: "debug") }
-    public var severity: DiagnosticSeverity { .warning }
+    public var diagnosticID: MessageID { .init(domain: "VeinMacros", id: "error") }
+    public var severity: DiagnosticSeverity { .error }
 }
 
 public enum FieldType {
@@ -509,3 +514,40 @@ extension ExprSyntax {
         )
     }
 }
+
+extension ClassDeclSyntax {
+    func ensureNotSettingToRelationshipInInit(
+        in context: some MacroExpansionContext,
+        relationshipPropertyNames: [String]
+    ) {
+        let initializers = self.memberBlock.members.compactMap {
+            $0.decl.as(InitializerDeclSyntax.self)
+        }
+        
+        if initializers.isEmpty {
+            return
+        }
+        
+        for initializer in initializers {
+            initializer.ensureNotSettingToRelationship(
+                in: context,
+                relationshipPropertyNames: relationshipPropertyNames
+            )
+        }
+    }
+}
+
+extension InitializerDeclSyntax {
+    func ensureNotSettingToRelationship(
+        in context: some MacroExpansionContext,
+        relationshipPropertyNames: [String]
+    ) {
+        let visitor = InitializerVisitor(
+            forbiddenSelfAssignments: Set(relationshipPropertyNames),
+            in: context
+        )
+        
+        visitor.walk(self)
+    }
+}
+
