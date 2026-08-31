@@ -547,7 +547,11 @@ extension InitializerDeclSyntax {
             in: context
         )
         
-        visitor.walk(self)
+        guard let body = self.body else {
+            return
+        }
+        
+        visitor.walk(body)
     }
 }
 

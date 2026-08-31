@@ -14,15 +14,93 @@ import Testing
 import SwiftSyntaxMacrosGenericTestSupport
 import SwiftSyntaxMacros
 import SwiftSyntaxMacroExpansion
-#if TEST_SWIFTUI
-    @_spi(VeinTesting) @testable import VeinSwiftUIMacros
+#if TEST_SCUI
+@_spi(VeinTesting) @testable import VeinSCUIMacros
+#elseif TEST_SWIFTUI
+@_spi(VeinTesting) @testable import VeinSwiftUIMacros
+#else
+@_spi(VeinTesting) @testable import VeinCoreMacros
+#endif
 
     fileprivate let testMacros: [String: MacroSpec] = [
-        "Model": MacroSpec(type: ModelMacro.self)
+        "Model": MacroSpec(type: ModelMacro.self),
+        "Relationship": MacroSpec(type: RelationshipMarkerMacro.self)
     ]
 
     @Suite
     struct MacrosTests {
+        #if TEST_SCUI
+        let sharedSuffix: String = #"""
+            var notifyOfChanges: () -> Void {
+                    { [weak self] in
+                        guard let self else {
+                            return
+                        }
+                        if Thread.isMainThread {
+                            self._observers.value.notifyAll()
+                            self.didChange.send()
+                        } else {
+                            DispatchQueue.main.async {
+                                self._observers.value.notifyAll()
+                                self.didChange.send()
+                            }
+                        }
+                    }
+                }
+            }
+            
+            extension Test: Vein.PersistentModel, @unchecked Sendable {
+                static let schema = "Test"
+                static var version: Vein.ModelVersion {
+                    Test.version
+                }
+            }
+            
+            @MainActor
+            extension Test: SwiftCrossUI.ObservableObject {
+            }
+            """#
+        #elseif TEST_SWIFTUI
+        let sharedSuffix: String = #"""
+            let objectWillChange = Combine.PassthroughSubject<Void, Never>()
+            
+                var notifyOfChanges: () -> Void {
+                    { [weak self] in
+                        guard let self else { return }
+                        self._observers.value.notifyAll()
+                        self.objectWillChange.send()
+                    }
+                }
+            }
+            
+            extension Test: Vein.PersistentModel, @unchecked Sendable {
+                static let schema = "Test"
+                static var version: Vein.ModelVersion {
+                    Test.version
+                }
+            }
+            
+            @MainActor
+            extension Test: Combine.ObservableObject {
+            }
+            """#
+        #else
+        let sharedSuffix: String = #"""
+                var notifyOfChanges: () -> Void {
+                        return {
+                        }
+                    }
+                }
+                
+                extension Test: Vein.PersistentModel, @unchecked Sendable {
+                    static let schema = "Test"
+                    static var version: Vein.ModelVersion {
+                        Test.version
+                    }
+                }
+                """#
+        #endif
+        
         @Test
         func commentsAreNotTreatedAsPartOfType() async throws {
             assertMacroExpansion(
@@ -33,7 +111,7 @@ import SwiftSyntaxMacroExpansion
                     var test: String // Test
                 }
                 """,
-                expandedSource: """
+                expandedSource: #"""
                     final class Test {
                         @Field
                         var test: String // Test
@@ -117,12 +195,12 @@ import SwiftSyntaxMacroExpansion
 
                         static func _predicateInformation(for keyPath: PartialKeyPath<Test>) -> Vein.FieldInformation? {
                             switch keyPath {
-                                case \\._clientID: Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false)
-                                case \\._isDeleted: Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false)
-                                case \\._isSynced: Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false)
-                                case \\._updatedAt: Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false)
-                                case \\.test: Vein.FieldInformation(String.sqliteTypeName, "test", true)
-                                case \\.id: Vein.FieldInformation(ULID.sqliteTypeName, "id", true)
+                                case \._clientID: Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false)
+                                case \._isDeleted: Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false)
+                                case \._isSynced: Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false)
+                                case \._updatedAt: Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false)
+                                case \.test: Vein.FieldInformation(String.sqliteTypeName, "test", true)
+                                case \.id: Vein.FieldInformation(ULID.sqliteTypeName, "id", true)
                                 default: nil
                             }
                         }
@@ -135,28 +213,8 @@ import SwiftSyntaxMacroExpansion
                             Vein.FieldInformation(String.sqliteTypeName, "test", true)
                         ]
 
-                        let objectWillChange = Combine.PassthroughSubject<Void, Never>()
-
-                        var notifyOfChanges: () -> Void {
-                            { [weak self] in
-                                guard let self else { return }
-                                self._observers.value.notifyAll()
-                                self.objectWillChange.send()
-                            }
-                        }
-                    }
-
-                    extension Test: Vein.PersistentModel, @unchecked Sendable {
-                        static let schema = "Test"
-                        static var version: Vein.ModelVersion {
-                            Test.version
-                        }
-                    }
-
-                    @MainActor
-                    extension Test: Combine.ObservableObject {
-                    }
-                    """,
+                        \#(sharedSuffix)
+                    """#,
                 macroSpecs: testMacros,
                 failureHandler: { spec in
                     Issue.record("\(spec.message)")
@@ -173,7 +231,7 @@ import SwiftSyntaxMacroExpansion
                     var test: String // Test
                 }
                 """,
-                expandedSource: """
+                expandedSource: #"""
                     final class Test {
                         @Vein.Field
                         var test: String // Test
@@ -257,12 +315,12 @@ import SwiftSyntaxMacroExpansion
 
                         static func _predicateInformation(for keyPath: PartialKeyPath<Test>) -> Vein.FieldInformation? {
                             switch keyPath {
-                                case \\._clientID: Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false)
-                                case \\._isDeleted: Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false)
-                                case \\._isSynced: Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false)
-                                case \\._updatedAt: Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false)
-                                case \\.test: Vein.FieldInformation(String.sqliteTypeName, "test", true)
-                                case \\.id: Vein.FieldInformation(ULID.sqliteTypeName, "id", true)
+                                case \._clientID: Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false)
+                                case \._isDeleted: Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false)
+                                case \._isSynced: Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false)
+                                case \._updatedAt: Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false)
+                                case \.test: Vein.FieldInformation(String.sqliteTypeName, "test", true)
+                                case \.id: Vein.FieldInformation(ULID.sqliteTypeName, "id", true)
                                 default: nil
                             }
                         }
@@ -275,28 +333,8 @@ import SwiftSyntaxMacroExpansion
                             Vein.FieldInformation(String.sqliteTypeName, "test", true)
                         ]
 
-                        let objectWillChange = Combine.PassthroughSubject<Void, Never>()
-
-                        var notifyOfChanges: () -> Void {
-                            { [weak self] in
-                                guard let self else { return }
-                                self._observers.value.notifyAll()
-                                self.objectWillChange.send()
-                            }
-                        }
-                    }
-
-                    extension Test: Vein.PersistentModel, @unchecked Sendable {
-                        static let schema = "Test"
-                        static var version: Vein.ModelVersion {
-                            Test.version
-                        }
-                    }
-
-                    @MainActor
-                    extension Test: Combine.ObservableObject {
-                    }
-                    """,
+                        \#(sharedSuffix)
+                    """#,
                 macroSpecs: testMacros,
                 failureHandler: { spec in
                     Issue.record("\(spec.message)")
@@ -424,18 +462,7 @@ import SwiftSyntaxMacroExpansion
                         Vein.FieldInformation(ULID?.sqliteTypeName, "doNotUseInInit", true, Test.self)
                     ]
                 
-                    var notifyOfChanges: () -> Void {
-                        return {
-                        }
-                    }
-                }
-                
-                extension Test: Vein.PersistentModel, @unchecked Sendable {
-                    static let schema = "Test"
-                    static var version: Vein.ModelVersion {
-                        Test.version
-                    }
-                }
+                    \#(sharedSuffix)
                 """#,
                 diagnostics: [
                     DiagnosticSpec(message: "Illegal assignment to relationship property in initializer. Relationships require the model to be managed by a context.", line: 7, column: 9 )
@@ -567,18 +594,7 @@ import SwiftSyntaxMacroExpansion
                         Vein.FieldInformation(ULID?.sqliteTypeName, "doNotUseInInit", true, Test.self)
                     ]
                 
-                    var notifyOfChanges: () -> Void {
-                        return {
-                        }
-                    }
-                }
-                
-                extension Test: Vein.PersistentModel, @unchecked Sendable {
-                    static let schema = "Test"
-                    static var version: Vein.ModelVersion {
-                        Test.version
-                    }
-                }
+                    \#(sharedSuffix)
                 """#,
                 diagnostics: [
                     DiagnosticSpec(message: "Illegal assignment to relationship property in initializer. Relationships require the model to be managed by a context.", line: 7, column: 9 )
@@ -722,18 +738,7 @@ import SwiftSyntaxMacroExpansion
                         Vein.FieldInformation(ULID?.sqliteTypeName, "doNotUseInInit", true, Test.self)
                     ]
                 
-                    var notifyOfChanges: () -> Void {
-                        return {
-                        }
-                    }
-                }
-                
-                extension Test: Vein.PersistentModel, @unchecked Sendable {
-                    static let schema = "Test"
-                    static var version: Vein.ModelVersion {
-                        Test.version
-                    }
-                }
+                    \#(sharedSuffix)
                 """#,
                 diagnostics: [
                     DiagnosticSpec(message: "Illegal assignment to relationship property in initializer. Relationships require the model to be managed by a context.", line: 10, column: 13),
@@ -747,4 +752,3 @@ import SwiftSyntaxMacroExpansion
             )
         }
     }
-#endif

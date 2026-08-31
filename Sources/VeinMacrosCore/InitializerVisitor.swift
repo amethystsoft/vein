@@ -13,10 +13,6 @@ class InitializerVisitor: SyntaxVisitor {
         super.init(viewMode: .fixedUp)
     }
     
-    enum Error: Swift.Error {
-        case forbiddenAssignmentToRelationshipProperty
-    }
-    
     override func visit(_ node: CodeBlockSyntax) -> SyntaxVisitorContinueKind {
         localVariableScopes.append([])
         return .visitChildren
