@@ -234,7 +234,6 @@ public struct ModelMacroBase {
             """
         )
         
-        // TODO: Promote to error in V2.0
         if !typeName.contains(".") {
             context.diagnose(Diagnostic(
                 node: node,
