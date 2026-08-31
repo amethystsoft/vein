@@ -49,7 +49,7 @@ public struct ModelMacroBase {
         lazyFields["_isSynced"] = "Bool?"
 
         let eagerFields = fieldVariables.fields()
-        
+
         classDecl.ensureNotSettingToRelationshipInInit(
             in: context,
             relationshipPropertyNames: Array(relationshipFields.keys)
@@ -233,7 +233,7 @@ public struct ModelMacroBase {
             }
             """
         )
-        
+
         if !typeName.contains(".") {
             context.diagnose(Diagnostic(
                 node: node,
@@ -243,7 +243,8 @@ public struct ModelMacroBase {
                         Otherwise they will not function correctly.
                         """,
                     severity: .error
-                )))
+                )
+            ))
         }
 
         return [extensionDecl]
@@ -318,7 +319,7 @@ public struct ErrorDiag: DiagnosticMessage {
     public let message: String
     public var diagnosticID: MessageID { .init(domain: "VeinMacros", id: "error") }
     public var severity: DiagnosticSeverity
-    
+
     init(message: String, severity: DiagnosticSeverity = .error) {
         self.message = message
         self.severity = severity
@@ -541,11 +542,11 @@ extension ClassDeclSyntax {
         let initializers = self.memberBlock.members.compactMap {
             $0.decl.as(InitializerDeclSyntax.self)
         }
-        
+
         if initializers.isEmpty {
             return
         }
-        
+
         for initializer in initializers {
             initializer.ensureNotSettingToRelationship(
                 in: context,
@@ -564,12 +565,11 @@ extension InitializerDeclSyntax {
             forbiddenSelfAssignments: Set(relationshipPropertyNames),
             in: context
         )
-        
+
         guard let body = self.body else {
             return
         }
-        
+
         visitor.walk(body)
     }
 }
-

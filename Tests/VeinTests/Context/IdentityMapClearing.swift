@@ -121,13 +121,9 @@ fileprivate enum V0_0_1: VersionedSchema {
     @Model
     final class Test: Identifiable {
         var flag: Bool
-        
-        @Relationship
-        var doNotUseInInit: Test?
 
         init(flag: Bool) {
             self.flag = flag
-            //self.doNotUseInInit = nil
         }
     }
 }
