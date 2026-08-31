@@ -215,6 +215,13 @@ import SwiftSyntaxMacroExpansion
 
                         \#(sharedSuffix)
                     """#,
+                diagnostics: [
+                    DiagnosticSpec(
+                        message: "Models need to be enclosed in a VersionedSchema enum. Otherwise they will not function correctly.",
+                        line: 1,
+                        column: 1
+                    )
+                ],
                 macroSpecs: testMacros,
                 failureHandler: { spec in
                     Issue.record("\(spec.message)")
@@ -335,6 +342,13 @@ import SwiftSyntaxMacroExpansion
 
                         \#(sharedSuffix)
                     """#,
+                diagnostics: [
+                    DiagnosticSpec(
+                        message: "Models need to be enclosed in a VersionedSchema enum. Otherwise they will not function correctly.",
+                        line: 1,
+                        column: 1
+                    )
+                ],
                 macroSpecs: testMacros,
                 failureHandler: { spec in
                     Issue.record("\(spec.message)")
@@ -465,7 +479,16 @@ import SwiftSyntaxMacroExpansion
                     \#(sharedSuffix)
                 """#,
                 diagnostics: [
-                    DiagnosticSpec(message: "Illegal assignment to relationship property in initializer. Relationships require the model to be managed by a context.", line: 7, column: 9 )
+                    DiagnosticSpec(
+                        message: "Illegal assignment to relationship property in initializer. Relationships require the model to be managed by a context.",
+                        line: 7,
+                        column: 9
+                    ),
+                    DiagnosticSpec(
+                        message: "Models need to be enclosed in a VersionedSchema enum. Otherwise they will not function correctly.",
+                        line: 1,
+                        column: 1
+                    ),
                 ],
                 macroSpecs: testMacros,
                 failureHandler: { spec in
@@ -597,7 +620,16 @@ import SwiftSyntaxMacroExpansion
                     \#(sharedSuffix)
                 """#,
                 diagnostics: [
-                    DiagnosticSpec(message: "Illegal assignment to relationship property in initializer. Relationships require the model to be managed by a context.", line: 7, column: 9 )
+                    DiagnosticSpec(
+                        message: "Illegal assignment to relationship property in initializer. Relationships require the model to be managed by a context.",
+                        line: 7,
+                        column: 9
+                    ),
+                    DiagnosticSpec(
+                        message: "Models need to be enclosed in a VersionedSchema enum. Otherwise they will not function correctly.",
+                        line: 1,
+                        column: 1
+                    ),
                 ],
                 macroSpecs: testMacros,
                 failureHandler: { spec in
@@ -741,9 +773,26 @@ import SwiftSyntaxMacroExpansion
                     \#(sharedSuffix)
                 """#,
                 diagnostics: [
-                    DiagnosticSpec(message: "Illegal assignment to relationship property in initializer. Relationships require the model to be managed by a context.", line: 10, column: 13),
-                    DiagnosticSpec(message: "Illegal assignment to relationship property in initializer. Relationships require the model to be managed by a context.", line: 12, column: 9),
-                    DiagnosticSpec(message: "Illegal assignment to relationship property in initializer. Relationships require the model to be managed by a context.", line: 13, column: 9)
+                    DiagnosticSpec(
+                        message: "Illegal assignment to relationship property in initializer. Relationships require the model to be managed by a context.",
+                        line: 10,
+                        column: 13
+                    ),
+                    DiagnosticSpec(
+                        message: "Illegal assignment to relationship property in initializer. Relationships require the model to be managed by a context.",
+                        line: 12,
+                        column: 9
+                    ),
+                    DiagnosticSpec(
+                        message: "Illegal assignment to relationship property in initializer. Relationships require the model to be managed by a context.",
+                        line: 13,
+                        column: 9
+                    ),
+                    DiagnosticSpec(
+                        message: "Models need to be enclosed in a VersionedSchema enum. Otherwise they will not function correctly.",
+                        line: 1,
+                        column: 1
+                    ),
                 ],
                 macroSpecs: testMacros,
                 failureHandler: { spec in

@@ -223,7 +223,8 @@ public struct ModelMacroBase {
         conformingTo protocols: [SwiftSyntax.TypeSyntax],
         in context: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
-        let modelVersionString = "\("\(type)".prefix(while: { $0 != "."})).version"
+        let typeName = "\(type)"
+        let modelVersionString = "\(typeName.prefix(while: { $0 != "."})).version"
         let extensionDecl = try ExtensionDeclSyntax(
             """
             extension \(raw: type): Vein.PersistentModel, @unchecked Sendable {
@@ -232,6 +233,19 @@ public struct ModelMacroBase {
             }
             """
         )
+        
+        // TODO: Promote to error in V2.0
+        if !typeName.contains(".") {
+            context.diagnose(Diagnostic(
+                node: node,
+                message: ErrorDiag(
+                    message: """
+                        Models need to be enclosed in a VersionedSchema enum. \
+                        Otherwise they will not function correctly.
+                        """,
+                    severity: .error
+                )))
+        }
 
         return [extensionDecl]
     }
@@ -304,7 +318,12 @@ public struct ModelMacroBase {
 public struct ErrorDiag: DiagnosticMessage {
     public let message: String
     public var diagnosticID: MessageID { .init(domain: "VeinMacros", id: "error") }
-    public var severity: DiagnosticSeverity { .error }
+    public var severity: DiagnosticSeverity
+    
+    init(message: String, severity: DiagnosticSeverity = .error) {
+        self.message = message
+        self.severity = severity
+    }
 }
 
 public enum FieldType {
