@@ -66,9 +66,9 @@ extension FieldBase {
         guard let key else {
             fatalError(MOCError
                 .keyMissing(message: """
-                raised by Field property of Type '\(WrappedType.self)' \
-                on \(model?._getSchema() ?? "Unknown model type")
-                """)
+                    raised by Field property of Type '\(WrappedType.self)' \
+                    on \(model?._getSchema() ?? "Unknown model type")
+                    """)
                 .localizedDescription
             )
         }
@@ -83,9 +83,9 @@ extension FieldBase {
         guard let _model else {
             fatalError(MOCError
                 .modelReference(message: """
-                raised by Field property of Type '\(WrappedType.self)' \
-                on \(model?._getSchema() ?? "Unknown model type")
-                """)
+                    raised by Field property of Type '\(WrappedType.self)' \
+                    on \(model?._getSchema() ?? "Unknown model type")
+                    """)
                 .localizedDescription
             )
         }
@@ -96,9 +96,9 @@ extension FieldBase {
         guard let _model else {
             fatalError(MOCError
                 .modelReference(message: """
-                raised by Field property of Type '\(WrappedType.self)' \
-                on \(model?._getSchema() ?? "Unknown model type")
-                """)
+                    raised by Field property of Type '\(WrappedType.self)' \
+                    on \(model?._getSchema() ?? "Unknown model type")
+                    """)
                 .localizedDescription
             )
         }
@@ -109,9 +109,9 @@ extension FieldBase {
         guard let _model else {
             fatalError(MOCError
                 .modelReference(message: """
-                raised by Field property of Type '\(WrappedType.self)' \
-                on \(model?._getSchema() ?? "Unknown model type")
-                """)
+                    raised by Field property of Type '\(WrappedType.self)' \
+                    on \(model?._getSchema() ?? "Unknown model type")
+                    """)
                 .localizedDescription
             )
         }

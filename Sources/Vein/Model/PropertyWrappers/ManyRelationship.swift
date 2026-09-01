@@ -223,7 +223,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                     } else if target.context?.identifier != context.identifier {
                         fatalError("""
                             Tried set model from different context as relationship.
-                            
+
                             Triggered by adding \(target) with id \(target.id.ulidString) \
                             to \(instanceKey) of \(model._getSchema())
                             """)
@@ -377,7 +377,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                     storage.model = observed
                 }
             }
-            
+
             if observed.context == nil {
                 let key = storage.key ?? {
                     observed._setupFields()
@@ -386,11 +386,11 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                 fatalError("""
                     Relationships require a context for setting. \
                     Insert the model before adding relationships.
-                    
+
                     Triggered by write to \(key) on \(OuterSelf.self).
                     """)
             }
-            
+
             storage.wrappedValue = newValue
         }
     }

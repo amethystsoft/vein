@@ -90,7 +90,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
                 {
                     fatalError("""
                         Tried set model from different context as relationship.
-                        
+
                         Triggered by setting \(newValue) with id \(newValue.id.ulidString) \
                             on \(instanceKey) of \(model._getSchema())
                         """)
@@ -361,7 +361,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
                     storage.model = observed
                 }
             }
-            
+
             if observed.context == nil {
                 let key = storage.key ?? {
                     observed._setupFields()
@@ -370,11 +370,11 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
                 fatalError("""
                     Relationships require a context for setting. \
                     Insert the model before adding relationships.
-                    
+
                     Triggered by write to \(key) on \(OuterSelf.self).
                     """)
             }
-            
+
             storage.wrappedValue = newValue
         }
     }

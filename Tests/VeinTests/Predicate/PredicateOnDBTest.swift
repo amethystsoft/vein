@@ -90,7 +90,7 @@ struct RealDatabasePredicateTests {
         try container.context.insert(user2)
         try container.context.insert(user3)
         try container.context.save()
-        
+
         return container.getConnection()
     }
 
