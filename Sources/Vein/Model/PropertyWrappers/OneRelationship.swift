@@ -75,10 +75,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
                 let model = model,
                 let context = model.context
             else {
-                fatalError("""
-                    Relationships require a context for setting. \
-                    Insert the model before adding relationships.
-                    """)
+                fatalError("Unreachable")
             }
 
             do {
@@ -92,8 +89,10 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
                     newValue.context?.identifier != context.identifier
                 {
                     fatalError("""
-                        Tried set model from different context as relationship. \
-                        Schema: \(model._getSchema())
+                        Tried set model from different context as relationship.
+                        
+                        Triggered by setting \(newValue) with id \(newValue.id.ulidString) \
+                            on \(instanceKey) of \(model._getSchema())
                         """)
                 }
             } catch {
@@ -362,6 +361,20 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
                     storage.model = observed
                 }
             }
+            
+            if observed.context == nil {
+                let key = storage.key ?? {
+                    observed._setupFields()
+                    return storage.key
+                }() ?? "\(wrappedKeyPath)"
+                fatalError("""
+                    Relationships require a context for setting. \
+                    Insert the model before adding relationships.
+                    
+                    Triggered by write to \(key) on \(OuterSelf.self).
+                    """)
+            }
+            
             storage.wrappedValue = newValue
         }
     }

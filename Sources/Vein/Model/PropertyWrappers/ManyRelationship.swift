@@ -76,10 +76,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                 let model = model,
                 let context = model.context
             else {
-                fatalError("""
-                    Relationships require a context for setting. \
-                    Insert the model before adding relationships.
-                    """)
+                fatalError("Unreachable")
             }
 
             let predicateMatches = context._prepareForChange(of: model)
@@ -225,8 +222,10 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                         try context.insert(target)
                     } else if target.context?.identifier != context.identifier {
                         fatalError("""
-                            Tried set model from different context as relationship. \
-                            Schema: \(model._getSchema())
+                            Tried set model from different context as relationship.
+                            
+                            Triggered by adding \(target) with id \(target.id.ulidString) \
+                            to \(instanceKey) of \(model._getSchema())
                             """)
                     }
                 } catch {
@@ -378,6 +377,20 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                     storage.model = observed
                 }
             }
+            
+            if observed.context == nil {
+                let key = storage.key ?? {
+                    observed._setupFields()
+                    return storage.key
+                }() ?? "\(wrappedKeyPath)"
+                fatalError("""
+                    Relationships require a context for setting. \
+                    Insert the model before adding relationships.
+                    
+                    Triggered by write to \(key) on \(OuterSelf.self).
+                    """)
+            }
+            
             storage.wrappedValue = newValue
         }
     }

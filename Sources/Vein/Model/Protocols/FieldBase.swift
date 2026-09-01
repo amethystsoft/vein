@@ -65,8 +65,12 @@ extension FieldBase {
     var instanceKey: String {
         guard let key else {
             fatalError(MOCError
-                .keyMissing(message: "raised by Field property of Type '\(WrappedType.self)'")
-                .localizedDescription)
+                .keyMissing(message: """
+                raised by Field property of Type '\(WrappedType.self)' \
+                on \(model?._getSchema() ?? "Unknown model type")
+                """)
+                .localizedDescription
+            )
         }
         return key
     }
@@ -78,8 +82,12 @@ extension FieldBase {
     var instanceObjectID: ObjectIdentifier {
         guard let _model else {
             fatalError(MOCError
-                .modelReference(message: "raised by Field property of Type '\(WrappedType.self)'")
-                .localizedDescription)
+                .modelReference(message: """
+                raised by Field property of Type '\(WrappedType.self)' \
+                on \(model?._getSchema() ?? "Unknown model type")
+                """)
+                .localizedDescription
+            )
         }
         return _model.typeIdentifier
     }
@@ -87,8 +95,12 @@ extension FieldBase {
     var instanceSchema: String {
         guard let _model else {
             fatalError(MOCError
-                .modelReference(message: "raised by Field property of Type '\(WrappedType.self)'")
-                .localizedDescription)
+                .modelReference(message: """
+                raised by Field property of Type '\(WrappedType.self)' \
+                on \(model?._getSchema() ?? "Unknown model type")
+                """)
+                .localizedDescription
+            )
         }
         return _model._getSchema()
     }
@@ -96,8 +108,12 @@ extension FieldBase {
     var instanceID: ULID {
         guard let _model else {
             fatalError(MOCError
-                .modelReference(message: "raised by Field property of Type '\(WrappedType.self)'")
-                .localizedDescription)
+                .modelReference(message: """
+                raised by Field property of Type '\(WrappedType.self)' \
+                on \(model?._getSchema() ?? "Unknown model type")
+                """)
+                .localizedDescription
+            )
         }
         return _model.id
     }
@@ -232,7 +248,7 @@ extension FieldBase {
                 builder.field(instanceKey, type: .data(required: required))
             case .null:
                 fatalError(
-                    "Unexpectedly hit null SQLiteTypeName while building migration on Field \(key ?? instanceKey)"
+                    "Unexpectedly hit null SQLiteTypeName while building migration on Field \(key ?? "unknow field")"
                 )
         }
     }
