@@ -22,14 +22,14 @@
 
     @MainActor
     fileprivate func apiCoverage() {
-        let query = Query(#Predicate<Test> { test in test.flag == 0 })
-        let sortedQuery = Query(
+        let _ = Query(#Predicate<Test> { test in test.flag == 0 })
+        let _ = Query(
             #Predicate<Test> { test in test.flag == 0 },
             sortBy: [SortRule(\.flag)]
         )
 
-        let query1 = Query(#Filter<Test> { test in test.flag == 0})
-        let sortedQuery1 = Query(
+        let _ = Query(#Filter<Test> { test in test.flag == 0})
+        let _ = Query(
             #Filter<Test> { test in test.flag == 0 },
             sortBy: [SortRule(\.flag)]
         )

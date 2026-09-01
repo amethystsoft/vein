@@ -49,21 +49,19 @@ struct RealDatabasePredicateTests {
 
     private func makeContainer(name: String) throws -> ModelContainer {
         let dbPath = try prepareContainerLocation(name: name)
-        try makeTestData(name: name)
+        let connection = try makeTestData(dbPath: dbPath)
 
         return try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
-            at: dbPath,
+            connection: connection,
             appID: "de.amethystsoft.vein.RealDatabasePredicateTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
     }
 
     // Helper to spin up a container and seed test users
-    private func makeTestData(name: String) throws {
-        let dbPath = try prepareContainerLocation(name: name)
-
+    private func makeTestData(dbPath: String) throws -> Connection {
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
@@ -92,6 +90,8 @@ struct RealDatabasePredicateTests {
         try container.context.insert(user2)
         try container.context.insert(user3)
         try container.context.save()
+        
+        return container.getConnection()
     }
 
     @Test

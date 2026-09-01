@@ -27,44 +27,42 @@
     struct RealDatabaseFilterTests {
         func prepareContainerLocation(name: String) throws -> String {
             let containerPath = FileManager.default.temporaryDirectory
-
+            
             let dbDir = containerPath.relativePath
                 .appending("/veinTests/\(testID.uuidString)/Filter")
-
+            
             let dbPath = dbDir.appending("/\(name).sqlite3")
-
+            
             try FileManager.default.createDirectory(
                 atPath: dbDir,
                 withIntermediateDirectories: true
             )
-
+            
             if !FileManager.default.fileExists(atPath: dbPath) {
                 FileManager.default.createFile(
                     atPath: dbPath,
                     contents: nil
                 )
             }
-
+            
             return dbPath
         }
-
+        
         private func makeContainer(name: String) throws -> ModelContainer {
             let dbPath = try prepareContainerLocation(name: name)
-            try makeTestData(name: name)
-
+            let connection = try makeTestData(dbPath: dbPath)
+            
             return try ModelContainer(
                 V0_0_1.self,
                 migration: Migration.self,
-                at: dbPath,
+                connection: connection,
                 appID: "de.amethystsoft.vein.RealDatabaseFilterTests",
                 encryptionEnabled: ProcessInfo.shouldEnableEncryption
             )
         }
-
+        
         // Helper to spin up a container and seed test users
-        private func makeTestData(name: String) throws {
-            let dbPath = try prepareContainerLocation(name: name)
-
+        private func makeTestData(dbPath: String) throws -> Connection {
             let container = try ModelContainer(
                 V0_0_1.self,
                 migration: Migration.self,
@@ -77,22 +75,24 @@
             user1.balance = 500.0
             user1.pendingTransactionValue = 50.0
             user1.somethingOptional = "has_value"
-
+            
             // Name matches email exactly
             let user2 = V0_0_1.User(name: "matching", email: "matching", birthday: Date())
             user2.balance = -10.0
             user2.pendingTransactionValue = 100.0
             user2.somethingOptional = nil
-
+            
             let user3 = V0_0_1.User(name: "Charlie", email: "charlie@mia.com", birthday: Date())
             user3.balance = 0.0
             user3.pendingTransactionValue = 0.0
             user3.somethingOptional = nil
-
+            
             try container.context.insert(user1)
             try container.context.insert(user2)
             try container.context.insert(user3)
             try container.context.save()
+            
+            return container.getConnection()
         }
 
         @Test
