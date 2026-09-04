@@ -305,7 +305,7 @@ public final class ModelContainer: @unchecked Sendable {
         }
     }
 
-    func getConnection() -> Connection {
+    public func getConnection() -> Connection {
         return context.connection
     }
 
