@@ -122,6 +122,95 @@ extension ManagedObjectContext {
             throw .other(message: error.localizedDescription)
         }
     }
+    
+    /// Returns all models matching the predicate on DB, excludes models pending deletion
+    nonisolated func _fetchAllWithoutPendingChanges<T: PersistentModel>(
+        _ predicate: ModelPredicate<T>,
+        sortingBy sortDescriptors: [SortRule<T>]?,
+        fetchLimit: (limit: Int, offset: Int)?,
+    ) throws(MOCError) -> [T] {
+        do {
+            let table = Table(T.schema).filter(predicate.sql)
+            let eagerLoadedFields = T._fieldInformation.eagerLoaded
+            
+            var fieldsToLoad = eagerLoadedFields.map(\.fetchExpressible)
+            fieldsToLoad.append(SQLExpression<String>("id"))
+            var select = table.select(fieldsToLoad)
+            
+            if let sortDescriptors {
+                select = try select.order(sortDescriptors.map { try $0.expressible })
+            }
+            
+            if let (limit, offset) = fetchLimit {
+                select = select.limit(limit, offset: offset)
+            }
+            
+            if modelContainer.logConfiguration.sqlQueries {
+                Self.logger.info(
+                    "Fetching \(T.self) with \nQuery: '\(select.expression.template)'\nBindings:\(select.expression.bindings)"
+                )
+            }
+            
+            var models = [T]()
+            
+            var currentlyDeleted = [ULID: any PersistentModel]()
+            
+            writeCache.mutate { _, _, deleted, _ in
+                currentlyDeleted = deleted[T.typeIdentifier] ?? [:]
+            }
+            
+            var results: AnySequence<Row>? = nil
+            do {
+                results = try connection.prepare(select)
+            } catch let error as SQLiteDB.Result {
+                switch error.parse() {
+                    case .noSuchTable:
+                        break
+                    default: throw error
+                }
+            }
+            var resultIDs = Set<ULID>()
+            
+            if let results {
+                identityMap.batched { getTracked, startTracking in
+                    for row in results {
+                        let id = ULID(ulidString: row[SQLExpression<String>("id")])!
+                        
+                        if currentlyDeleted[id] != nil { continue }
+                        
+                        if let alreadyTrackedModel = getTracked(T.self, id) {
+                            models.append(alreadyTrackedModel)
+                            resultIDs.insert(alreadyTrackedModel.id)
+                            continue
+                        }
+                        var fields = [String: SQLiteValue]()
+                        
+                        for field in eagerLoadedFields {
+                            fields[field.key] = SQLiteValue(
+                                typeName: field.typeName,
+                                key: field.key,
+                                row: row
+                            )
+                        }
+                        
+                        let model = T(id: id, fields: fields)
+                        model.context = self
+                        models.append(model)
+                        resultIDs.insert(model.id)
+                        startTracking(model)
+                    }
+                }
+            }
+            
+            return models.sorted(using: sortDescriptors ?? [SortRule<T>(\.id)])
+        } catch let error as ManagedObjectContextError {
+            throw error
+        } catch let error as SQLiteDB.Result {
+            throw error.parse()
+        } catch {
+            throw .other(message: error.localizedDescription)
+        }
+    }
 
     nonisolated func _fetchSingleProperty<Field: PersistedField>(field: Field) throws(MOCError)
         -> Field.WrappedType.PersistentRepresentation

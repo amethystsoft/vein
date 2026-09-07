@@ -70,3 +70,5 @@ DerivedData/
 .netrc
 .swiftpm
 Package.resolved
+docs/DocHub/Build
+docs/DocHub/.vscode
