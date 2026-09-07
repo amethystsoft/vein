@@ -233,7 +233,7 @@ Vein is designed to be highly portable, relying on standard Swift Evolution tool
 
 - **Database & Security**: `skiptools/swift-sqlcipher` (cross platform sqlite and db level encryption)
 - **Credentials**: `kishikawakatsumi/keychainaccess` (Apple), `amethystsoft/KeyringAccess` (our own lib for storing credentials in SecretService on Linux) and a Vein internal wrapper for CredW from the WinSDK on windows. Currently we don't support db level encryption on android automatically due to difficulties with storing keys safely caused by the way android is build. You can use your own implementation of `DatabaseKeyProvider`.
-- **Metadata & Tooling**: `swiftlang/swift-syntax` (compile time macros), `apple/swift-log`, `apple/swift-atomics` (used only in a write once, read a lot place)
+- **Metadata & Tooling**: `swiftlang/swift-syntax` (compile time macros), `apple/swift-log`, `apple/swift-atomics` (used only in a write once, read a lot place), `amethystsoft/vein-filter` our back-port of `#Predicate` to macOS 13/iOS 16, available as `#Filter` when the `VeinFilter` trait is enabled)
 - **Testing**: `typelift/SwiftCheck` for property based testing.
 - **SwiftCrossUI**: VeinSCUI depends on SwiftCrossUI. It's only used when the trait `VeinSCUI` is active.
 
