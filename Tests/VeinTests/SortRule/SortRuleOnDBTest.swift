@@ -101,7 +101,10 @@ struct RealDatabaseSortRuleTests {
     func testDoubleAscending() async throws {
         let container = try makeContainer(name: "DoubleAscending")
 
-        let descriptor = try FetchDescriptor(model: V0_0_1.User.self, sortBy: [SortRule<V0_0_1.User>(\.balance)])
+        let descriptor = try FetchDescriptor(
+            model: V0_0_1.User.self,
+            sortBy: [SortRule<V0_0_1.User>(\.balance)]
+        )
         let results = try container.context.fetch(descriptor)
 
         #expect(results.count == 3)
@@ -113,7 +116,10 @@ struct RealDatabaseSortRuleTests {
     func testDoubleDescending() async throws {
         let container = try makeContainer(name: "DoubleDescending")
 
-        let descriptor = try FetchDescriptor(model: V0_0_1.User.self, sortBy: [SortRule(\.balance, order: .descending)])
+        let descriptor = try FetchDescriptor(
+            model: V0_0_1.User.self,
+            sortBy: [SortRule(\.balance, order: .descending)]
+        )
         let results = try container.context.fetch(descriptor)
 
         #expect(results.count == 3)
@@ -125,7 +131,10 @@ struct RealDatabaseSortRuleTests {
     func testStringAscending() async throws {
         let container = try makeContainer(name: "StringAscending")
 
-        let descriptor = try FetchDescriptor(model: V0_0_1.User.self, sortBy: [SortRule<V0_0_1.User>(\.name, comparator: .lexical)])
+        let descriptor = try FetchDescriptor(
+            model: V0_0_1.User.self,
+            sortBy: [SortRule<V0_0_1.User>(\.name, comparator: .lexical)]
+        )
         let results = try container.context.fetch(descriptor)
 
         #expect(results.count == 3)
@@ -137,7 +146,10 @@ struct RealDatabaseSortRuleTests {
     func testStringDescending() async throws {
         let container = try makeContainer(name: "StringDescending")
 
-        let descriptor = try FetchDescriptor(model: V0_0_1.User.self, sortBy: [SortRule(\.name, comparator: .lexical, order: .descending)])
+        let descriptor = try FetchDescriptor(
+            model: V0_0_1.User.self,
+            sortBy: [SortRule(\.name, comparator: .lexical, order: .descending)]
+        )
         let results = try container.context.fetch(descriptor)
 
         #expect(results.count == 3)
@@ -149,7 +161,10 @@ struct RealDatabaseSortRuleTests {
     func testOptionalAscending() async throws {
         let container = try makeContainer(name: "OptionalAscending")
 
-        let descriptor = try FetchDescriptor(model: V0_0_1.User.self, sortBy: [SortRule<V0_0_1.User>(\.somethingOptional)])
+        let descriptor = try FetchDescriptor(
+            model: V0_0_1.User.self,
+            sortBy: [SortRule<V0_0_1.User>(\.somethingOptional)]
+        )
         let results = try container.context.fetch(descriptor)
 
         #expect(results.count == 3)
@@ -162,7 +177,10 @@ struct RealDatabaseSortRuleTests {
     func testOptionalDescending() async throws {
         let container = try makeContainer(name: "OptionalDescending")
 
-        let descriptor = try FetchDescriptor(model: V0_0_1.User.self, sortBy: [SortRule(\.somethingOptional, order: .descending)])
+        let descriptor = try FetchDescriptor(
+            model: V0_0_1.User.self,
+            sortBy: [SortRule(\.somethingOptional, order: .descending)]
+        )
         let results = try container.context.fetch(descriptor)
 
         #expect(results.count == 3)
@@ -184,21 +202,30 @@ struct RealDatabaseSortRuleTests {
         #expect(caseInsensitiveSorted[1].name == "Banana")
         #expect(caseInsensitiveSorted[2].name == "cherry")
 
-        let descriptor2 = try FetchDescriptor(model: V0_0_1.User.self, sortBy: [SortRule(\.name, order: .descending)])
+        let descriptor2 = try FetchDescriptor(
+            model: V0_0_1.User.self,
+            sortBy: [SortRule(\.name, order: .descending)]
+        )
         let caseInsensitiveSortedReverse = try container.context.fetch(descriptor2)
 
         #expect(caseInsensitiveSortedReverse[2].name == "apple")
         #expect(caseInsensitiveSortedReverse[1].name == "Banana")
         #expect(caseInsensitiveSortedReverse[0].name == "cherry")
 
-        let descriptor3 = try FetchDescriptor(model: V0_0_1.User.self, sortBy: [SortRule(\.name, comparator: .lexical)])
+        let descriptor3 = try FetchDescriptor(
+            model: V0_0_1.User.self,
+            sortBy: [SortRule(\.name, comparator: .lexical)]
+        )
         let caseSensitiveSorted = try container.context.fetch(descriptor3)
 
         #expect(caseSensitiveSorted[0].name == "Banana")
         #expect(caseSensitiveSorted[1].name == "apple")
         #expect(caseSensitiveSorted[2].name == "cherry")
 
-        let descriptor4 = try FetchDescriptor(model: V0_0_1.User.self, sortBy: [SortRule(\.name, comparator: .lexical, order: .descending)])
+        let descriptor4 = try FetchDescriptor(
+            model: V0_0_1.User.self,
+            sortBy: [SortRule(\.name, comparator: .lexical, order: .descending)]
+        )
         let caseSensitiveSortedReverse = try container.context.fetch(descriptor4)
 
         #expect(caseSensitiveSortedReverse[2].name == "Banana")

@@ -129,7 +129,10 @@ struct MultithreadedStressTests {
             for _ in 0..<50 {
                 group.addTask {
                     try? await Task.sleep(nanoseconds: UInt64.random(in: 10_000...50_000))
-                    let descriptor = try FetchDescriptor(model: V0_0_1.Person.self, sortBy: [SortRule(\.name)])
+                    let descriptor = try FetchDescriptor(
+                        model: V0_0_1.Person.self,
+                        sortBy: [SortRule(\.name)]
+                    )
                     let results = try container.context.fetch(descriptor)
                     #expect(results.count == 2)
                 }
