@@ -6,7 +6,7 @@ import SQLiteDB
 
 /// A structure describing a paginated fetch request.
 /// Paginated requests ignore in memory changes during the query.
-/// Models pending deletion are removed from the results.
+/// Models pending deletion will still be removed from the results.
 public struct PaginatedFetchDescriptor<T: PersistentModel>: Sendable {
     public let modelPredicate: ModelPredicate<T>
     /// The sort rules that tell the fetch how to order its results.
@@ -88,6 +88,7 @@ public struct FetchDescriptor<T: PersistentModel> {
     
     /// A Boolean value that indicates whether, when the fetch runs,
     /// it matches against currently unsaved changes in the model context.
+    /// Models pending deletion will still be removed from the results.
     public var includePendingChanges = true
     
     /// Creates a fetch descriptor with the specified ``ModelPredicate`` that,

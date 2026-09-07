@@ -102,7 +102,7 @@ extension ManagedObjectContext {
     }
     
     /// Executes a paginated fetch request.
-    public func fetch<T: PersistentModel>(
+    public nonisolated func fetch<T: PersistentModel>(
         _ descriptor: PaginatedFetchDescriptor<T>
     ) throws(MOCError) -> [T] {
         do {
@@ -125,7 +125,7 @@ extension ManagedObjectContext {
     }
     
     /// Executes a fetch request.
-    public func fetch<T: PersistentModel>(
+    public nonisolated func fetch<T: PersistentModel>(
         _ descriptor: FetchDescriptor<T>
     ) throws(MOCError) -> [T] {
         do {
