@@ -64,7 +64,7 @@ public struct PaginatedFetchDescriptor<T: PersistentModel>: Sendable {
         sortBy sortRules: [SortRule<T>] = [],
         limit: Int,
         offset: Int
-    ) throws {
+    ) {
         self.modelPredicate = ModelPredicate<T>(
             runtimeFilter: { _ in true },
             sql: SQLExpression<Bool>(value: true)
@@ -129,7 +129,7 @@ public struct FetchDescriptor<T: PersistentModel> {
     public init(
         model: T.Type,
         sortBy sortRules: [SortRule<T>] = []
-    ) throws {
+    ) {
         self.modelPredicate = ModelPredicate<T>(
             runtimeFilter: { _ in true },
             sql: SQLExpression<Bool>(value: true)
