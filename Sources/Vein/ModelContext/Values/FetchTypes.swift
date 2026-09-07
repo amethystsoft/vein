@@ -82,8 +82,8 @@ public struct PaginatedFetchDescriptor<T: PersistentModel>: Sendable {
             sortBy sortRules: [SortRule<T>] = [],
             limit: Int,
             offset: Int
-        ) {
-            self.modelPredicate = ModelPredicate(filter)
+        ) throws {
+            self.modelPredicate = try ModelPredicate(filter)
             self.sortRules = sortRules
             self.fetchLimit = limit
             self.fetchOffset = offset
@@ -143,8 +143,8 @@ public struct FetchDescriptor<T: PersistentModel> {
         public init(
             _ filter: VeinFilter.Filter1<T>,
             sortBy sortRules: [SortRule<T>] = []
-        ) {
-            self.modelPredicate = ModelPredicate(filter)
+        ) throws {
+            self.modelPredicate = try ModelPredicate(filter)
             self.sortRules = sortRules
         }
     #endif

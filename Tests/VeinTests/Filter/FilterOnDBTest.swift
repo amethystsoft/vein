@@ -216,9 +216,11 @@
         func testSortRule() async throws {
             let container = try makeContainer(name: "StartsWithAndSortRule")
 
-            let results = try container.context.fetchAll(#Filter<V0_0_1.User> { _ in
-                true
-            }, sortBy: [SortRule(\.balance)])
+            let descriptor = try FetchDescriptor(
+                predicate: #Predicate<V0_0_1.User> { _ in true },
+                sortBy: [SortRule(\.balance)]
+            )
+            let results = try container.context.fetch(descriptor)
 
             #expect(results.count == 3)
             #expect(results.map(\.name) == ["matching", "Charlie", "Mia"])
