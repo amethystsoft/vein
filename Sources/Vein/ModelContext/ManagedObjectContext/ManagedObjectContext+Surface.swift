@@ -153,6 +153,27 @@ extension ManagedObjectContext {
             }
         } catch { throw .other(message: error.localizedDescription) }
     }
+    
+    /// Returns the count of rows matching the ``FetchDescriptor`` in the database.
+    /// In memory changes are always ignored.
+    public nonisolated func fetchCount<T: PersistentModel>(
+        _ descriptor: FetchDescriptor<T>
+    ) throws(MOCError) -> Int {
+        guard
+            self.modelContainer.getSchema(for: T.typeIdentifier) != nil
+        else { throw MOCError.inactiveModelTypeFetched(T.self)}
+        
+        do {
+            let count = Table(T.schema).filter(descriptor.modelPredicate.sql).count
+            return try connection.scalar(count)
+        } catch let error as MOCError {
+            switch error {
+                case .noSuchTable:
+                    return 0
+                default: throw error
+            }
+        } catch { throw .other(message: error.localizedDescription) }
+    }
 
     /// Inserts an unmanaged model into the context.
     ///
