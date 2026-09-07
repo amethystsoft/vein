@@ -153,7 +153,7 @@ extension ManagedObjectContext {
             }
         } catch { throw .other(message: error.localizedDescription) }
     }
-    
+
     /// Returns the count of rows matching the ``FetchDescriptor`` in the database.
     /// In memory changes are always ignored.
     public nonisolated func fetchCount<T: PersistentModel>(
@@ -162,7 +162,7 @@ extension ManagedObjectContext {
         guard
             self.modelContainer.getSchema(for: T.typeIdentifier) != nil
         else { throw MOCError.inactiveModelTypeFetched(T.self)}
-        
+
         do {
             let count = Table(T.schema).filter(descriptor.modelPredicate.sql).count
             return try connection.scalar(count)
