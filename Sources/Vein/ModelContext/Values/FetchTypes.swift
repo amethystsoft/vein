@@ -141,7 +141,7 @@ public struct FetchDescriptor<T: PersistentModel> {
     /// optionally, arranges the fetched models in a particular order.
     #if VeinFilter
         public init(
-            _ filter: VeinFilter.Filter1<T>,
+            filter: VeinFilter.Filter1<T>,
             sortBy sortRules: [SortRule<T>] = []
         ) throws {
             self.modelPredicate = try ModelPredicate(filter)
