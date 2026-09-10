@@ -17,6 +17,10 @@ import SQLiteDB
 ///
 /// `ModelContainer` coordinates the connection between your `VersionedSchema`,
 /// the migration lifecycle, and the underlying `ManagedObjectContext`.
+///
+/// - Important: Do not use different ``VersionedSchema``s or ``SchemaMigrationPlan``s
+///   on the same database at the same time.
+///   Only use versions of the same ``VersionedSchema`` and only going up in version numbers.
 public final class ModelContainer: @unchecked Sendable {
     /// The migration plan used to evolve the database schema.
     public let migration: SchemaMigrationPlan.Type
@@ -60,6 +64,10 @@ public final class ModelContainer: @unchecked Sendable {
     ///   - encryptionEnabled: Whether to apply DB-level encryption.
     ///   - keyProvider: The structure providing and storing the database key if encryption is enabled.
     ///   - logConfiguration: What information to log.
+    ///
+    /// - Important: Do not use different ``VersionedSchema``s or ``SchemaMigrationPlan``s
+    ///   on the same database at the same time.
+    ///   Only use versions of the same ``SchemaMigrationPlan`` and only going up in version numbers.
     ///
     /// - Note: `Keyring.appIdentifier` is a global, one-time configuration for the
     ///   underlying `KeyringAccess` library, typically set once per process or environment.
@@ -171,6 +179,10 @@ public final class ModelContainer: @unchecked Sendable {
     ///   - encryptionEnabled: Whether to apply DB-level encryption.
     ///   - keyProvider: The structure providing and storing the database key if encryption is enabled.
     ///   - logConfiguration: What information to log.
+    ///
+    /// - Important: Do not use different ``VersionedSchema``s or ``SchemaMigrationPlan``s
+    ///   on the same database at the same time.
+    ///   Only use schemas of the same ``SchemaMigrationPlan`` and only going up in version numbers.
     ///
     /// - Note: `Keyring.appIdentifier` is a global, one-time configuration for the
     ///   underlying `KeyringAccess` library, typically set once per process or environment.

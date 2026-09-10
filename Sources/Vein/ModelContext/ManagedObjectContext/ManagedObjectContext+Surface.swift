@@ -50,6 +50,8 @@ extension ManagedObjectContext {
     }
 
     #if VeinFilter
+        /// Returns all models matching the filter.
+        /// Non existent tables are treated as empty state and therefore return [].
         public nonisolated func fetchAll<T: PersistentModel>(
             _ predicate: Filter1<T>
         ) throws(MOCError) -> [T] {

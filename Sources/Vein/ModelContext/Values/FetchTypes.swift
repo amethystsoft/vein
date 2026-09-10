@@ -74,9 +74,9 @@ public struct PaginatedFetchDescriptor<T: PersistentModel>: Sendable {
         self.fetchOffset = offset
     }
 
-    /// Creates a paginated fetch descriptor with the specified filter that,
-    /// optionally, arranges the fetched models in a particular order.
     #if VeinFilter
+        /// Creates a paginated fetch descriptor with the specified filter that,
+        /// optionally, arranges the fetched models in a particular order.
         public init(
             _ filter: VeinFilter.Filter1<T>,
             sortBy sortRules: [SortRule<T>] = [],
@@ -137,9 +137,9 @@ public struct FetchDescriptor<T: PersistentModel> {
         self.sortRules = sortRules
     }
 
-    /// Creates a fetch descriptor with the specified filter that,
-    /// optionally, arranges the fetched models in a particular order.
     #if VeinFilter
+        /// Creates a fetch descriptor with the specified filter that,
+        /// optionally, arranges the fetched models in a particular order.
         public init(
             _ filter: VeinFilter.Filter1<T>,
             sortBy sortRules: [SortRule<T>] = []

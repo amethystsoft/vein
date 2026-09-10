@@ -13,6 +13,10 @@
         @TutorialReference(tutorial: "doc:Relationships")
     }
     
+    @Chapter(name: "Advanced Queries") {
+        @TutorialReference(tutorial: "doc:AdvancedQueries")
+    }
+    
     @Chapter(name: "Simple Migrations") {
         @TutorialReference(tutorial: "doc:SimpleMigrations")
     }

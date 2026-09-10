@@ -13,38 +13,42 @@
 @_spi(VeinSurface) import Vein
 
 extension ModelContainer {
-    /// Manages the schema and storage for a Vein database.
-    ///
-    /// - Parameters:
-    ///   - versionedSchema: The VersionedSchema you want to use models of.
-    ///   - migration: The MigrationPlan to use if migrations are necessary.
-    ///   - path: The path of the database file or nil for in memory.
-    ///   - appID: A unique identifier used per-database to construct the keyring
-    ///   service string: `"com.amethyst.vein.sqlcipher.\(appID)"`.
-    ///   - encryptionEnabled: Whether to apply DB-level encryption.
-    ///   - keyProvider: The structure providing and storing the database key if encryption is enabled.
-    ///   - logConfiguration: What information to log.
-    ///   - modelConfiguration: Additional configuration of the `ManagedObjectContext`.
-    ///
-    /// - Note: `Keyring.appIdentifier` is a global, one-time configuration for the
-    ///   underlying `KeyringAccess` library, typically set once per process or environment.
-    ///   It should represent the application bundle or organization identity.
-    ///
-    ///   `Keyring.appIdentifier` does not need to match the `appID` parameter. If they
-    ///   differ, `KeyringAccess` uses the global identifier for internal namespacing while
-    ///   continuing to store and retrieve items using the service string derived from `appID`.
-    ///
-    /// On Linux, set `Keyring.appIdentifier` before creating any `ModelContainer` instances:
-    /// ```swift
-    /// #if os(Linux)
-    ///     import Vein
-    ///
-    ///     Keyring.appIdentifier.withLock { identifier in
-    ///         identifier = "com.example.yourapp"
-    ///     }
-    /// #endif
-    /// ```
     #if canImport(AppKit) || canImport(UIKit) || os(Linux) || canImport(WinSDK)
+        /// Manages the schema and storage for a Vein database.
+        ///
+        /// - Parameters:
+        ///   - versionedSchema: The VersionedSchema you want to use models of.
+        ///   - migration: The MigrationPlan to use if migrations are necessary.
+        ///   - path: The path of the database file or nil for in memory.
+        ///   - appID: A unique identifier used per-database to construct the keyring
+        ///   service string: `"com.amethyst.vein.sqlcipher.\(appID)"`.
+        ///   - encryptionEnabled: Whether to apply DB-level encryption.
+        ///   - keyProvider: The structure providing and storing the database key if encryption is enabled.
+        ///   - logConfiguration: What information to log.
+        ///   - modelConfiguration: Additional configuration of the `ManagedObjectContext`.
+        ///
+        /// - Important: Do not use different ``VersionedSchema``s or ``SchemaMigrationPlan``s
+        ///   on the same database at the same time.
+        ///   Only use versions of the same ``SchemaMigrationPlan`` and only going up in version numbers.
+        ///
+        /// - Note: `Keyring.appIdentifier` is a global, one-time configuration for the
+        ///   underlying `KeyringAccess` library, typically set once per process or environment.
+        ///   It should represent the application bundle or organization identity.
+        ///
+        ///   `Keyring.appIdentifier` does not need to match the `appID` parameter. If they
+        ///   differ, `KeyringAccess` uses the global identifier for internal namespacing while
+        ///   continuing to store and retrieve items using the service string derived from `appID`.
+        ///
+        /// On Linux, set `Keyring.appIdentifier` before creating any `ModelContainer` instances:
+        /// ```swift
+        /// #if os(Linux)
+        ///     import Vein
+        ///
+        ///     Keyring.appIdentifier.withLock { identifier in
+        ///         identifier = "com.example.yourapp"
+        ///     }
+        /// #endif
+        /// ```
         public convenience init(
             _ versionedSchema: VersionedSchema.Type,
             migration: SchemaMigrationPlan.Type,
@@ -68,6 +72,41 @@ extension ModelContainer {
             )
         }
     #else
+        /// Manages the schema and storage for a Vein database.
+        ///
+        /// - Parameters:
+        ///   - versionedSchema: The VersionedSchema you want to use models of.
+        ///   - migration: The MigrationPlan to use if migrations are necessary.
+        ///   - path: The path of the database file or nil for in memory.
+        ///   - appID: A unique identifier used per-database to construct the keyring
+        ///   service string: `"com.amethyst.vein.sqlcipher.\(appID)"`.
+        ///   - encryptionEnabled: Whether to apply DB-level encryption.
+        ///   - keyProvider: The structure providing and storing the database key if encryption is enabled.
+        ///   - logConfiguration: What information to log.
+        ///   - modelConfiguration: Additional configuration of the `ManagedObjectContext`.
+        ///
+        /// - Important: Do not use different ``VersionedSchema``s or ``SchemaMigrationPlan``s
+        ///   on the same database at the same time.
+        ///   Only use versions of the same ``SchemaMigrationPlan`` and only going up in version numbers.
+        ///
+        /// - Note: `Keyring.appIdentifier` is a global, one-time configuration for the
+        ///   underlying `KeyringAccess` library, typically set once per process or environment.
+        ///   It should represent the application bundle or organization identity.
+        ///
+        ///   `Keyring.appIdentifier` does not need to match the `appID` parameter. If they
+        ///   differ, `KeyringAccess` uses the global identifier for internal namespacing while
+        ///   continuing to store and retrieve items using the service string derived from `appID`.
+        ///
+        /// On Linux, set `Keyring.appIdentifier` before creating any `ModelContainer` instances:
+        /// ```swift
+        /// #if os(Linux)
+        ///     import Vein
+        ///
+        ///     Keyring.appIdentifier.withLock { identifier in
+        ///         identifier = "com.example.yourapp"
+        ///     }
+        /// #endif
+        /// ```
         public convenience init(
             _ versionedSchema: VersionedSchema.Type,
             migration: SchemaMigrationPlan.Type,
@@ -92,38 +131,42 @@ extension ModelContainer {
         }
     #endif
 
-    /// Manages the schema and storage for a Vein database.
-    ///
-    /// - Parameters:
-    ///   - versionedSchema: The VersionedSchema you want to use models of.
-    ///   - migration: The MigrationPlan to use if migrations are necessary.
-    ///   - connection: The existing connection to the database.
-    ///   - appID: A unique identifier used per-database to construct the keyring
-    ///   service string: `"com.amethyst.vein.sqlcipher.\(appID)"`.
-    ///   - encryptionEnabled: Whether to apply DB-level encryption.
-    ///   - keyProvider: The structure providing and storing the database key if encryption is enabled.
-    ///   - logConfiguration: What information to log.
-    ///   - modelConfiguration: Additional configuration of the `ManagedObjectContext`.
-    ///
-    /// - Note: `Keyring.appIdentifier` is a global, one-time configuration for the
-    ///   underlying `KeyringAccess` library, typically set once per process or environment.
-    ///   It should represent the application bundle or organization identity.
-    ///
-    ///   `Keyring.appIdentifier` does not need to match the `appID` parameter. If they
-    ///   differ, `KeyringAccess` uses the global identifier for internal namespacing while
-    ///   continuing to store and retrieve items using the service string derived from `appID`.
-    ///
-    /// On Linux, set `Keyring.appIdentifier` before creating any `ModelContainer` instances:
-    /// ```swift
-    /// #if os(Linux)
-    ///     import Vein
-    ///
-    ///     Keyring.appIdentifier.withLock { identifier in
-    ///         identifier = "com.example.yourapp"
-    ///     }
-    /// #endif
-    /// ```
     #if canImport(AppKit) || canImport(UIKit) || os(Linux) || canImport(WinSDK)
+        /// Manages the schema and storage for a Vein database.
+        ///
+        /// - Parameters:
+        ///   - versionedSchema: The VersionedSchema you want to use models of.
+        ///   - migration: The MigrationPlan to use if migrations are necessary.
+        ///   - connection: The existing connection to the database.
+        ///   - appID: A unique identifier used per-database to construct the keyring
+        ///   service string: `"com.amethyst.vein.sqlcipher.\(appID)"`.
+        ///   - encryptionEnabled: Whether to apply DB-level encryption.
+        ///   - keyProvider: The structure providing and storing the database key if encryption is enabled.
+        ///   - logConfiguration: What information to log.
+        ///   - modelConfiguration: Additional configuration of the `ManagedObjectContext`.
+        ///
+        /// - Important: Do not use different ``VersionedSchema``s or ``SchemaMigrationPlan``s
+        ///   on the same database at the same time.
+        ///   Only use versions of the same ``SchemaMigrationPlan`` and only going up in version numbers.
+        ///
+        /// - Note: `Keyring.appIdentifier` is a global, one-time configuration for the
+        ///   underlying `KeyringAccess` library, typically set once per process or environment.
+        ///   It should represent the application bundle or organization identity.
+        ///
+        ///   `Keyring.appIdentifier` does not need to match the `appID` parameter. If they
+        ///   differ, `KeyringAccess` uses the global identifier for internal namespacing while
+        ///   continuing to store and retrieve items using the service string derived from `appID`.
+        ///
+        /// On Linux, set `Keyring.appIdentifier` before creating any `ModelContainer` instances:
+        /// ```swift
+        /// #if os(Linux)
+        ///     import Vein
+        ///
+        ///     Keyring.appIdentifier.withLock { identifier in
+        ///         identifier = "com.example.yourapp"
+        ///     }
+        /// #endif
+        /// ```
         public convenience init(
             _ versionedSchema: VersionedSchema.Type,
             migration: SchemaMigrationPlan.Type,
@@ -147,6 +190,41 @@ extension ModelContainer {
             )
         }
     #else
+        /// Manages the schema and storage for a Vein database.
+        ///
+        /// - Parameters:
+        ///   - versionedSchema: The VersionedSchema you want to use models of.
+        ///   - migration: The MigrationPlan to use if migrations are necessary.
+        ///   - connection: The existing connection to the database.
+        ///   - appID: A unique identifier used per-database to construct the keyring
+        ///   service string: `"com.amethyst.vein.sqlcipher.\(appID)"`.
+        ///   - encryptionEnabled: Whether to apply DB-level encryption.
+        ///   - keyProvider: The structure providing and storing the database key if encryption is enabled.
+        ///   - logConfiguration: What information to log.
+        ///   - modelConfiguration: Additional configuration of the `ManagedObjectContext`.
+        ///
+        /// - Important: Do not use different ``VersionedSchema``s or ``SchemaMigrationPlan``s
+        ///   on the same database at the same time.
+        ///   Only use versions of the same ``SchemaMigrationPlan`` and only going up in version numbers.
+        ///
+        /// - Note: `Keyring.appIdentifier` is a global, one-time configuration for the
+        ///   underlying `KeyringAccess` library, typically set once per process or environment.
+        ///   It should represent the application bundle or organization identity.
+        ///
+        ///   `Keyring.appIdentifier` does not need to match the `appID` parameter. If they
+        ///   differ, `KeyringAccess` uses the global identifier for internal namespacing while
+        ///   continuing to store and retrieve items using the service string derived from `appID`.
+        ///
+        /// On Linux, set `Keyring.appIdentifier` before creating any `ModelContainer` instances:
+        /// ```swift
+        /// #if os(Linux)
+        ///     import Vein
+        ///
+        ///     Keyring.appIdentifier.withLock { identifier in
+        ///         identifier = "com.example.yourapp"
+        ///     }
+        /// #endif
+        /// ```
         public convenience init(
             _ versionedSchema: VersionedSchema.Type,
             migration: SchemaMigrationPlan.Type,

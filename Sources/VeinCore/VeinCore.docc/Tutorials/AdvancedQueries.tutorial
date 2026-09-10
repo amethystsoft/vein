@@ -1,0 +1,46 @@
+@Tutorial(time: 5) {
+    @Intro(title: "Advanced Queries") {
+        Sometimes filtering is not enough. Starting Vein 1.1 you can sort and paginate queries.
+    }
+    
+    @Section(title: "FetchDescriptor and PaginatedFetchDescriptor") {
+        @ContentAndMedia {
+            Use `FetchDescriptor` for your every-day queries and `PaginatedFetchDescriptor` when you need to limit the amount of active instances.
+            
+            `FetchDescriptor` gives you control over including pending changes while `PaginatedFetchDescriptor` only operates on the database. Models pending persistance of deletion are excluded in both cases.
+            
+            Let's get some posts containing "Swift" and sort them by title.
+        }
+        
+        @Steps {            
+            @Step {
+                First, create a FetchDescriptor.
+                
+                @Code(name: "AdvancedQuries.swift", file: AdvancedQuery)
+            }
+            
+            @Step {
+                Now, add your `SortRule`. When adding multiple rules, the later ones are used to resolve conflicts.
+                
+                `SortRule` allows you to specify the order they should be sorted in: `.ascending` (default) or `.descending`.
+                For sorting strings, you can also choose between `.caseInsensitive` (default) and `.lexical`.
+                
+                @Code(name: "AdvancedQuries.swift", file: AdvancedQuery-2)
+            }
+            
+            @Step {
+                You might get a lot of results, so let's group them into pages of 20 results.
+                
+                We'll take a parameter page size to determine which one to get.
+                
+                @Code(name: "AdvancedQuries.swift", file: AdvancedQuery-3)
+            }
+            
+            @Step {
+                Now the only thing left is to add the limit (20) and offset (page \* 20).
+                
+                @Code(name: "AdvancedQuries.swift", file: AdvancedQuery-4)
+            }
+        }
+    }
+}
