@@ -217,7 +217,7 @@
             let container = try makeContainer(name: "StartsWithAndSortRule")
 
             let descriptor = try FetchDescriptor(
-                predicate: #Predicate<V0_0_1.User> { _ in true },
+                predicate: #Filter<V0_0_1.User> { _ in true },
                 sortBy: [SortRule(\.balance)]
             )
             let results = try container.context.fetch(descriptor)
