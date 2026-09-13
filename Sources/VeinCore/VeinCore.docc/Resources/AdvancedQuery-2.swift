@@ -1,12 +1,12 @@
 import VeinCore
 
-func fetchPostsMentioningSwiftSortedByTitle(_ context: ManagedObjectContext) -> [Post] {
-    let fetchDescriptor = FetchDescriptor(
+func fetchPostsMentioningSwiftSortedByTitle(_ context: ManagedObjectContext) throws -> [Post] {
+    let fetchDescriptor = try FetchDescriptor(
         predicate: #Predicate<Post> { post in
             post.content.contains("Swift")
         },
         sortBy: [SortRule(\.title)]
     )
     
-    return context.fetch(fetchDescriptor)
+    return try context.fetch(fetchDescriptor)
 }

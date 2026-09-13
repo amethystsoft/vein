@@ -78,7 +78,7 @@ public struct PaginatedFetchDescriptor<T: PersistentModel>: Sendable {
         /// Creates a paginated fetch descriptor with the specified filter that,
         /// optionally, arranges the fetched models in a particular order.
         public init(
-            _ filter: VeinFilter.Filter1<T>,
+            filter: VeinFilter.Filter1<T>,
             sortBy sortRules: [SortRule<T>] = [],
             limit: Int,
             offset: Int

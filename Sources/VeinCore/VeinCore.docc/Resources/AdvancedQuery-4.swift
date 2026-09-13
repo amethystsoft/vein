@@ -3,8 +3,8 @@ import VeinCore
 func fetchPostsMentioningSwiftSortedByTitle(
     page: Int,
     _ context: ManagedObjectContext
-) -> [Post] {
-    let fetchDescriptor = PaginatedFetchDescriptor(
+) throws -> [Post] {
+    let fetchDescriptor = try PaginatedFetchDescriptor(
         predicate: #Predicate<Post> { post in
             post.content.contains("Swift")
         },
@@ -13,5 +13,5 @@ func fetchPostsMentioningSwiftSortedByTitle(
         offset: page * 20
     )
     
-    return context.fetch(fetchDescriptor)
+    return try context.fetch(fetchDescriptor)
 }
