@@ -79,7 +79,7 @@ public class PrimaryKey: PersistedField, @unchecked Sendable {
 
     public weak var _model: (any PersistentModel)?
 
-    public init(wrappedValue: ULID = ULID()) {
+    public init(wrappedValue: ULID) {
         self.store = wrappedValue
     }
 
