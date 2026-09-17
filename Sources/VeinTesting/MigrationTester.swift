@@ -102,7 +102,7 @@ public struct MigrationTester {
                 throw Error.usesUnknownSchema(endSchema, in: stage)
             }
         }
-        
+
         self.containerPath = try Self.prepareContainerLocation(
             plan: migrationPlan,
             id: id

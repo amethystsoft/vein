@@ -28,7 +28,7 @@ let testID = UUID()
 @Suite(.serialized)
 struct MigrationTests: @MainActor DiskUsingTest {
     var additionalPath: String { "" }
-    
+
     let logger = Logger(label: "de.amethystsoft.vein.test.migration")
 
     @Test

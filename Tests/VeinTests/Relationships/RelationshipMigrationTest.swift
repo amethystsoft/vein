@@ -24,7 +24,7 @@ import Logging
 @MainActor
 @Suite struct RelationshipTest: @MainActor DiskUsingTest {
     var additionalPath: String { "" }
-    
+
     static let logger = Logger(label: "de.amethystsoft.vein.test.relationship")
 
     @Test func testPersist() async throws {

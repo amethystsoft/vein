@@ -25,7 +25,7 @@ import Testing
 @Suite(.serialized)
 struct ModelUsageConstraints: @MainActor DiskUsingTest {
     var additionalPath: String { "" }
-    
+
     @Test("Fetch unpermitted model during migration")
     func fetchUnpermittedModelDuringMigration() throws {
         let path = try prepareContainerLocation(name: "unpermittedDuringMigration")

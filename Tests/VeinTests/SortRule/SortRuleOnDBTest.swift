@@ -25,7 +25,7 @@ import Logging
 @Suite
 struct RealDatabaseSortRuleTests: DiskUsingTest {
     var additionalPath: String { "" }
-    
+
     private func makeContainer(name: String) throws -> ModelContainer {
         let dbPath = try prepareContainerLocation(name: name)
         let connection = try makeTestData(name: name)
@@ -71,7 +71,7 @@ struct RealDatabaseSortRuleTests: DiskUsingTest {
         try container.context.insert(user2)
         try container.context.insert(user3)
         try container.context.save()
-        
+
         return container.getConnection()
     }
 
