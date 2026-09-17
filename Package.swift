@@ -85,23 +85,23 @@ let package = Package(
         // SQLite >= 3.45.0 is required to support JSONB.
         // The bundled version of swift-sqlcipher >= 1.9.0 matches that requirement.
         .package(
-            url: "https://github.com/skiptools/swift-sqlcipher",
+            url: "https://github.com/skiptools/swift-sqlcipher.git",
             .upToNextMajor(from: "1.11.0")
         ),
         .package(url: "https://github.com/swiftlang/swift-syntax.git", "600.0.0" ..< "610.0.0"),
         .package(url: "https://github.com/apple/swift-log.git", .upToNextMajor(from: "1.9.1")),
         .package(
-            url: "https://github.com/kishikawakatsumi/keychainaccess",
+            url: "https://github.com/kishikawakatsumi/keychainaccess.git",
             .upToNextMajor(from: "4.2.2")
         ),
         .package(
-            url: "https://github.com/amethystsoft/KeyringAccess",
+            url: "https://github.com/amethystsoft/KeyringAccess.git",
             .upToNextMajor(from: "1.0.0")
         ),
         .package(url: "https://github.com/apple/swift-atomics.git", .upToNextMajor(from: "1.3.1")),
-        .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.1.0"),
-        .package(url: "https://github.com/typelift/SwiftCheck", .upToNextMinor(from: "0.12.0")),
-        .package(url: "https://github.com/moreSwift/swift-cross-ui", "0.8.0"..."0.9.0"),
+        .package(url: "https://github.com/swiftlang/swift-docc-plugin.git", from: "1.1.0"),
+        .package(url: "https://github.com/typelift/SwiftCheck.git", .upToNextMinor(from: "0.12.0")),
+        .package(url: "https://github.com/moreSwift/swift-cross-ui.git", "0.8.0"..."0.9.0"),
         .package(
             url: "https://github.com/amethystsoft/vein-filter.git",
             .upToNextMajor(from: "1.0.0")
