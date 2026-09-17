@@ -61,13 +61,13 @@ extension RelationshipTest {
         )
         #expect(postDeletePostSaveComments.isEmpty)
 
-        try verifyWithNewContainer()
+        try verifyWithNewContainer(connection: container.getConnection())
 
-        func verifyWithNewContainer() throws {
+        func verifyWithNewContainer(connection: Connection) throws {
             let container = try ModelContainer(
                 CommentRelationshipCascade.self,
                 migration: CascadeMigration.self,
-                at: dbPath,
+                connection: connection,
                 appID: "de.amethystsoft.vein.RelationshipTests",
                 encryptionEnabled: ProcessInfo.shouldEnableEncryption
             )
@@ -115,13 +115,13 @@ extension RelationshipTest {
         )
         #expect(postDeletePostSaveComments.isEmpty)
 
-        try verifyWithNewContainer()
+        try verifyWithNewContainer(connection: container.getConnection())
 
-        func verifyWithNewContainer() throws {
+        func verifyWithNewContainer(connection: Connection) throws {
             let container = try ModelContainer(
                 RelationshipCascadeCascade.self,
                 migration: CascadeCascadeMigration.self,
-                at: dbPath,
+                connection: connection,
                 appID: "de.amethystsoft.vein.RelationshipTests",
                 encryptionEnabled: ProcessInfo.shouldEnableEncryption
             )
@@ -181,13 +181,13 @@ extension RelationshipTest {
         #expect(postDeletePostSaveComments.map(\.id) == [comment.id])
         #expect(postDeletePostSaveComments.map(\.author?.id) == [nil])
 
-        try verifyWithNewContainer()
+        try verifyWithNewContainer(connection: container.getConnection())
 
-        func verifyWithNewContainer() throws {
+        func verifyWithNewContainer(connection: Connection) throws {
             let container = try ModelContainer(
                 CommentRelationshipNullify.self,
                 migration: NullifyMigration.self,
-                at: dbPath,
+                connection: connection,
                 appID: "de.amethystsoft.vein.RelationshipTests",
                 encryptionEnabled: ProcessInfo.shouldEnableEncryption
             )

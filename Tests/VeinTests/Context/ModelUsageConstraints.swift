@@ -23,29 +23,9 @@ import Testing
 
 @MainActor
 @Suite(.serialized)
-struct ModelUsageConstraints {
-    func prepareContainerLocation(name: String) throws -> String {
-        let containerPath = FileManager.default.temporaryDirectory
-
-        let dbDir = containerPath.relativePath.appending("/veinTests/\(testID.uuidString)")
-
-        let dbPath = dbDir.appending("/\(name).sqlite3")
-
-        try FileManager.default.createDirectory(
-            atPath: dbDir,
-            withIntermediateDirectories: true
-        )
-
-        if !FileManager.default.fileExists(atPath: dbPath) {
-            FileManager.default.createFile(
-                atPath: dbPath,
-                contents: nil
-            )
-        }
-
-        return dbPath
-    }
-
+struct ModelUsageConstraints: @MainActor DiskUsingTest {
+    var additionalPath: String { "" }
+    
     @Test("Fetch unpermitted model during migration")
     func fetchUnpermittedModelDuringMigration() throws {
         let path = try prepareContainerLocation(name: "unpermittedDuringMigration")
@@ -63,7 +43,7 @@ struct ModelUsageConstraints {
         let newContainer = try ModelContainer(
             V0_0_3.self,
             migration: Migration.self,
-            at: path,
+            connection: container.getConnection(),
             appID: "de.amethystsoft.vein.ModelUsageConstraints",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )

@@ -51,7 +51,7 @@ extension RelationshipTest {
         let newContainer = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
-            at: dbPath,
+            connection: container.getConnection(),
             appID: "de.amethystsoft.vein.RelationshipTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )

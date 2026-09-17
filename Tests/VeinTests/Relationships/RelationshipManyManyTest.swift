@@ -45,7 +45,7 @@ extension RelationshipTest {
 
         #expect(tagSwift.posts.contains(where: { $0.id == post.id }))
 
-        try verifySaveWithNewContainer()
+        try verifySaveWithNewContainer(connection: container.getConnection())
 
         // Verify removal clean-up
         post.tags.remove(at: 0)
@@ -53,14 +53,14 @@ extension RelationshipTest {
         #expect(tagSwift.posts.isEmpty)
         #expect(tagPerformance.posts.contains(where: { $0.id == post.id }))
 
-        try verifyRemovalWithNewContainer()
+        try verifyRemovalWithNewContainer(connection: container.getConnection())
 
-        func verifySaveWithNewContainer() throws {
+        func verifySaveWithNewContainer(connection: Connection) throws {
             // Verify disk written changes
             let newContainer = try ModelContainer(
                 V0_0_1.self,
                 migration: Migration.self,
-                at: dbPath,
+                connection: connection,
                 appID: "de.amethystsoft.vein.RelationshipTests",
                 encryptionEnabled: ProcessInfo.shouldEnableEncryption
             )
@@ -76,11 +76,11 @@ extension RelationshipTest {
                 .contains { $0.id == tagSwift.id || $0.id == tagPerformance.id })
         }
 
-        func verifyRemovalWithNewContainer() throws {
+        func verifyRemovalWithNewContainer(connection: Connection) throws {
             let newContainer = try ModelContainer(
                 V0_0_1.self,
                 migration: Migration.self,
-                at: dbPath,
+                connection: connection,
                 appID: "de.amethystsoft.vein.RelationshipTests",
                 encryptionEnabled: ProcessInfo.shouldEnableEncryption
             )

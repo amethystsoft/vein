@@ -42,7 +42,7 @@ public struct MigrationTester {
 
     private let migrationPlan: any SchemaMigrationPlan.Type
     private let id = UUID()
-    public let containerPath: String
+    public let containerPath: String?
 
     public init(migrationPlan: any SchemaMigrationPlan.Type) throws {
         self.migrationPlan = migrationPlan
@@ -102,7 +102,7 @@ public struct MigrationTester {
                 throw Error.usesUnknownSchema(endSchema, in: stage)
             }
         }
-
+        
         self.containerPath = try Self.prepareContainerLocation(
             plan: migrationPlan,
             id: id

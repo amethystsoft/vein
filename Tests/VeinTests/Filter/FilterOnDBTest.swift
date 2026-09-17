@@ -24,29 +24,8 @@
     #endif
 
     @Suite
-    struct RealDatabaseFilterTests {
-        func prepareContainerLocation(name: String) throws -> String {
-            let containerPath = FileManager.default.temporaryDirectory
-
-            let dbDir = containerPath.relativePath
-                .appending("/veinTests/\(testID.uuidString)/Filter")
-
-            let dbPath = dbDir.appending("/\(name).sqlite3")
-
-            try FileManager.default.createDirectory(
-                atPath: dbDir,
-                withIntermediateDirectories: true
-            )
-
-            if !FileManager.default.fileExists(atPath: dbPath) {
-                FileManager.default.createFile(
-                    atPath: dbPath,
-                    contents: nil
-                )
-            }
-
-            return dbPath
-        }
+    struct RealDatabaseFilterTests: DiskUsingTest {
+        var additionalPath: String { "/Filter" }
 
         private func makeContainer(name: String) throws -> ModelContainer {
             let dbPath = try prepareContainerLocation(name: name)
@@ -62,7 +41,7 @@
         }
 
         // Helper to spin up a container and seed test users
-        private func makeTestData(dbPath: String) throws -> Connection {
+        private func makeTestData(dbPath: String?) throws -> Connection {
             let container = try ModelContainer(
                 V0_0_1.self,
                 migration: Migration.self,

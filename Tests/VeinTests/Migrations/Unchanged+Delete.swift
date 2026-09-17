@@ -57,7 +57,7 @@ extension MigrationTests {
         let newContainer = try ModelContainer(
             SimpleSchemaV0_0_4.self,
             migration: SimpleMigrationSuccess.self,
-            at: dbPath,
+            connection: container.getConnection(),
             appID: "de.amethystsoft.vein.MigrationTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )

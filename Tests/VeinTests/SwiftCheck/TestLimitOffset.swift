@@ -45,7 +45,7 @@
                     for test in unsaved {
                         try container.context.insert(test)
                     }
-                    let descriptor = try PaginatedFetchDescriptor(
+                    let descriptor = PaginatedFetchDescriptor(
                         model: Test.self,
                         sortBy: [SortRule(\.id)],
                         limit: saved.count + unsaved.count,
@@ -84,7 +84,7 @@
                         try container.context.delete(object)
                     }
 
-                    let descriptor = try PaginatedFetchDescriptor(
+                    let descriptor = PaginatedFetchDescriptor(
                         model: Test.self,
                         sortBy: [SortRule(\.id)],
                         limit: tests.count,
@@ -120,7 +120,7 @@
                         try container.context.insert(test)
                     }
 
-                    var descriptor = try FetchDescriptor(model: Test.self)
+                    var descriptor = FetchDescriptor(model: Test.self)
                     descriptor.includePendingChanges = true
 
                     let results = try container.context.fetch(descriptor)
@@ -150,7 +150,7 @@
                         try container.context.insert(test)
                     }
 
-                    var descriptor = try FetchDescriptor(model: Test.self)
+                    var descriptor = FetchDescriptor(model: Test.self)
                     descriptor.includePendingChanges = false
 
                     let results = try container.context.fetch(descriptor)
@@ -258,7 +258,7 @@
                     }
                     try! container.context.save()
 
-                    let descriptor = try PaginatedFetchDescriptor(
+                    let descriptor = PaginatedFetchDescriptor(
                         model: Test.self,
                         sortBy: [SortRule(\.id)],
                         limit: tests.count,
@@ -288,7 +288,7 @@
                     }
                     try! container.context.save()
 
-                    let descriptor = try PaginatedFetchDescriptor(
+                    let descriptor = PaginatedFetchDescriptor(
                         model: Test.self,
                         sortBy: [SortRule(\.id)],
                         limit: 1_000_000,
@@ -321,7 +321,7 @@
                     let offset = max(0, tests.count / 2)
                     let limit = max(1, tests.count - offset)
 
-                    let descriptor = try PaginatedFetchDescriptor(
+                    let descriptor = PaginatedFetchDescriptor(
                         model: Test.self,
                         sortBy: [SortRule(\.id)],
                         limit: limit,
@@ -367,7 +367,7 @@
                     let offset = max(0, tests.count / 2)
                     let limit = max(1, tests.count - offset)
 
-                    let descriptor = try PaginatedFetchDescriptor(
+                    let descriptor = PaginatedFetchDescriptor(
                         model: Test.self,
                         sortBy: [SortRule(\.id)],
                         limit: limit,
