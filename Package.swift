@@ -101,7 +101,10 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-atomics.git", .upToNextMajor(from: "1.3.1")),
         .package(url: "https://github.com/swiftlang/swift-docc-plugin.git", from: "1.1.0"),
         .package(url: "https://github.com/typelift/SwiftCheck.git", .upToNextMinor(from: "0.12.0")),
-        .package(url: "https://github.com/moreSwift/swift-cross-ui.git", .upToNextMajor(from: "0.8.0")),
+        .package(
+            url: "https://github.com/moreSwift/swift-cross-ui.git",
+            .upToNextMajor(from: "0.8.0")
+        ),
         .package(
             url: "https://github.com/amethystsoft/vein-filter.git",
             .upToNextMajor(from: "1.0.0")
