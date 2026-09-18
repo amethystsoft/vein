@@ -102,7 +102,15 @@ struct IdentityMapClearing {
 
         #expect(wrapperPostMutation.isDeallocated)
 
-        try await Task.sleep(for: .seconds(2))
+        let timeout = Date().addingTimeInterval(5)
+        while identityMap.dump()[V0_0_1.Test.typeIdentifier]?[test.id] != nil {
+            if Date() > timeout {
+                Issue.record("Timed out waiting for identity map key to be purged.")
+                return
+            }
+            await Task.yield()
+            try await Task.sleep(for: .milliseconds(50))
+        }
 
         guard let mapPostTimeout = identityMap.dump()[V0_0_1.Test.typeIdentifier] else {
             Issue.record("Unexpectedly didn't find type in identity map.")
