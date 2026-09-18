@@ -382,7 +382,7 @@ struct WriteCache {
         }
     }
     
-    @Test("Merging on failed save new insert overrides delete")
+    @Test("Merging on failed save new delete overrides insert")
     func mergingOnFailedSaveNewDeleteOverridesInsert() throws {
         let container = try setupContainer()
         

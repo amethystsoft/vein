@@ -606,6 +606,7 @@ extension WriteCacheDictionary {
 }
 
 extension [ObjectIdentifier: [ULID: PrimitiveState]] {
+    // For state the oldest has to win, because it needs to reflect latest database state.
     @inline(__always)
     nonisolated func merge(
         into source: inout Self
