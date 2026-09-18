@@ -523,10 +523,12 @@ extension ManagedObjectContext {
             } catch {
                 // Re-add changes in case of rollback
                 writeCache.mutate { inserts, touches, deletes, primitiveState in
-                    insertsCopy.merge(into: &inserts)
-                    touchesCopy.merge(into: &touches)
-                    deletesCopy.merge(into: &deletes)
-                    primitiveStateCopy.merge(into: &primitiveState)
+                    Self.mergeWriteCaches(
+                        insertsCached: &inserts, insertsFromSave: insertsCopy,
+                        updatesCached: &touches, updatesFromSave: touchesCopy,
+                        deletesCached: &deletes, deletesFromSave: deletesCopy,
+                        stateCached: &primitiveState, stateFromSave: primitiveStateCopy
+                    )
                 }
                 throw error
             }
@@ -598,7 +600,7 @@ extension WriteCacheDictionary {
     ) {
         for (typeIdentifier, models) in self {
             source[typeIdentifier, default: [:]]
-                .merge(models) { (_, new) in new }
+                .merge(models) { (current, _) in current }
         }
     }
 }
@@ -610,7 +612,7 @@ extension [ObjectIdentifier: [ULID: PrimitiveState]] {
     ) {
         for (typeIdentifier, models) in self {
             source[typeIdentifier, default: [:]]
-                .merge(models) { (_, new) in new }
+                .merge(models) { (_, old) in old }
         }
     }
 }

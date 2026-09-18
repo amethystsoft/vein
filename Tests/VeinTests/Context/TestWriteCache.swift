@@ -300,6 +300,397 @@ struct WriteCache {
         #expect(results.count == 1)
         #expect(results.contains { $0.id == m2.id })
     }
+    
+    @Test("Merging on failed save new insert overrides delete")
+    func mergingOnFailedSaveNewInsertOverridesDelete() throws {
+        let container = try setupContainer()
+        
+        let model = V0_0_1.Test(flag: true, someValue: "Original", randomValue: 1)
+        try container.context.insert(model)
+        try container.context.save()
+        
+        try container.context.delete(model)
+        
+        let typeID = V0_0_1.Test.typeIdentifier
+        container.context.writeCache.mutate { inserts, touches, deletes, _ in
+            #expect(inserts[typeID, default: [:]].count == 0)
+            #expect(touches[typeID, default: [:]].count == 0)
+            #expect(deletes[typeID, default: [:]].count == 1)
+            #expect(deletes[typeID, default: [:]].keys.contains(model.id))
+        }
+        
+        var insertsFromSave = WriteCacheDictionary()
+        var touchesFromSave = WriteCacheDictionary()
+        var deletesFromSave = WriteCacheDictionary()
+        var stateFromSave = [ObjectIdentifier: [ULID: PrimitiveState]]()
+        
+        container.context.writeCache.mutate { inserts, touches, deletes, states in
+            insertsFromSave = inserts
+            touchesFromSave = touches
+            deletesFromSave = deletes
+            stateFromSave = states
+            inserts.removeAll()
+            touches.removeAll()
+            deletes.removeAll()
+            states.removeAll()
+        }
+        
+        try container.context.insert(model)
+        
+        container.context.writeCache.mutate { inserts, touches, deletes, _ in
+            #expect(inserts[typeID, default: [:]].count == 1)
+            #expect(inserts[typeID, default: [:]].keys.contains(model.id))
+            #expect(touches[typeID, default: [:]].count == 0)
+            #expect(deletes[typeID, default: [:]].count == 0)
+        }
+        
+        var mergedInserts = WriteCacheDictionary()
+        var mergedTouches = WriteCacheDictionary()
+        var mergedDeletes = WriteCacheDictionary()
+        var mergedStates = [ObjectIdentifier: [ULID: PrimitiveState]]()
+        
+        container.context.writeCache.mutate { inserts, touches, deletes, states in
+            mergedInserts = inserts
+            mergedTouches = touches
+            mergedDeletes = deletes
+            mergedStates = states
+        }
+        
+        ManagedObjectContext.mergeWriteCaches(
+            insertsCached: &mergedInserts,
+            insertsFromSave: insertsFromSave,
+            updatesCached: &mergedTouches,
+            updatesFromSave: touchesFromSave,
+            deletesCached: &mergedDeletes,
+            deletesFromSave: deletesFromSave,
+            stateCached: &mergedStates,
+            stateFromSave: stateFromSave
+        )
+        
+        container.context.writeCache.mutate { inserts, touches, deletes, states in
+            inserts = mergedInserts
+            touches = mergedTouches
+            deletes = mergedDeletes
+            states = mergedStates
+        }
+        
+        container.context.writeCache.mutate { inserts, touches, deletes, _ in
+            #expect(inserts[typeID, default: [:]].count == 1)
+            #expect(inserts[typeID, default: [:]].keys.contains(model.id))
+            #expect(touches[typeID, default: [:]].count == 0)
+            #expect(deletes[typeID, default: [:]].count == 0)
+        }
+    }
+    
+    @Test("Merging on failed save new insert overrides delete")
+    func mergingOnFailedSaveNewDeleteOverridesInsert() throws {
+        let container = try setupContainer()
+        
+        let model = V0_0_1.Test(flag: true, someValue: "Original", randomValue: 1)
+        try container.context.insert(model)
+        
+        let typeID = V0_0_1.Test.typeIdentifier
+        container.context.writeCache.mutate { inserts, touches, deletes, _ in
+            #expect(inserts[typeID, default: [:]].count == 1)
+            #expect(inserts[typeID, default: [:]].keys.contains(model.id))
+            #expect(touches[typeID, default: [:]].count == 0)
+            #expect(deletes[typeID, default: [:]].count == 0)
+        }
+        
+        var insertsFromSave = WriteCacheDictionary()
+        var touchesFromSave = WriteCacheDictionary()
+        var deletesFromSave = WriteCacheDictionary()
+        var stateFromSave = [ObjectIdentifier: [ULID: PrimitiveState]]()
+        
+        container.context.writeCache.mutate { inserts, touches, deletes, states in
+            insertsFromSave = inserts
+            touchesFromSave = touches
+            deletesFromSave = deletes
+            stateFromSave = states
+            inserts.removeAll()
+            touches.removeAll()
+            deletes.removeAll()
+            states.removeAll()
+        }
+        
+        try container.context.delete(model)
+        
+        container.context.writeCache.mutate { inserts, touches, deletes, _ in
+            #expect(inserts[typeID, default: [:]].count == 0)
+            #expect(touches[typeID, default: [:]].count == 0)
+            #expect(deletes[typeID, default: [:]].count == 1)
+            #expect(deletes[typeID, default: [:]].keys.contains(model.id))
+        }
+        
+        var mergedInserts = WriteCacheDictionary()
+        var mergedTouches = WriteCacheDictionary()
+        var mergedDeletes = WriteCacheDictionary()
+        var mergedStates = [ObjectIdentifier: [ULID: PrimitiveState]]()
+        
+        container.context.writeCache.mutate { inserts, touches, deletes, states in
+            mergedInserts = inserts
+            mergedTouches = touches
+            mergedDeletes = deletes
+            mergedStates = states
+        }
+        
+        ManagedObjectContext.mergeWriteCaches(
+            insertsCached: &mergedInserts,
+            insertsFromSave: insertsFromSave,
+            updatesCached: &mergedTouches,
+            updatesFromSave: touchesFromSave,
+            deletesCached: &mergedDeletes,
+            deletesFromSave: deletesFromSave,
+            stateCached: &mergedStates,
+            stateFromSave: stateFromSave
+        )
+        
+        container.context.writeCache.mutate { inserts, touches, deletes, states in
+            inserts = mergedInserts
+            touches = mergedTouches
+            deletes = mergedDeletes
+            states = mergedStates
+        }
+        container.context.writeCache.mutate { inserts, touches, deletes, _ in
+            #expect(inserts[typeID, default: [:]].count == 0)
+            #expect(touches[typeID, default: [:]].count == 0)
+            #expect(deletes[typeID, default: [:]].count == 1)
+            #expect(deletes[typeID, default: [:]].keys.contains(model.id))
+        }
+    }
+    
+    @Test("Merging on failed save preserves non conflicting operations")
+    func mergingOnFailedSavePreservesNonConflictingOperations() throws {
+        let container = try setupContainer()
+        
+        let model = V0_0_1.Test(flag: true, someValue: "Original", randomValue: 1)
+        let model2 = V0_0_1.Test(flag: true, someValue: "Original", randomValue: 1)
+        try container.context.insert(model)
+        try container.context.insert(model2)
+        
+        let typeID = V0_0_1.Test.typeIdentifier
+        container.context.writeCache.mutate { inserts, touches, deletes, _ in
+            #expect(inserts[typeID, default: [:]].count == 2)
+            #expect(inserts[typeID, default: [:]].keys.contains(model.id))
+            #expect(inserts[typeID, default: [:]].keys.contains(model2.id))
+            #expect(touches[typeID, default: [:]].count == 0)
+            #expect(deletes[typeID, default: [:]].count == 0)
+        }
+        
+        var insertsFromSave = WriteCacheDictionary()
+        var touchesFromSave = WriteCacheDictionary()
+        var deletesFromSave = WriteCacheDictionary()
+        var stateFromSave = [ObjectIdentifier: [ULID: PrimitiveState]]()
+        
+        container.context.writeCache.mutate { inserts, touches, deletes, states in
+            insertsFromSave = inserts
+            touchesFromSave = touches
+            deletesFromSave = deletes
+            stateFromSave = states
+            inserts.removeAll()
+            touches.removeAll()
+            deletes.removeAll()
+            states.removeAll()
+        }
+        
+        try container.context.delete(model)
+        
+        container.context.writeCache.mutate { inserts, touches, deletes, _ in
+            #expect(inserts[typeID, default: [:]].count == 0)
+            #expect(touches[typeID, default: [:]].count == 0)
+            #expect(deletes[typeID, default: [:]].count == 1)
+            #expect(deletes[typeID, default: [:]].keys.contains(model.id))
+        }
+        
+        var mergedInserts = WriteCacheDictionary()
+        var mergedTouches = WriteCacheDictionary()
+        var mergedDeletes = WriteCacheDictionary()
+        var mergedStates = [ObjectIdentifier: [ULID: PrimitiveState]]()
+        
+        container.context.writeCache.mutate { inserts, touches, deletes, states in
+            mergedInserts = inserts
+            mergedTouches = touches
+            mergedDeletes = deletes
+            mergedStates = states
+        }
+        
+        ManagedObjectContext.mergeWriteCaches(
+            insertsCached: &mergedInserts,
+            insertsFromSave: insertsFromSave,
+            updatesCached: &mergedTouches,
+            updatesFromSave: touchesFromSave,
+            deletesCached: &mergedDeletes,
+            deletesFromSave: deletesFromSave,
+            stateCached: &mergedStates,
+            stateFromSave: stateFromSave
+        )
+        
+        container.context.writeCache.mutate { inserts, touches, deletes, states in
+            inserts = mergedInserts
+            touches = mergedTouches
+            deletes = mergedDeletes
+            states = mergedStates
+        }
+        
+        container.context.writeCache.mutate { inserts, touches, deletes, _ in
+            #expect(inserts[typeID, default: [:]].count == 1)
+            #expect(inserts[typeID, default: [:]].keys.contains(model2.id))
+            #expect(touches[typeID, default: [:]].count == 0)
+            #expect(deletes[typeID, default: [:]].count == 1)
+            #expect(deletes[typeID, default: [:]].keys.contains(model.id))
+        }
+    }
+    
+    @Test("Merging on failed save discards superseded touch")
+    func mergingOnFailedSaveDiscardsSupersededTouch() throws {
+        let container = try setupContainer()
+        
+        let model = V0_0_1.Test(flag: true, someValue: "Original", randomValue: 1)
+        try container.context.insert(model)
+        try container.context.save()
+        
+        model.someValue = "Changed"
+        
+        let typeID = V0_0_1.Test.typeIdentifier
+        
+        container.context.writeCache.mutate { inserts, touches, deletes, states in
+            #expect(inserts[typeID, default: [:]].count == 0)
+            #expect(touches[typeID, default: [:]].count == 1)
+            #expect(touches[typeID, default: [:]].keys.contains(model.id))
+            #expect(deletes[typeID, default: [:]].count == 0)
+            #expect(states[typeID, default: [:]].count == 1)
+            #expect(states[typeID, default: [:]].keys.contains(model.id))
+        }
+        
+        var insertsFromSave = WriteCacheDictionary()
+        var touchesFromSave = WriteCacheDictionary()
+        var deletesFromSave = WriteCacheDictionary()
+        var stateFromSave = [ObjectIdentifier: [ULID: PrimitiveState]]()
+        
+        container.context.writeCache.mutate { inserts, touches, deletes, states in
+            insertsFromSave = inserts
+            touchesFromSave = touches
+            deletesFromSave = deletes
+            stateFromSave = states
+            inserts.removeAll()
+            touches.removeAll()
+            deletes.removeAll()
+            states.removeAll()
+        }
+        
+        try container.context.delete(model)
+        
+        container.context.writeCache.mutate { inserts, touches, deletes, _ in
+            #expect(inserts[typeID, default: [:]].count == 0)
+            #expect(touches[typeID, default: [:]].count == 0)
+            #expect(deletes[typeID, default: [:]].count == 1)
+            #expect(deletes[typeID, default: [:]].keys.contains(model.id))
+        }
+        
+        var mergedInserts = WriteCacheDictionary()
+        var mergedTouches = WriteCacheDictionary()
+        var mergedDeletes = WriteCacheDictionary()
+        var mergedStates = [ObjectIdentifier: [ULID: PrimitiveState]]()
+        
+        container.context.writeCache.mutate { inserts, touches, deletes, states in
+            mergedInserts = inserts
+            mergedTouches = touches
+            mergedDeletes = deletes
+            mergedStates = states
+        }
+        
+        ManagedObjectContext.mergeWriteCaches(
+            insertsCached: &mergedInserts,
+            insertsFromSave: insertsFromSave,
+            updatesCached: &mergedTouches,
+            updatesFromSave: touchesFromSave,
+            deletesCached: &mergedDeletes,
+            deletesFromSave: deletesFromSave,
+            stateCached: &mergedStates,
+            stateFromSave: stateFromSave
+        )
+        
+        container.context.writeCache.mutate { inserts, touches, deletes, states in
+            inserts = mergedInserts
+            touches = mergedTouches
+            deletes = mergedDeletes
+            states = mergedStates
+        }
+        
+        container.context.writeCache.mutate { inserts, touches, deletes, states in
+            #expect(inserts[typeID, default: [:]].count == 0)
+            #expect(touches[typeID, default: [:]].count == 0)
+            #expect(deletes[typeID, default: [:]].count == 1)
+            #expect(deletes[typeID, default: [:]].keys.contains(model.id))
+            #expect(states[typeID, default: [:]].count == 0)
+        }
+    }
+    
+    @Test("Merging on failed save preserves earliest primitive state")
+    func mergingOnFailedSavePreservesLatestPrimitiveState() throws {
+        let container = try setupContainer()
+        let model = V0_0_1.Test(flag: true, someValue: "Original", randomValue: 1)
+        try container.context.insert(model)
+        try container.context.save()
+        
+        model.someValue = "First"
+        let typeID = V0_0_1.Test.typeIdentifier
+        
+        var touchesFromSave = WriteCacheDictionary()
+        var stateFromSave = [ObjectIdentifier: [ULID: PrimitiveState]]()
+        
+        container.context.writeCache.mutate { inserts, touches, deletes, states in
+            touchesFromSave = touches
+            stateFromSave = states
+            
+            let state = states[typeID, default: [:]][model.id]
+            #expect(state?.values["someValue"] as? String == "Original")
+            
+            inserts.removeAll()
+            touches.removeAll()
+            deletes.removeAll()
+            states.removeAll()
+        }
+        
+        model.someValue = "Second"
+        
+        var mergedTouches = WriteCacheDictionary()
+        var mergedInserts = WriteCacheDictionary()
+        var mergedDeletes = WriteCacheDictionary()
+        var mergedStates = [ObjectIdentifier: [ULID: PrimitiveState]]()
+        
+        container.context.writeCache.mutate { inserts, touches, deletes, states in
+            mergedTouches = touches
+            mergedStates = states
+            let state = states[typeID, default: [:]][model.id]
+            #expect(state?.values["someValue"] as? String == "First")
+        }
+        
+        ManagedObjectContext.mergeWriteCaches(
+            insertsCached: &mergedInserts,
+            insertsFromSave: WriteCacheDictionary(),
+            updatesCached: &mergedTouches,
+            updatesFromSave: touchesFromSave,
+            deletesCached: &mergedDeletes,
+            deletesFromSave: WriteCacheDictionary(),
+            stateCached: &mergedStates,
+            stateFromSave: stateFromSave
+        )
+        
+        container.context.writeCache.mutate { inserts, touches, deletes, states in
+            touches = mergedTouches
+            states = mergedStates
+        }
+        
+        container.context.writeCache.mutate { _, touches, _, states in
+            #expect(touches[typeID]?.count == 1)
+            #expect(touches[typeID]?.keys.contains(model.id) == true)
+            #expect(states[typeID]?.count == 1)
+            #expect(states[typeID]?.keys.contains(model.id) == true)
+            let state = states[typeID, default: [:]][model.id]
+            #expect(state?.values["someValue"] as? String == "Original")
+        }
+    }
 }
 
 fileprivate enum V0_0_1: VersionedSchema {

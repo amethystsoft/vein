@@ -140,6 +140,40 @@ extension ManagedObjectContext {
             throw .other(message: error.localizedDescription)
         }
     }
+    
+    static func mergeWriteCaches(
+        insertsCached: inout WriteCacheDictionary, insertsFromSave: WriteCacheDictionary,
+        updatesCached: inout WriteCacheDictionary, updatesFromSave: WriteCacheDictionary,
+        deletesCached: inout WriteCacheDictionary, deletesFromSave: WriteCacheDictionary,
+        stateCached: inout [ObjectIdentifier : [ULID : PrimitiveState]],
+        stateFromSave: [ObjectIdentifier : [ULID : PrimitiveState]]
+    ) {
+        var insertsFromSave = insertsFromSave
+        var updatesFromSave = updatesFromSave
+        var deletesFromSave = deletesFromSave
+        var stateFromSave = stateFromSave
+        
+        for (type, deletedModels) in deletesCached {
+            for (id, _) in deletedModels {
+                insertsFromSave[type]?[id] = nil
+                updatesFromSave[type]?[id] = nil
+                stateFromSave[type]?[id] = nil
+            }
+        }
+        
+        for (type, insertedModels) in insertsCached {
+            for (id, _) in insertedModels {
+                deletesFromSave[type]?[id] = nil
+                updatesFromSave[type]?[id] = nil
+                stateFromSave[type]?[id] = nil
+            }
+        }
+        
+        insertsFromSave.merge(into: &insertsCached)
+        updatesFromSave.merge(into: &updatesCached)
+        deletesFromSave.merge(into: &deletesCached)
+        stateFromSave.merge(into: &stateCached)
+    }
 
     package nonisolated func run(_ query: String) throws(ManagedObjectContextError) {
         if modelContainer.logConfiguration.sqlQueries {
