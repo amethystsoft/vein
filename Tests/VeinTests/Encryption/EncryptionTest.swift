@@ -12,6 +12,7 @@
 
 import Foundation
 import Testing
+import SQLiteDB
 #if TEST_SWIFTUI
     @_spi(VeinTesting) @testable import VeinSwiftUI
 #elseif TEST_SCUI
@@ -22,7 +23,7 @@ import Testing
 
 @Suite
 struct EncryptionTest {
-    func prepareContainerLocation(name: String) throws -> String? {
+    func prepareContainerLocation(name: String) throws -> String {
         let containerPath = FileManager.default.temporaryDirectory
 
         let dbDir = containerPath.relativePath.appending("/veinTests/\(testID.uuidString)")
@@ -104,6 +105,60 @@ struct EncryptionTest {
             Issue.record("Thrown error does not match expectations: \(error.errorDescription)")
             return
         }
+    }
+    
+    @Test("getDatabaseKey matches key used for encryption")
+    func getDatabaseKeyMatchesKeyUsedForEncryption() async throws {
+        let path = try prepareContainerLocation(name: "getDatabaseKeyMatches")
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: path,
+            appID: "de.amethystsoft.vein.ModelContainerTests"
+        )
+        
+        let key = try #require(container.context.getDatabaseKey())
+        
+        let hexKeyRegex = /^[0-9a-f]{64}$/
+        #expect(key.wholeMatch(of: hexKeyRegex) != nil)
+        
+        let connection = try Connection(path)
+        try connection.key(key)
+        
+        do {
+            let connection = try Connection(path)
+            try connection.key("abc")
+            Issue.record("Should have thrown")
+        } catch let error as SQLiteDB.Result {
+            #expect(error.description == "file is not a database (code: 26)")
+        }
+    }
+    
+    @Test("getDatabaseKey returns nil for unencrypted db")
+    func getDatabaseKeyReturnsNilForUnencryptedDb() async throws {
+        let path = try prepareContainerLocation(name: "getDatabaseKeyIsNil")
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: path,
+            appID: "de.amethystsoft.vein.ModelContainerTests",
+            encryptionEnabled: false
+        )
+        
+        #expect(container.context.getDatabaseKey() == nil)
+    }
+    
+    @Test("getDatabaseKey returns nil for in memory db")
+    func getDatabaseKeyReturnsNilForInMemoryDb() async throws {
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.ModelContainerTests",
+            encryptionEnabled: true
+        )
+        
+        #expect(container.context.getDatabaseKey() == nil)
     }
 
     #if os(Android)
