@@ -103,7 +103,7 @@ let package = Package(
         .package(url: "https://github.com/typelift/SwiftCheck.git", .upToNextMinor(from: "0.12.0")),
         .package(
             url: "https://github.com/moreSwift/swift-cross-ui.git",
-            .upToNextMajor(from: "0.8.0")
+            "0.8.0"..<"0.10.0"
         ),
         .package(
             url: "https://github.com/amethystsoft/vein-filter.git",
