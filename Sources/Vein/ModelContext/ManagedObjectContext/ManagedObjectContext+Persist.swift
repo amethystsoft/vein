@@ -155,6 +155,21 @@ extension ManagedObjectContext {
             throw .other(message: error.localizedDescription)
         }
     }
+    
+    package nonisolated func _tableExists(for name: String) throws -> Bool {
+        let query = Table("sqlite_master")
+            .select([SQLExpression<String>("name")])
+            .where(
+                SQLExpression<String>("type") == "table" &&
+                SQLExpression<String>("name") == name
+            )
+        
+        let results = try connection.prepare(query)
+        
+        let mapped = try results.map { row in try row.get(SQLExpression<String>("name")) }.first
+        
+        return mapped == name
+    }
 
     package nonisolated func runDetached(_ query: String) {
         Task {

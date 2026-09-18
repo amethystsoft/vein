@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import SQLiteDB
 import SQLCipher
+@testable import Vein
 #if TEST_SWIFTUI
 @_spi(VeinTesting) @testable import VeinSwiftUI
 #elseif TEST_SCUI
@@ -154,6 +155,344 @@ struct ManagedObjectContextTests {
             #expect(states.isEmpty)
         }
     }
+    
+    @Test("Deletion removes insertion and update of same model")
+    func deletionRemovesInsertionAndUpdateOfSameModel() throws {
+        let connection = try Connection()
+        
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            connection: connection,
+            appID: "de.amethystsoft.vein.ManagedObjectContextTests",
+            encryptionEnabled: false
+        )
+        
+        let toUpdate = V0_0_1.Test(flag: false)
+        let toInsert = V0_0_1.Test(flag: true)
+        
+        try container.context.insert(toUpdate)
+        try container.context.save()
+        
+        try container.context.insert(toInsert)
+        toUpdate.flag = true
+        
+        let identifier = ObjectIdentifier(V0_0_1.Test.self)
+        
+        container.context.writeCache.mutate { inserts, updates, deletes, states in
+            #expect(inserts[identifier, default: [:]].count == 1)
+            #expect(inserts[identifier, default: [:]].keys.contains { $0 == toInsert.id })
+            
+            #expect(updates[identifier, default: [:]].count == 1)
+            #expect(updates[identifier, default: [:]].keys.contains { $0 == toUpdate.id })
+            
+            #expect(deletes[identifier, default: [:]].count == 0)
+            
+            #expect(states[identifier, default: [:]].count == 1)
+            #expect(states[identifier, default: [:]].keys.contains { $0 == toUpdate.id })
+        }
+        
+        try container.context.delete(toUpdate)
+        try container.context.delete(toInsert)
+        
+        container.context.writeCache.mutate { inserts, updates, deletes, _ in
+            #expect(inserts.isEmpty)
+            #expect(updates.isEmpty)
+            #expect(deletes[identifier, default: [:]].count == 2)
+            #expect(deletes[identifier, default: [:]].keys.contains { $0 == toInsert.id })
+            #expect(deletes[identifier, default: [:]].keys.contains { $0 == toUpdate.id })
+        }
+        
+        #expect(!toUpdate.isManaged)
+        #expect(!toInsert.isManaged)
+    }
+    
+    @Test("Insertion removes deletes of same model")
+    func insertionRemovesDeleteOfSameModel() throws {
+        let connection = try Connection()
+        
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            connection: connection,
+            appID: "de.amethystsoft.vein.ManagedObjectContextTests",
+            encryptionEnabled: false
+        )
+        
+        let model = V0_0_1.Test(flag: false)
+        
+        try container.context.insert(model)
+        try container.context.save()
+        
+        let identifier = ObjectIdentifier(V0_0_1.Test.self)
+        
+        #expect(model.isManaged)
+        
+        try container.context.delete(model)
+        #expect(!model.isManaged)
+        
+        container.context.writeCache.mutate { inserts, updates, deletes, _ in
+            #expect(inserts[identifier, default: [:]].count == 0)
+            
+            #expect(updates[identifier, default: [:]].count == 0)
+            
+            #expect(deletes[identifier, default: [:]].count == 1)
+            #expect(deletes[identifier, default: [:]].keys.contains { $0 == model.id })
+        }
+        
+        try container.context.insert(model)
+        #expect(model.isManaged)
+        
+        container.context.writeCache.mutate { inserts, updates, deletes, _ in
+            #expect(inserts[identifier, default: [:]].count == 1)
+            #expect(inserts[identifier, default: [:]].keys.contains { $0 == model.id })
+            #expect(updates.isEmpty)
+            #expect(deletes.isEmpty)
+        }
+    }
+    
+    @Test("Deletion of unmanaged model silently returns")
+    func deletionOfUnmanagedModelSilentlyReturns() throws {
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.ManagedObjectContextTests",
+            encryptionEnabled: false
+        )
+        
+        try container.context.delete(V0_0_1.Test(flag: false))
+        
+        #expect(!container.context.hasChanges)
+    }
+    
+    @Test("Insertion of managed model throws")
+    func insertionOfManagedModelThrows() throws {
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.ManagedObjectContextTests",
+            encryptionEnabled: false
+        )
+        
+        let model = V0_0_1.Test(flag: true)
+        
+        let expectedErrorMessage =
+            "raised by model of type '\(V0_0_1.Test.self)' with id \(model.id.ulidString)"
+        
+        do {
+            try container.context.insert(model)
+            #expect(model.isManaged)
+            try container.context.insert(model)
+        } catch {
+            switch error {
+                case .insertManagedModel(let message):
+                    #expect(message == expectedErrorMessage)
+                default:
+                    throw error
+            }
+        }
+    }
+    
+    @Test("fetchAll with empty table returns []")
+    func fetchAllWithEmptyTableReturnsEmptyArray() throws {
+        let connection = try Connection()
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            connection: connection,
+            appID: "de.amethystsoft.vein.ManagedObjectContextTests",
+            encryptionEnabled: false
+        )
+        let model = V0_0_1.Test(flag: true)
+        model._setupFields()
+        
+        try model.migrate(in: container.context)
+        
+        let query = Table("sqlite_master")
+            .select([SQLExpression<String>("name")])
+            .where(
+                SQLExpression<String>("type") == "table" &&
+                SQLExpression<String>("name") == V0_0_1.Test.schema
+            )
+        
+        let results = try connection.prepare(query)
+        
+        let mapped = try results.map { row in try row.get(SQLExpression<String>("name")) }
+        
+        let name = try #require(mapped.first)
+        #expect(name == V0_0_1.Test.schema)
+        
+        let result = try container.context.fetchAll(V0_0_1.Test.self)
+        #expect(result.isEmpty)
+    }
+    
+    @Test("fetchCount with noSuchTable returns 0")
+    func fetchCountWithNoSuchTableReturnsZero() throws {
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.ManagedObjectContextTests",
+            encryptionEnabled: false
+        )
+        
+        let descriptor = FetchDescriptor(model: V0_0_1.Test.self)
+        
+        let fetchCount = try container.context.fetchCount(descriptor)
+        #expect(fetchCount == 0)
+    }
+    
+    @Test("_fetchSingleProperty without result throws unexpectedlyEmptyResult")
+    func LazyFieldWithoutResultReturnsNil() throws {
+        let connection = try Connection()
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            connection: connection,
+            appID: "de.amethystsoft.vein.ManagedObjectContextTests",
+            encryptionEnabled: false
+        )
+        
+        let model = V0_0_1.Test(flag: true)
+        try container.context.insert(model)
+        try container.context.save()
+        
+        let table = Table(V0_0_1.Test.schema)
+            .filter(SQLExpression<String>("id") == model.id.ulidString)
+            .delete()
+        
+        try connection.run(table)
+        
+        let field = model.getLazy()
+        do {
+            let _ = try container.context._fetchSingleProperty(field: field)
+            Issue.record("Unexpectedly didn't throw")
+        } catch {
+            if case .unexpectedlyEmptyResult(let message) = error {
+                #expect(message == "raised by field with property name 'lazy' of Model '\(V0_0_1.Test.schema)' with id \(model.id.ulidString)")
+            } else {
+                throw error
+            }
+        }
+        
+        #expect(field.wrappedValue == nil)
+    }
+    
+    @Test("LazyField with noSuchTable returns nil")
+    func LazyFieldWithNoSuchTableReturnsNil() throws {
+        let connection = try Connection()
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            connection: connection,
+            appID: "de.amethystsoft.vein.ManagedObjectContextTests",
+            encryptionEnabled: false
+        )
+        
+        let model = V0_0_1.Test(flag: true)
+        try container.context.insert(model)
+        try container.context.save()
+        
+        let table = Table(V0_0_1.Test.schema)
+            .drop()
+        
+        try connection.run(table)
+        
+        let field = model.getLazy()
+        #expect(field.wrappedValue == nil)
+    }
+    
+    // This is currently not used outside of test, but since it might be in the future
+    // I'm adding this test to make sure it doesn't break.
+    @Test("getAllStoredSchemas exclueds system tables")
+    func getAllStoredSchemasExcludesSystemTables() throws {
+        let connection = try Connection()
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            connection: connection,
+            appID: "de.amethystsoft.vein.ManagedObjectContextTests",
+            encryptionEnabled: false
+        )
+        
+        let model = V0_0_1.Test(flag: true)
+        try container.context.insert(model)
+        try container.context.save()
+        
+        let tables = try connection.schema.objectDefinitions(type: .table)
+        #expect(tables.count == 3)
+        
+        let schemas = try container.context.getAllStoredSchemas()
+        #expect(schemas == [V0_0_1.Test.schema])
+    }
+    
+    @Test("getNonEmptySchemas excludes empty tables")
+    func getNonEmptySchemasExcludesEmptyTables() throws {
+        let connection = try Connection()
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            connection: connection,
+            appID: "de.amethystsoft.vein.ManagedObjectContextTests",
+            encryptionEnabled: false
+        )
+        
+        let model = V0_0_1.Test(flag: true)
+        try container.context.insert(model)
+        try container.context.save()
+        
+        let nonEmptySchemas = try container.context.getNonEmptySchemas()
+        #expect(nonEmptySchemas == [V0_0_1.Test.schema])
+        
+        try container.context.delete(model)
+        try container.context.save()
+        
+        let nonEmptySchemas2 = try container.context.getNonEmptySchemas()
+        #expect(nonEmptySchemas2.isEmpty)
+    }
+    
+    @Test("nested transaction")
+    func nestedTransaction() throws {
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.ManagedObjectContextTests",
+            encryptionEnabled: false
+        )
+        
+        try container.context.transaction {
+            do {
+                try container.context.transaction {
+                    try container.context.insert(V0_0_1.Test(flag: true))
+                    try container.context.save()
+                    
+                    let results = try container.context.fetchAll(V0_0_1.Test.self)
+                    #expect(results.count == 1)
+                    
+                    throw MOCError.other(message: "throwing from nested transaction")
+                }
+                Issue.record("unexpectedly didn't throw.")
+            } catch {
+                if case ManagedObjectContextError.other(let message) = error {
+                    #expect(message == "throwing from nested transaction")
+                } else {
+                    Issue.record("threw unexpected error")
+                }
+                
+                let results = try container.context.fetchAll(V0_0_1.Test.self)
+                #expect(results.count == 0)
+            }
+            
+            try container.context.insert(V0_0_1.Test(flag: true))
+            try container.context.save()
+        }
+        
+        let results = try container.context.fetchAll(V0_0_1.Test.self)
+        #expect(results.count == 1)
+    }
 }
 
 fileprivate enum V0_0_1: VersionedSchema {
@@ -165,8 +504,15 @@ fileprivate enum V0_0_1: VersionedSchema {
         @Field
         var flag: Bool
         
+        @LazyField
+        var lazy: Bool?
+        
         init(flag: Bool) {
             self.flag = flag
+        }
+        
+        func getLazy() -> LazyField<Bool> {
+            _lazy
         }
     }
 }

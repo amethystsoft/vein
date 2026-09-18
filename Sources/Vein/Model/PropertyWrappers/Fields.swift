@@ -84,7 +84,7 @@ public final class LazyField<T: Persistable>: PersistedField, @unchecked Sendabl
                         return nil
                     }
                     if case .unexpectedlyEmptyResult = error {
-                        return store
+                        return nil
                     }
                     fatalError(error.localizedDescription)
                 }

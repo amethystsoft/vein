@@ -18,6 +18,7 @@ public typealias MOCError = ManagedObjectContextError
 
 /// An error thrown by ManagedObjectContext.
 public enum ManagedObjectContextError: Error {
+    case operationCouldNotBeCompleted(message: String)
     case connect(message: String)
     case writeInReadonly(message: String)
     case insufficientPermissions(message: String)
@@ -116,6 +117,8 @@ extension ManagedObjectContextError: LocalizedError {
                 return "File is not a database, or it is encrypted and the provided key is incorrect."
             case .other(let message):
                 return "Unexpected: \(message)"
+            case .operationCouldNotBeCompleted(message: let message):
+                return message
         }
     }
 
@@ -171,6 +174,8 @@ extension ManagedObjectContextError: LocalizedError {
                 return "File is not a database or encrypted and an incorrect key was provided."
             case .other:
                 return nil
+            case .operationCouldNotBeCompleted:
+                return "Something went wrong. If this happened during a scalar query, the table might not exist."
         }
     }
 
@@ -238,7 +243,7 @@ extension ManagedObjectContextError: LocalizedError {
                 return "Update your app or notify your administrator if no update is available"
             case .notADatabase:
                 return "Use the right key to decrypt the database or check if it is a database."
-            case .other:
+            case .other, .operationCouldNotBeCompleted:
                 return nil
         }
     }

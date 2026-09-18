@@ -250,7 +250,7 @@ extension ManagedObjectContext {
             }
             throw MOCError
                 .unexpectedlyEmptyResult(
-                    message: "raised by field with property name '\(key)' of Model '\(T.self)' with id \(model.id.ulidString)"
+                    message: "raised by field with property name '\(key)' of Model '\(model._getSchema())' with id \(model.id.ulidString)"
                 )
         } catch let error as ManagedObjectContextError {
             throw error

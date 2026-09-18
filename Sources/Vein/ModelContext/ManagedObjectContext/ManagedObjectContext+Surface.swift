@@ -167,14 +167,32 @@ extension ManagedObjectContext {
 
         do {
             let count = Table(T.schema).filter(descriptor.modelPredicate.sql).count
-            return try connection.scalar(count)
-        } catch let error as MOCError {
-            switch error {
-                case .noSuchTable:
-                    return 0
-                default: throw error
+            
+            if modelContainer.logConfiguration.sqlQueries {
+                Self.logger.info(
+                    "Fetching count of \(T.self) with \nQuery: '\(count.expression.template)'\nBindings:\(count.expression.bindings)"
+                )
             }
-        } catch { throw .other(message: error.localizedDescription) }
+            
+            return try connection.scalar(count)
+        } catch let error as SQLiteDB.Result {
+            let parsed = error.parse()
+            switch parsed {
+                case .operationCouldNotBeCompleted:
+                    do {
+                        if !(try _tableExists(for: T.schema)) {
+                            return 0
+                        }
+                    } catch {
+                        break
+                    }
+                case .noSuchTable: return 0
+                default: break
+            }
+            throw parsed
+        } catch {
+            throw .other(message: error.localizedDescription)
+        }
     }
 
     /// Inserts an unmanaged model into the context.
@@ -301,7 +319,7 @@ extension ManagedObjectContext {
     public nonisolated func delete<M: PersistentModel>(
         _ model: M
     ) throws(ManagedObjectContextError) {
-        guard model.context != nil else { return }
+        guard model.isManaged else { return }
         guard modelContainer.getSchema(for: model.typeIdentifier) != nil else {
             throw ManagedObjectContextError.inactiveModelType(model)
         }
@@ -335,9 +353,10 @@ extension ManagedObjectContext {
             if touches[model.typeIdentifier]?.isEmpty ?? false {
                 touches[model.typeIdentifier] = nil
             }
+            
+            model.context = nil
+            identityMap.remove(M.self, id: model.id)
         }
-        model.context = nil
-        identityMap.remove(M.self, id: model.id)
 
         guard
             let observers = registeredQueries.value[model.typeIdentifier],
@@ -446,21 +465,21 @@ extension ManagedObjectContext {
             }
         }
 
-        writeCache.mutate { inserts, touches, deletes, primitiveState in
-            insertsCopy = inserts
-            inserts.removeAll()
-
-            touchesCopy = touches
-            touches.removeAll()
-
-            deletesCopy = deletes
-            deletes.removeAll()
-
-            primitiveStateCopy = primitiveState
-            primitiveState.removeAll()
-        }
-
         try saveLock.withLock {
+            writeCache.mutate { inserts, touches, deletes, primitiveState in
+                insertsCopy = inserts
+                inserts.removeAll()
+                
+                touchesCopy = touches
+                touches.removeAll()
+                
+                deletesCopy = deletes
+                deletes.removeAll()
+                
+                primitiveStateCopy = primitiveState
+                primitiveState.removeAll()
+            }
+            
             guard !insertsCopy.isEmpty || !touchesCopy.isEmpty || !deletesCopy.isEmpty else {
                 return
             }
