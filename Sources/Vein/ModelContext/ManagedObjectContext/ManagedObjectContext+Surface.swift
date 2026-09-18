@@ -167,13 +167,13 @@ extension ManagedObjectContext {
 
         do {
             let count = Table(T.schema).filter(descriptor.modelPredicate.sql).count
-            
+
             if modelContainer.logConfiguration.sqlQueries {
                 Self.logger.info(
                     "Fetching count of \(T.self) with \nQuery: '\(count.expression.template)'\nBindings:\(count.expression.bindings)"
                 )
             }
-            
+
             return try connection.scalar(count)
         } catch let error as SQLiteDB.Result {
             let parsed = error.parse()
@@ -353,7 +353,7 @@ extension ManagedObjectContext {
             if touches[model.typeIdentifier]?.isEmpty ?? false {
                 touches[model.typeIdentifier] = nil
             }
-            
+
             model.context = nil
             identityMap.remove(M.self, id: model.id)
         }
@@ -469,17 +469,17 @@ extension ManagedObjectContext {
             writeCache.mutate { inserts, touches, deletes, primitiveState in
                 insertsCopy = inserts
                 inserts.removeAll()
-                
+
                 touchesCopy = touches
                 touches.removeAll()
-                
+
                 deletesCopy = deletes
                 deletes.removeAll()
-                
+
                 primitiveStateCopy = primitiveState
                 primitiveState.removeAll()
             }
-            
+
             guard !insertsCopy.isEmpty || !touchesCopy.isEmpty || !deletesCopy.isEmpty else {
                 return
             }

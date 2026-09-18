@@ -64,11 +64,11 @@ public struct LogConfiguration: Sendable {
 extension LogConfiguration: Equatable {
     public static func == (lhs: LogConfiguration, rhs: LogConfiguration) -> Bool {
         lhs.sqlQueries == rhs.sqlQueries
-        && lhs.potentialDataCorruption == rhs.potentialDataCorruption
-        && lhs.potentialDataCorruptionInMigration == rhs.potentialDataCorruptionInMigration
-        && lhs.unexpectedlyEmptyResults == rhs.unexpectedlyEmptyResults
-        && lhs.errorWhileCascadeDeletion == rhs.errorWhileCascadeDeletion
-        && lhs.primaryKeyMutation == rhs.primaryKeyMutation
-        && lhs.modelContextErrors == rhs.modelContextErrors
+            && lhs.potentialDataCorruption == rhs.potentialDataCorruption
+            && lhs.potentialDataCorruptionInMigration == rhs.potentialDataCorruptionInMigration
+            && lhs.unexpectedlyEmptyResults == rhs.unexpectedlyEmptyResults
+            && lhs.errorWhileCascadeDeletion == rhs.errorWhileCascadeDeletion
+            && lhs.primaryKeyMutation == rhs.primaryKeyMutation
+            && lhs.modelContextErrors == rhs.modelContextErrors
     }
 }

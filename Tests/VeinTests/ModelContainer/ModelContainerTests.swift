@@ -73,11 +73,11 @@ struct ModelContainerTests {
         }
         Issue.record("Unexpectedly no error was thrown")
     }
-    
+
     @Test("Invalid path throws")
     func invalidPathThrows() async throws {
         let sillyPath = "https://soSilly%2Ede"
-        
+
         do {
             _ = try ModelContainer(
                 V0_0_1.self,
@@ -90,13 +90,14 @@ struct ModelContainerTests {
         } catch let error {
             switch error {
                 case .other(let message):
-                    #expect(message == "Failed to create database file at path: \(sillyPath.removingPercentEncoding!)")
+                    #expect(message ==
+                        "Failed to create database file at path: \(sillyPath.removingPercentEncoding!)")
                 default:
                     throw error
             }
         }
     }
-    
+
     @Test("Schema not registered on migrationplan throws")
     func schemaNotRegisteredOnMigrationPlanThrows() async throws {
         do {
@@ -118,7 +119,7 @@ struct ModelContainerTests {
             }
         }
     }
-    
+
     @Test("Connection based init throws on schema not registered on migration plans")
     func connectionBasedInitThrowsOnSchemaNotRegisteredOnMigrationPlans() async throws {
         let connection = try Connection()
@@ -141,12 +142,12 @@ struct ModelContainerTests {
             }
         }
     }
-    
+
     @Test("Custom LogConfiguration is applied")
     func customLogConfigurationIsApplied() async throws {
         var config = LogConfiguration.debug
         config.sqlQueries = true
-        
+
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
@@ -155,7 +156,7 @@ struct ModelContainerTests {
             encryptionEnabled: false,
             logConfiguration: config
         )
-        
+
         #expect(container.logConfiguration == config)
     }
 }
@@ -210,19 +211,19 @@ fileprivate enum V0_0_2: VersionedSchema {
 fileprivate enum UnregisteredSchema: VersionedSchema {
     static let version = ModelVersion(0, 0, 3)
     static let models: [any Vein.PersistentModel.Type] = [Test.self]
-    
+
     @Model
     final class Test: Identifiable {
         @Field
         var flag: Bool
-        
+
         @Field
         var someValue: String
-        
+
         // Renamed and transformed from randomValue
         @Field
         var securityCode: String
-        
+
         init(flag: Bool, someValue: String, securityCode: String) {
             self.flag = flag
             self.someValue = someValue

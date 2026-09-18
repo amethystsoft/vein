@@ -106,7 +106,7 @@ struct EncryptionTest {
             return
         }
     }
-    
+
     @Test("getDatabaseKey matches key used for encryption")
     func getDatabaseKeyMatchesKeyUsedForEncryption() async throws {
         let path = try prepareContainerLocation(name: "getDatabaseKeyMatches")
@@ -116,15 +116,15 @@ struct EncryptionTest {
             at: path,
             appID: "de.amethystsoft.vein.ModelContainerTests"
         )
-        
+
         let key = try #require(container.context.getDatabaseKey())
-        
+
         let hexKeyRegex = /^[0-9a-f]{64}$/
         #expect(key.wholeMatch(of: hexKeyRegex) != nil)
-        
+
         let connection = try Connection(path)
         try connection.key(key)
-        
+
         do {
             let connection = try Connection(path)
             try connection.key("abc")
@@ -133,7 +133,7 @@ struct EncryptionTest {
             #expect(error.description == "file is not a database (code: 26)")
         }
     }
-    
+
     @Test("getDatabaseKey returns nil for unencrypted db")
     func getDatabaseKeyReturnsNilForUnencryptedDb() async throws {
         let path = try prepareContainerLocation(name: "getDatabaseKeyIsNil")
@@ -144,10 +144,10 @@ struct EncryptionTest {
             appID: "de.amethystsoft.vein.ModelContainerTests",
             encryptionEnabled: false
         )
-        
+
         #expect(container.context.getDatabaseKey() == nil)
     }
-    
+
     @Test("getDatabaseKey returns nil for in memory db")
     func getDatabaseKeyReturnsNilForInMemoryDb() async throws {
         let container = try ModelContainer(
@@ -157,7 +157,7 @@ struct EncryptionTest {
             appID: "de.amethystsoft.vein.ModelContainerTests",
             encryptionEnabled: true
         )
-        
+
         #expect(container.context.getDatabaseKey() == nil)
     }
 
