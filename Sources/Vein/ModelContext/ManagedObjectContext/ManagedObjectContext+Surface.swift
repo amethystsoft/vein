@@ -461,11 +461,8 @@ extension ManagedObjectContext {
         }
 
         try saveLock.withLock {
-            stagingCache.mutate { inserts, touches, deletes, primitiveState in
-                inserts = insertsCopy
-                touches = touchesCopy
-                deletes = deletesCopy
-                primitiveState = primitiveStateCopy
+            guard !insertsCopy.isEmpty || !touchesCopy.isEmpty || !deletesCopy.isEmpty else {
+                return
             }
 
             do {
@@ -512,24 +509,7 @@ extension ManagedObjectContext {
                     deletesCopy.merge(into: &deletes)
                     primitiveStateCopy.merge(into: &primitiveState)
                 }
-
-                // Reset staging cache
-                stagingCache.mutate { inserts, touches, deletes, primitiveState in
-                    inserts.removeAll()
-                    touches.removeAll()
-                    deletes.removeAll()
-                    primitiveState.removeAll()
-                }
-
                 throw error
-            }
-
-            // Reset staging cache
-            stagingCache.mutate { inserts, touches, deletes, primitiveStages in
-                inserts.removeAll()
-                touches.removeAll()
-                deletes.removeAll()
-                primitiveStages.removeAll()
             }
         }
     }
@@ -538,13 +518,6 @@ extension ManagedObjectContext {
     /// their most recent committed state, and empties the undo stack.
     public nonisolated func rollback() {
         saveLock.withLock {
-            stagingCache.mutate { inserts, touches, deletes, primitiveStages in
-                inserts.removeAll()
-                touches.removeAll()
-                deletes.removeAll()
-                primitiveStages.removeAll()
-            }
-
             writeCache.mutate { inserts, touches, deletes, primitiveStates in
                 for (identifier, models) in inserts {
                     for (_, model) in models {
@@ -631,7 +604,7 @@ package final class WriteCache: Sendable {
 
     private nonisolated let lock = NSLock()
 
-    nonisolated func mutate<R>(
+    package nonisolated func mutate<R>(
         _ block: (
             _ inserts: inout WriteCacheDictionary,
             _ touches: inout WriteCacheDictionary,

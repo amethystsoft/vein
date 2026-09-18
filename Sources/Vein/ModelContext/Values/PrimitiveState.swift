@@ -10,6 +10,6 @@
 //
 // ===----------------------------------------------------------------------===
 
-struct PrimitiveState {
+package struct PrimitiveState {
     let values: [String: Any]
 }
