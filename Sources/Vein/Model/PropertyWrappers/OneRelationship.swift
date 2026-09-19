@@ -157,12 +157,9 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
 
                 if isDifferent {
                     // Disconnect from the old relation first while wrappedValue points to it.
-                    updateOtherSide(isRemoving: true, id: previousID)
-                }
-
-                if isDifferent {
+                    _updateOtherSide(isRemoving: true, id: previousID)
                     // Connect to the new relation now that wrappedValue points to it.
-                    updateOtherSide(isRemoving: false, id: newID)
+                    _updateOtherSide(isRemoving: false, id: newID)
                 }
             }
         }
@@ -170,7 +167,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         wasTouched = true
     }
 
-    private func updateOtherSide(isRemoving: Bool, id: ULID?) {
+    public func _updateOtherSide(isRemoving: Bool, id: ULID?) {
         guard let model, let context = model.context else { return }
 
         lock.withLock {

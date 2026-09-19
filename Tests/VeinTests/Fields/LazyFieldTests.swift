@@ -131,7 +131,8 @@ struct LazyFieldTests {
         try container.context.save()
         
         let table = Table(V0_0_1.Test.schema)
-            .drop()
+            .filter(SQLExpression<String>("id") == model.id.ulidString)
+            .delete()
         
         try connection.run(table)
         
