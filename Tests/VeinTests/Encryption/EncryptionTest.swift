@@ -110,12 +110,22 @@ struct EncryptionTest {
     @Test("getDatabaseKey matches key used for encryption")
     func getDatabaseKeyMatchesKeyUsedForEncryption() async throws {
         let path = try prepareContainerLocation(name: "getDatabaseKeyMatches")
-        let container = try ModelContainer(
-            V0_0_1.self,
-            migration: Migration.self,
-            at: path,
-            appID: "de.amethystsoft.vein.ModelContainerTests"
-        )
+        #if !os(Android)
+            let container = try ModelContainer(
+                V0_0_1.self,
+                migration: Migration.self,
+                at: path,
+                appID: "de.amethystsoft.vein.ModelContainerTests"
+            )
+        #else
+            let container = try ModelContainer(
+                V0_0_1.self,
+                migration: Migration.self,
+                at: path,
+                appID: "de.amethystsoft.vein.ModelContainerTests",
+                keyProvider: StubKeyProvider.self
+            )
+        #endif
 
         let key = try #require(container.context.getDatabaseKey())
 
@@ -133,6 +143,29 @@ struct EncryptionTest {
             #expect(error.description == "file is not a database (code: 26)")
         }
     }
+
+    #if os(Android)
+        @Test("Container init throws when no key provider is set with enabled encryption android")
+        func containerInitThrowsWhenNoKeyProviderIsSetWithEnabledEncryptionAndroid() async throws {
+            let path = try prepareContainerLocation(name: "testThrowWithoutKeyProvider")
+
+            do {
+                _ = try ModelContainer(
+                    V0_0_1.self,
+                    migration: Migration.self,
+                    at: path,
+                    appID: "de.amethystsoft.vein.ModelContainerTests"
+                )
+                Issue.record("Unexpectedly didn't throw")
+            } catch {
+                if case .other(let message) = error {
+                    #expect(message == "Failed to retrieve/save key to encrypt Database.")
+                } else {
+                    throw error
+                }
+            }
+        }
+    #endif
 
     @Test("getDatabaseKey returns nil for unencrypted db")
     func getDatabaseKeyReturnsNilForUnencryptedDb() async throws {

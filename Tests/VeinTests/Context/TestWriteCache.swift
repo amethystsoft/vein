@@ -310,7 +310,7 @@ struct WriteCache {
         let model = V0_0_1.Test(flag: true, someValue: "Original", randomValue: 1)
         try container.context.insert(model)
         try container.context.save()
-        
+
         try assertWriteCacheMerge(container: container) { context in
             verifyRuns[0] = true
             try context.delete(model)
@@ -336,19 +336,19 @@ struct WriteCache {
             #expect(touches[typeID, default: [:]].count == 0)
             #expect(deletes[typeID, default: [:]].count == 0)
         }
-        
+
         #expect(!verifyRuns.contains(false))
     }
 
     @Test("Merging on failed save new delete overrides insert")
     func mergingOnFailedSaveNewDeleteOverridesInsert() throws {
         var verifyRuns = [Bool](repeating: false, count: 5)
-        
+
         let typeID = V0_0_1.Test.typeIdentifier
         let container = try setupContainer()
 
         let model = V0_0_1.Test(flag: true, someValue: "Original", randomValue: 1)
-        
+
         try assertWriteCacheMerge(container: container) { context in
             verifyRuns[0] = true
             try context.insert(model)
@@ -374,20 +374,20 @@ struct WriteCache {
             #expect(deletes[typeID, default: [:]].count == 1)
             #expect(deletes[typeID, default: [:]].keys.contains(model.id))
         }
-        
+
         #expect(!verifyRuns.contains(false))
     }
 
     @Test("Merging on failed save preserves non conflicting operations")
     func mergingOnFailedSavePreservesNonConflictingOperations() throws {
         var verifyRuns = [Bool](repeating: false, count: 5)
-        
+
         let typeID = V0_0_1.Test.typeIdentifier
         let container = try setupContainer()
 
         let model = V0_0_1.Test(flag: true, someValue: "Original", randomValue: 1)
         let model2 = V0_0_1.Test(flag: true, someValue: "Original", randomValue: 1)
-        
+
         try assertWriteCacheMerge(container: container) { context in
             verifyRuns[0] = true
             try context.insert(model)
@@ -416,14 +416,14 @@ struct WriteCache {
             #expect(deletes[typeID, default: [:]].count == 1)
             #expect(deletes[typeID, default: [:]].keys.contains(model.id))
         }
-        
+
         #expect(!verifyRuns.contains(false))
     }
 
     @Test("Merging on failed save discards superseded touch")
     func mergingOnFailedSaveDiscardsSupersededTouch() throws {
         var verifyRuns = [Bool](repeating: false, count: 5)
-        
+
         let typeID = V0_0_1.Test.typeIdentifier
         let container = try setupContainer()
 
@@ -463,20 +463,20 @@ struct WriteCache {
             let states = states[typeID]?[model.id]
             #expect(states?.values["someValue"] as? String == "Original")
         }
-        
+
         #expect(!verifyRuns.contains(false))
     }
 
     @Test("Merging on failed save preserves earliest primitive state")
     func mergingOnFailedSavePreservesLatestPrimitiveState() throws {
         var verifyRuns = [Bool](repeating: false, count: 5)
-        
+
         let typeID = V0_0_1.Test.typeIdentifier
         let container = try setupContainer()
         let model = V0_0_1.Test(flag: true, someValue: "Original", randomValue: 1)
         try container.context.insert(model)
         try container.context.save()
-        
+
         try assertWriteCacheMerge(container: container) { _ in
             verifyRuns[0] = true
             model.someValue = "First"
@@ -500,20 +500,20 @@ struct WriteCache {
             let state = states[typeID]?[model.id]
             #expect(state?.values["someValue"] as? String == "Original")
         }
-        
+
         #expect(!verifyRuns.contains(false))
     }
 
     @Test("Primitive state survives when touch is superseded by delete")
     func primitiveStateSurvivesSupersedingDelete() throws {
         var verifyRuns = [Bool](repeating: false, count: 5)
-        
+
         let typeID = V0_0_1.Test.typeIdentifier
         let container = try setupContainer()
         let model = V0_0_1.Test(flag: true, someValue: "Original", randomValue: 1)
         try container.context.insert(model)
         try container.context.save()
-        
+
         try assertWriteCacheMerge(container: container) { _ in
             verifyRuns[0] = true
             model.someValue = "Changed"
@@ -539,20 +539,20 @@ struct WriteCache {
 
         container.context.rollback()
         #expect(model.someValue == "Original")
-        
+
         #expect(!verifyRuns.contains(false))
     }
 
     @Test("Primitive state survives when touch is superseded by insert")
     func primitiveStateSurvivesSupersedingInsert() throws {
         var verifyRuns = [Bool](repeating: false, count: 5)
-        
+
         let typeID = V0_0_1.Test.typeIdentifier
         let container = try setupContainer()
         let model = V0_0_1.Test(flag: true, someValue: "Original", randomValue: 1)
         try container.context.insert(model)
         try container.context.save()
-        
+
         try assertWriteCacheMerge(container: container) { context in
             verifyRuns[0] = true
             model.someValue = "Changed"
@@ -572,7 +572,7 @@ struct WriteCache {
             #expect(inserts[typeID, default: [:]].keys.contains(model.id))
         } verifyMerged: { inserts, touches, _, states in
             verifyRuns[4] = true
-            
+
             #expect(touches[typeID, default: [:]].count == 0)
             #expect(inserts[typeID, default: [:]].count == 1)
             #expect(inserts[typeID, default: [:]].keys.contains(model.id))
@@ -580,13 +580,13 @@ struct WriteCache {
             let state = states[typeID]?[model.id]
             #expect(state?.values["someValue"] as? String == "Original")
         }
-        
+
         #expect(!verifyRuns.contains(false))
-        
+
         container.context.rollback()
         #expect(model.someValue == "Original")
     }
-    
+
     private func assertWriteCacheMerge(
         container: ModelContainer,
         setupFromSave: (ManagedObjectContext) throws -> Void,
@@ -596,7 +596,7 @@ struct WriteCache {
         verifyMerged: WriteCacheVerifier
     ) throws {
         let context = container.context!
-        
+
         try setupFromSave(context)
         var fromSave = makeEmptyWriteCache()
         context.writeCache.mutate { inserts, touches, deletes, states in
@@ -607,27 +607,31 @@ struct WriteCache {
             deletes.removeAll()
             states.removeAll()
         }
-        
+
         try performParallelWrite(context)
         var fromParallelWrite = makeEmptyWriteCache()
         context.writeCache.mutate { inserts, touches, deletes, states in
             verifyFromParallelWrite(inserts, touches, deletes, states)
             fromParallelWrite = (inserts, touches, deletes, states)
         }
-        
+
         ManagedObjectContext.mergeWriteCaches(
-            insertsCached: &fromParallelWrite.inserts, insertsFromSave: fromSave.inserts,
-            updatesCached: &fromParallelWrite.touches, updatesFromSave: fromSave.touches,
-            deletesCached: &fromParallelWrite.deletes, deletesFromSave: fromSave.deletes,
-            stateCached: &fromParallelWrite.states, stateFromSave: fromSave.states
+            insertsCached: &fromParallelWrite.inserts,
+            insertsFromSave: fromSave.inserts,
+            updatesCached: &fromParallelWrite.touches,
+            updatesFromSave: fromSave.touches,
+            deletesCached: &fromParallelWrite.deletes,
+            deletesFromSave: fromSave.deletes,
+            stateCached: &fromParallelWrite.states,
+            stateFromSave: fromSave.states
         )
-        
+
         context.writeCache.mutate { inserts, touches, deletes, states in
             (inserts, touches, deletes, states) = fromParallelWrite
             verifyMerged(inserts, touches, deletes, states)
         }
     }
-    
+
     private func makeEmptyWriteCache() -> (
         inserts: WriteCacheDictionary,
         touches: WriteCacheDictionary,
@@ -641,7 +645,7 @@ struct WriteCache {
             states: [ObjectIdentifier: [ULID: PrimitiveState]]()
         )
     }
-    
+
     typealias WriteCacheVerifier = (
         WriteCacheDictionary,
         WriteCacheDictionary,

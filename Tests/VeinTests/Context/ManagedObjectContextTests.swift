@@ -76,17 +76,12 @@ struct ManagedObjectContextTests {
         let identifier = ObjectIdentifier(V0_0_1.Test.self)
 
         container.context.writeCache.mutate { inserts, updates, deletes, states in
-            #expect(inserts[identifier, default: [:]].count == 1)
-            #expect(inserts[identifier, default: [:]].keys.contains { $0 == toInsert.id })
-
-            #expect(updates[identifier, default: [:]].count == 1)
-            #expect(updates[identifier, default: [:]].keys.contains { $0 == toUpdate.id })
-
-            #expect(deletes[identifier, default: [:]].count == 1)
-            #expect(deletes[identifier, default: [:]].keys.contains { $0 == toDelete.id })
-
-            #expect(states[identifier, default: [:]].count == 1)
-            #expect(states[identifier, default: [:]].keys.contains { $0 == toUpdate.id })
+            verify(
+                inserts: inserts,
+                updates: updates,
+                deletes: deletes,
+                states: states
+            )
         }
 
         let handle = connection.handle
@@ -104,6 +99,20 @@ struct ManagedObjectContextTests {
         }
 
         container.context.writeCache.mutate { inserts, updates, deletes, states in
+            verify(
+                inserts: inserts,
+                updates: updates,
+                deletes: deletes,
+                states: states
+            )
+        }
+
+        func verify(
+            inserts: WriteCacheDictionary,
+            updates: WriteCacheDictionary,
+            deletes: WriteCacheDictionary,
+            states: [ObjectIdentifier: [ULID: PrimitiveState]]
+        ) {
             #expect(inserts[identifier, default: [:]].count == 1)
             #expect(inserts[identifier, default: [:]].keys.contains { $0 == toInsert.id })
 
@@ -395,8 +404,29 @@ struct ManagedObjectContextTests {
         #expect(field.wrappedValue == nil)
     }
 
+    @Test("unsaved LazyField returns nil")
+    func unsavedLazyFieldReturnsNil() throws {
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.ManagedObjectContextTests",
+            encryptionEnabled: false
+        )
+
+        let creationModel = V0_0_1.Test(flag: true)
+        try container.context.insert(creationModel)
+        try container.context.save()
+
+        let model = V0_0_1.Test(flag: true)
+        try container.context.insert(model)
+
+        let field = model.getLazy()
+        #expect(field.wrappedValue == nil)
+    }
+
     @Test("LazyField with noSuchTable returns nil")
-    func LazyFieldWithNoSuchTableReturnsNil() throws {
+    func lazyFieldWithNoSuchTableReturnsNil() throws {
         let connection = try Connection()
         let container = try ModelContainer(
             V0_0_1.self,
@@ -504,13 +534,13 @@ struct ManagedObjectContextTests {
             try container.context.insert(V0_0_1.Test(flag: true))
             try container.context.save()
         }
-        
+
         var fetchDescriptor = FetchDescriptor(model: V0_0_1.Test.self)
         fetchDescriptor.includePendingChanges = false
         let results = try container.context.fetch(fetchDescriptor)
         #expect(results.count == 1)
     }
-    
+
     @Test("nested transaction inner saves outer rollbacks both")
     func nestedTransactionInnerSavesOuterRollbacksBoths() throws {
         let container = try ModelContainer(
@@ -520,32 +550,32 @@ struct ManagedObjectContextTests {
             appID: "de.amethystsoft.vein.ManagedObjectContextTests",
             encryptionEnabled: false
         )
-        
+
         do {
             try container.context.transaction {
                 try container.context.transaction {
                     try container.context.insert(V0_0_1.Test(flag: true))
                     try container.context.save()
                 }
-                
+
                 let results = try container.context.fetchAll(V0_0_1.Test.self)
                 #expect(results.count == 1)
-                
+
                 try container.context.insert(V0_0_1.Test(flag: true))
                 try container.context.save()
                 throw MOCError.other(message: "throwing from outer transaction")
             }
         } catch {
-                if case ManagedObjectContextError.other(let message) = error {
-                    #expect(message == "throwing from outer transaction")
-                } else {
-                    Issue.record("threw unexpected error")
-                }
-                
-                let results = try container.context.fetchAll(V0_0_1.Test.self)
-                #expect(results.count == 0)
+            if case ManagedObjectContextError.other(let message) = error {
+                #expect(message == "throwing from outer transaction")
+            } else {
+                Issue.record("threw unexpected error")
             }
-        
+
+            let results = try container.context.fetchAll(V0_0_1.Test.self)
+            #expect(results.count == 0)
+        }
+
         var fetchDescriptor = FetchDescriptor(model: V0_0_1.Test.self)
         fetchDescriptor.includePendingChanges = false
         let results = try container.context.fetch(fetchDescriptor)
