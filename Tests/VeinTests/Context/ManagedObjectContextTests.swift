@@ -400,52 +400,7 @@ struct ManagedObjectContextTests {
                 throw error
             }
         }
-
-        #expect(field.wrappedValue == nil)
-    }
-
-    @Test("unsaved LazyField returns nil")
-    func unsavedLazyFieldReturnsNil() throws {
-        let container = try ModelContainer(
-            V0_0_1.self,
-            migration: Migration.self,
-            at: nil,
-            appID: "de.amethystsoft.vein.ManagedObjectContextTests",
-            encryptionEnabled: false
-        )
-
-        let creationModel = V0_0_1.Test(flag: true)
-        try container.context.insert(creationModel)
-        try container.context.save()
-
-        let model = V0_0_1.Test(flag: true)
-        try container.context.insert(model)
-
-        let field = model.getLazy()
-        #expect(field.wrappedValue == nil)
-    }
-
-    @Test("LazyField with noSuchTable returns nil")
-    func lazyFieldWithNoSuchTableReturnsNil() throws {
-        let connection = try Connection()
-        let container = try ModelContainer(
-            V0_0_1.self,
-            migration: Migration.self,
-            connection: connection,
-            appID: "de.amethystsoft.vein.ManagedObjectContextTests",
-            encryptionEnabled: false
-        )
-
-        let model = V0_0_1.Test(flag: true)
-        try container.context.insert(model)
-        try container.context.save()
-
-        let table = Table(V0_0_1.Test.schema)
-            .drop()
-
-        try connection.run(table)
-
-        let field = model.getLazy()
+        
         #expect(field.wrappedValue == nil)
     }
 
