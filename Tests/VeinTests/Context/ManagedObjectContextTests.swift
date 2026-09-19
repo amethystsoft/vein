@@ -468,8 +468,8 @@ struct ManagedObjectContextTests {
         #expect(nonEmptySchemas2.isEmpty)
     }
 
-    @Test("nested transaction")
-    func nestedTransaction() throws {
+    @Test("nested transaction inner rollbacks outer saves")
+    func nestedTransactionInnerRollbacksOuterSaves() throws {
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
@@ -504,9 +504,52 @@ struct ManagedObjectContextTests {
             try container.context.insert(V0_0_1.Test(flag: true))
             try container.context.save()
         }
-
-        let results = try container.context.fetchAll(V0_0_1.Test.self)
+        
+        var fetchDescriptor = FetchDescriptor(model: V0_0_1.Test.self)
+        fetchDescriptor.includePendingChanges = false
+        let results = try container.context.fetch(fetchDescriptor)
         #expect(results.count == 1)
+    }
+    
+    @Test("nested transaction inner saves outer rollbacks both")
+    func nestedTransactionInnerSavesOuterRollbacksBoths() throws {
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.ManagedObjectContextTests",
+            encryptionEnabled: false
+        )
+        
+        do {
+            try container.context.transaction {
+                try container.context.transaction {
+                    try container.context.insert(V0_0_1.Test(flag: true))
+                    try container.context.save()
+                }
+                
+                let results = try container.context.fetchAll(V0_0_1.Test.self)
+                #expect(results.count == 1)
+                
+                try container.context.insert(V0_0_1.Test(flag: true))
+                try container.context.save()
+                throw MOCError.other(message: "throwing from outer transaction")
+            }
+        } catch {
+                if case ManagedObjectContextError.other(let message) = error {
+                    #expect(message == "throwing from outer transaction")
+                } else {
+                    Issue.record("threw unexpected error")
+                }
+                
+                let results = try container.context.fetchAll(V0_0_1.Test.self)
+                #expect(results.count == 0)
+            }
+        
+        var fetchDescriptor = FetchDescriptor(model: V0_0_1.Test.self)
+        fetchDescriptor.includePendingChanges = false
+        let results = try container.context.fetch(fetchDescriptor)
+        #expect(results.count == 0)
     }
 
     @Test("Model is rolled back to original state correctly")
