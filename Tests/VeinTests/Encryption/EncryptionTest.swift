@@ -159,7 +159,8 @@ struct EncryptionTest {
                 Issue.record("Unexpectedly didn't throw")
             } catch {
                 if case .other(let message) = error {
-                    #expect(message == "Failed to retrieve/save key to encrypt Database.")
+                    #expect(message ==
+                        "Unexpected: Failed to retrieve/save key to encrypt Database.")
                 } else {
                     throw error
                 }
