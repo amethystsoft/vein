@@ -140,32 +140,35 @@ extension ManagedObjectContext {
             throw .other(message: error.localizedDescription)
         }
     }
-    
+
     static func mergeWriteCaches(
-        insertsCached: inout WriteCacheDictionary, insertsFromSave: WriteCacheDictionary,
-        updatesCached: inout WriteCacheDictionary, updatesFromSave: WriteCacheDictionary,
-        deletesCached: inout WriteCacheDictionary, deletesFromSave: WriteCacheDictionary,
+        insertsCached: inout WriteCacheDictionary,
+        insertsFromSave: WriteCacheDictionary,
+        updatesCached: inout WriteCacheDictionary,
+        updatesFromSave: WriteCacheDictionary,
+        deletesCached: inout WriteCacheDictionary,
+        deletesFromSave: WriteCacheDictionary,
         stateCached: inout [ObjectIdentifier : [ULID : PrimitiveState]],
         stateFromSave: [ObjectIdentifier : [ULID : PrimitiveState]]
     ) {
         var insertsFromSave = insertsFromSave
         var updatesFromSave = updatesFromSave
         var deletesFromSave = deletesFromSave
-        
+
         for (type, deletedModels) in deletesCached {
             for (id, _) in deletedModels {
                 insertsFromSave[type]?[id] = nil
                 updatesFromSave[type]?[id] = nil
             }
         }
-        
+
         for (type, insertedModels) in insertsCached {
             for (id, _) in insertedModels {
                 deletesFromSave[type]?[id] = nil
                 updatesFromSave[type]?[id] = nil
             }
         }
-        
+
         insertsFromSave.merge(into: &insertsCached)
         updatesFromSave.merge(into: &updatesCached)
         deletesFromSave.merge(into: &deletesCached)

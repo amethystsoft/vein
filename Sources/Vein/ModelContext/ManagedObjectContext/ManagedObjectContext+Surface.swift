@@ -524,10 +524,14 @@ extension ManagedObjectContext {
                 // Re-add changes in case of rollback
                 writeCache.mutate { inserts, touches, deletes, primitiveState in
                     Self.mergeWriteCaches(
-                        insertsCached: &inserts, insertsFromSave: insertsCopy,
-                        updatesCached: &touches, updatesFromSave: touchesCopy,
-                        deletesCached: &deletes, deletesFromSave: deletesCopy,
-                        stateCached: &primitiveState, stateFromSave: primitiveStateCopy
+                        insertsCached: &inserts,
+                        insertsFromSave: insertsCopy,
+                        updatesCached: &touches,
+                        updatesFromSave: touchesCopy,
+                        deletesCached: &deletes,
+                        deletesFromSave: deletesCopy,
+                        stateCached: &primitiveState,
+                        stateFromSave: primitiveStateCopy
                     )
                 }
                 throw error
@@ -547,7 +551,7 @@ extension ManagedObjectContext {
                                 model.typeIdentifier,
                                 default: [:]
                             ][model.id]
-                                {
+                        {
                             model.applyPrimitiveState(state)
                         }
                         model.context = nil
