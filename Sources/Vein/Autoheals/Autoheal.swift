@@ -24,5 +24,5 @@ extension _Autoheal {
 }
 
 protocol AutohealImplementation {
-    nonisolated func run(with: ModelContainer) throws
+    nonisolated func run(with container: ModelContainer) throws
 }
