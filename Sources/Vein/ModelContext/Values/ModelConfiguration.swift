@@ -19,6 +19,8 @@ public struct ModelConfiguration: Sendable {
     ///
     /// Disabled via `nil` by default.
     public var cleanStaleIdentityMapEntriesTimeoutSeconds: UInt16? = nil
+    
+    public var shouldRunAutoheal: @Sendable (_Autoheal) -> Bool = { _ in true }
 
     /// Creates a default ``ModelConfiguration``
     public init() {}

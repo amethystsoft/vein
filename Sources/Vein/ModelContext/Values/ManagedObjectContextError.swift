@@ -47,6 +47,7 @@ public enum ManagedObjectContextError: Error {
     case inactiveModelTypeFetched(any PersistentModel.Type)
     case dbNewerThanCode(ModelVersion, ModelVersion)
     case notADatabase
+    case dbOpenedWithOlderVeinVersion
     case other(message: String)
 }
 
@@ -119,6 +120,11 @@ extension ManagedObjectContextError: LocalizedError {
                 return "Unexpected: \(message)"
             case .operationCouldNotBeCompleted(message: let message):
                 return message
+            case .dbOpenedWithOlderVeinVersion:
+                return """
+                    The database was last opened with a version newer than your \
+                    current one. Please update your vein version to prevent data loss.
+                    """
         }
     }
 
@@ -176,6 +182,8 @@ extension ManagedObjectContextError: LocalizedError {
                 return nil
             case .operationCouldNotBeCompleted:
                 return "Something went wrong. If this happened during a scalar query, the table might not exist."
+            case .dbOpenedWithOlderVeinVersion:
+                return "To prevent data corruption Vein doesn't allow opening a database with an older version of Vein."
         }
     }
 
@@ -243,6 +251,8 @@ extension ManagedObjectContextError: LocalizedError {
                 return "Update your app or notify your administrator if no update is available"
             case .notADatabase:
                 return "Use the right key to decrypt the database or check if it is a database."
+            case .dbOpenedWithOlderVeinVersion:
+                return "Update Vein to a newer Version."
             case .other, .operationCouldNotBeCompleted:
                 return nil
         }

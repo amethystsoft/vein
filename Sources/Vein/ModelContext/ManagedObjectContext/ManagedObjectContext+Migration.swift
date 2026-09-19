@@ -14,6 +14,120 @@ import SQLiteDB
 import Foundation
 
 extension ManagedObjectContext {
+    internal static var veinVersion: ModelVersion { ModelVersion(1, 1, 1) }
+    internal nonisolated func createSystemTable() throws {
+        try connection.run(SystemTable.systemTable.create(ifNotExists: true) { t in
+            t.column(SystemTable.id, primaryKey: .autoincrement)
+            t.column(SystemTable.veinVersionMajor)
+            t.column(SystemTable.veinVersionMinor)
+            t.column(SystemTable.veinVersionPatch)
+            t.column(SystemTable.appliedAutoheals)
+        })
+        
+        let version = Self.veinVersion
+        if try _getSystemTable() == nil {
+            let insert = SystemTable.systemTable.insert(
+                [
+                    SQLExpression<Int64>(SystemTable.veinVersionMajor)
+                        <- SQLExpression<Int64>(value: Int64(version.major)),
+                    SQLExpression<Int64>(SystemTable.veinVersionMinor)
+                        <- SQLExpression<Int64>(value: Int64(version.minor)),
+                    SQLExpression<Int64>(SystemTable.veinVersionPatch)
+                        <- SQLExpression<Int64>(value: Int64(version.patch)),
+                    SQLExpression<String>(SystemTable.appliedAutoheals)
+                        <- SQLExpression<String>(value: "[]")
+                ]
+            )
+            try connection.run(insert)
+        } else {
+            let update = SystemTable.systemTable.update(
+                [
+                    SQLExpression<Int64>(SystemTable.veinVersionMajor)
+                    <- SQLExpression<Int64>(value: Int64(version.major)),
+                    SQLExpression<Int64>(SystemTable.veinVersionMinor)
+                    <- SQLExpression<Int64>(value: Int64(version.minor)),
+                    SQLExpression<Int64>(SystemTable.veinVersionPatch)
+                    <- SQLExpression<Int64>(value: Int64(version.patch))
+                ]
+            )
+            try connection.run(update)
+        }
+    }
+    
+    public nonisolated func runAutoheal(_ heal: _Autoheal) throws {
+        try heal.run(modelContainer)
+    }
+    
+    internal nonisolated func _getSystemTable() throws -> SystemTable.DTO? {
+        let select = SystemTable.systemTable.select([
+            SystemTable.veinVersionMajor,
+            SystemTable.veinVersionMinor,
+            SystemTable.veinVersionPatch,
+            SystemTable.appliedAutoheals
+        ]).limit(1)
+        
+        let result = try connection.prepare(select)
+        for row in result {
+            let autoheals = row[SystemTable.appliedAutoheals]
+            let decoded = try JSONDecoder().decode(
+                [String].self,
+                from: autoheals.data(using: .utf8)!
+            )
+            let dto = SystemTable.DTO(
+                veinVersionMajor: row[SystemTable.veinVersionMajor],
+                veinVersionMinor: row[SystemTable.veinVersionMinor],
+                veinVersionPatch: row[SystemTable.veinVersionPatch],
+                appliedAutheals: decoded
+            )
+            
+            if ModelVersion(
+                UInt32(dto.veinVersionMajor),
+                UInt32(dto.veinVersionMinor),
+                UInt32(dto.veinVersionPatch)
+            ) > Self.veinVersion {
+                throw MOCError.dbOpenedWithOlderVeinVersion
+            }
+            
+            return dto
+        }
+        
+        return nil
+    }
+    
+    internal nonisolated func getSystemTable() throws -> SystemTable.DTO {
+        do {
+            return try _getSystemTable() ?? SystemTable.DTO(
+                veinVersionMajor: Int64(Self.veinVersion.major),
+                veinVersionMinor: Int64(Self.veinVersion.minor),
+                veinVersionPatch: Int64(Self.veinVersion.patch),
+                appliedAutheals: []
+            )
+        } catch let error as SQLiteDB.Result {
+            let parsed = error.parse()
+            
+            if case .noSuchTable = parsed {
+                if try _tableExists(for: MigrationTable.schema) {
+                    return SystemTable.DTO(
+                        veinVersionMajor: 1,
+                        veinVersionMinor: 1,
+                        veinVersionPatch: 0,
+                        appliedAutheals: []
+                    )
+                } else {
+                    let veinVersion = Self.veinVersion
+                    return SystemTable.DTO(
+                        veinVersionMajor: Int64(veinVersion.major),
+                        veinVersionMinor: Int64(veinVersion.minor),
+                        veinVersionPatch: Int64(veinVersion.patch),
+                        appliedAutheals: []
+                    )
+                }
+            }
+            
+            throw parsed
+        }
+    }
+    
     internal nonisolated func createMigrationsTable() throws {
         try connection.run(MigrationTable.migrationsTable.create(ifNotExists: true) { t in
             t.column(MigrationTable.id, primaryKey: .autoincrement)
@@ -102,4 +216,21 @@ enum MigrationTable {
     static let minor = SQLExpression<Int64>("minor")
     static let patch = SQLExpression<Int64>("patch")
     static let appliedAt = SQLExpression<Int64>("applied_at")
+}
+
+enum SystemTable {
+    static let schema = "_vein_system"
+    static let systemTable = Table(schema)
+    static let id = SQLExpression<Int64>("id")
+    static let veinVersionMajor = SQLExpression<Int64>("vein_version_major")
+    static let veinVersionMinor = SQLExpression<Int64>("vein_version_minor")
+    static let veinVersionPatch = SQLExpression<Int64>("vein_version_patch")
+    static let appliedAutoheals = SQLExpression<String>("applied_autoheals")
+    
+    struct DTO {
+        let veinVersionMajor: Int64
+        let veinVersionMinor: Int64
+        let veinVersionPatch: Int64
+        let appliedAutheals: [String]
+    }
 }

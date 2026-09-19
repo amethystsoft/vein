@@ -158,6 +158,21 @@ public final class ModelContainer: @unchecked Sendable {
         }
 
         do {
+            let latestSystemTable = try context.getSystemTable()
+            let latestUsedVersion = ModelVersion(
+                UInt32(latestSystemTable.veinVersionMajor),
+                UInt32(latestSystemTable.veinVersionMinor),
+                UInt32(latestSystemTable.veinVersionPatch)
+            )
+            for heal in _Autoheal.allCases {
+                if
+                    latestUsedVersion < heal.versionIntroduced,
+                    modelConfiguration.shouldRunAutoheal(heal)
+                {
+                    try heal.run(self)
+                }
+            }
+            try context.createSystemTable()
             try context.createMigrationsTable()
         } catch let error as ManagedObjectContextError {
             throw error
