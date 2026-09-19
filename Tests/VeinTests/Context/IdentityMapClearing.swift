@@ -57,7 +57,7 @@ struct IdentityMapClearing {
             encryptionEnabled: ProcessInfo.shouldEnableEncryption,
             modelConfiguration: config
         )
-        
+
         try await assertIdentityMapCleanup(container: container) { map, id1, id2, count in
             #expect(count == 2)
             #expect(map[V0_0_1.Test.typeIdentifier]?[id1]?.wrappedValue != nil)
@@ -78,13 +78,13 @@ struct IdentityMapClearing {
             #expect(map[id2]?.wrappedValue != nil)
         }
     }
-    
+
     @Test
     func manualCleanup() async throws {
         var config = ModelConfiguration.default
         config.cleanStaleIdentityMapEntriesTimeoutSeconds = nil
         config.cleanStaleIdentityMapEntriesOnSave = false
-        
+
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
@@ -93,7 +93,7 @@ struct IdentityMapClearing {
             encryptionEnabled: ProcessInfo.shouldEnableEncryption,
             modelConfiguration: config
         )
-        
+
         try await assertIdentityMapCleanup(container: container) { map, id1, id2, count in
             #expect(count == 2)
             #expect(map[V0_0_1.Test.typeIdentifier]?[id1]?.wrappedValue != nil)
@@ -107,7 +107,7 @@ struct IdentityMapClearing {
             #expect(map[id2]?.wrappedValue != nil)
         }
     }
-    
+
     private func assertIdentityMapCleanup(
         container: ModelContainer,
         validate: ([ObjectIdentifier : [ULID : WeakModel]], ULID, ULID, Int) -> Void,
@@ -116,32 +116,32 @@ struct IdentityMapClearing {
     ) async throws {
         let test = V0_0_1.Test(flag: true)
         let test2 = V0_0_1.Test(flag: false)
-        
+
         try container.context.insert(test)
         try container.context.insert(test2)
-        
+
         let identityMap = container.context.identityMap
         let mapPreSave = identityMap.dump()
-        
+
         validate(mapPreSave, test.id, test2.id, identityMap.getTrackedCount())
-        
+
         identityMap.setToNil(type: V0_0_1.Test.typeIdentifier, id: test.id)
-        
+
         guard let wrapperPostMutation = identityMap.dump()[V0_0_1.Test.typeIdentifier]?[test.id]
-                else {
+        else {
             Issue.record("Unexpectedly didn't find the test object in the map.")
             return
         }
-        
+
         #expect(wrapperPostMutation.isDeallocated)
-        
+
         try await performChange(container.context, test.id)
-        
+
         guard let mapPostSave = identityMap.dump()[V0_0_1.Test.typeIdentifier] else {
             Issue.record("Unexpectedly didn't find type in identity map.")
             return
         }
-        
+
         validateResult(mapPostSave, test.id, test2.id, identityMap.getTrackedCount())
     }
 }

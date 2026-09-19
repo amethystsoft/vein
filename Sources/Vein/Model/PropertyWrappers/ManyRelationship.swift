@@ -72,13 +72,13 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
             return lock.withLock {
                 let models = get(for: idStore)
                 var resultModels = [T]()
-                
+
                 for id in idStore {
                     if let model = models[id] {
                         resultModels.append(model)
                     }
                 }
-                
+
                 return resultModels
             }
         }
@@ -156,14 +156,14 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
             }
 
             let oldValue = get(for: oldIDs)
-            
+
             var removed = [T]()
             var added = [T]()
-            
+
             let newValuesMapped = newValue.asIDDictionary
-            
-            for l in newIDs.difference(from: oldIDs) {
-                switch l {
+
+            for op in newIDs.difference(from: oldIDs) {
+                switch op {
                     case .insert(_, let element, _):
                         if let value = newValuesMapped[element] {
                             added.append(value)
@@ -174,13 +174,17 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                         }
                 }
             }
-            
+
             var remainingReferences: [ULID: Int] = [:]
             for id in newIDs {
                 remainingReferences[id, default: 0] += 1
             }
 
-            updateOtherSide(removed: removed, added: added, remainingReferences: remainingReferences)
+            updateOtherSide(
+                removed: removed,
+                added: added,
+                remainingReferences: remainingReferences
+            )
 
             wasTouched = true
         }
@@ -361,7 +365,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
             let model,
             let context = model.context,
             let _inverseKey
-                else { return }
+        else { return }
 
         for target in wrappedValue {
             _withObservationNotification({ target.notifyOfChanges() }) {
@@ -374,7 +378,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                         if let manyField = inverse as? (any ManyRelationship) {
                             manyField._persistableValue.removeAll(where: { $0 == model.id })
                             manyField.wasTouched = true
-                            
+
                         } else if let oneField = inverse as? (any OneRelationship) {
                             oneField._persistableValue = nil
                             oneField.wasTouched = true
@@ -394,12 +398,12 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                 }
             }
         }
-        
+
         _withObservationNotification({ model.notifyOfChanges() }) {
             let matches = context._prepareForChange(of: model)
-            
+
             _persistableValue = []
-            
+
             context._markTouched(model, previouslyMatching: matches)
         }
     }

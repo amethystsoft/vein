@@ -94,11 +94,11 @@ extension RelationshipTest {
         #expect(userA.comments.isEmpty)
         #expect(userB.comments.map(\.id).contains(comment.id))
     }
-    
+
     @Test
     func `update revives deallocated other side`() async throws {
         let dbPath = try prepareContainerLocation(name: "RelationshipRevivesOtherSide")
-        
+
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
@@ -106,42 +106,42 @@ extension RelationshipTest {
             appID: "de.amethystsoft.vein.RelationshipTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-        
+
         let userA = V0_0_1.User(name: "Mia")
         let userB = V0_0_1.User(name: "John")
         let comment = V0_0_1.Comment(text: "Transferable post")
-        
+
         try container.context.insert(userA)
         try container.context.insert(userB)
         userA.comments.append(comment)
         try container.context.save()
-        
+
         #expect(comment.author?.name == "Mia")
-        
+
         container.context.identityMap.setToNil(
             type: V0_0_1.Comment.typeIdentifier,
             id: comment.id
         )
-        
+
         userA.comments.removeAll()
-        
+
         let newComment = try #require(container.context.identityMap.getTracked(
             V0_0_1.Comment.self,
             id: comment.id
         ))
-        
+
         #expect(newComment.author == nil)
         #expect(ObjectIdentifier(comment) != ObjectIdentifier(newComment))
         #expect(newComment.id == comment.id)
-        
+
         let oldCommentState = comment.extractPrimitiveState()
         #expect(oldCommentState.values["author"] as? ULID == userA.id)
     }
-    
+
     @Test
     func `duplicates are allowed for array relationships`() async throws {
         let dbPath = try prepareContainerLocation(name: "RelationshipArrayAllowsDuplicates")
-        
+
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
@@ -149,23 +149,26 @@ extension RelationshipTest {
             appID: "de.amethystsoft.vein.RelationshipTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-        
+
         let userA = V0_0_1.User(name: "Mia")
         let comment = V0_0_1.Comment(text: "Transferable post")
-        
+
         try container.context.insert(userA)
         userA.comments.append(comment)
         userA.comments.append(comment)
         try container.context.save()
-        
+
         let commentIDs = userA.extractPrimitiveState().values["comments"]
         #expect((commentIDs as? [ULID])?.count == 2)
     }
-    
+
     @Test
     func `removing one duplicate only removes one from the other side post remove`() async throws {
-        let dbPath = try prepareContainerLocation(name: "RelationshipRemovingOneDuplicateOnlyRemovesOneFromOtherSide")
-        
+        let dbPath =
+            try prepareContainerLocation(
+                name: "RelationshipRemovingOneDuplicateOnlyRemovesOneFromOtherSide"
+            )
+
         let container = try ModelContainer(
             V0_0_2.self,
             migration: Migration.self,
@@ -173,37 +176,40 @@ extension RelationshipTest {
             appID: "de.amethystsoft.vein.RelationshipTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-        
+
         let post = V0_0_2.Post(title: "Vein 1.0")
         let tag = V0_0_2.Tag(name: "Swift")
-        
+
         try container.context.insert(post)
         post.tags.append(tag)
         post.tags.append(tag)
-        
+
         let tagIDs = post.extractPrimitiveState().values["tags"]
         #expect((tagIDs as? [ULID])?.count == 2)
         #expect(post.tags.count == 2)
-        
+
         let postIDs = tag.extractPrimitiveState().values["posts"]
         #expect((postIDs as? [ULID])?.count == 2)
         #expect(tag.posts.count == 2)
-        
+
         post.tags.remove(at: 0)
-        
+
         let newTagIDs = post.extractPrimitiveState().values["tags"]
         #expect((newTagIDs as? [ULID])?.count == 1)
         #expect(post.tags.count == 1)
-        
+
         let newPostIDs = tag.extractPrimitiveState().values["posts"]
         #expect((newPostIDs as? [ULID])?.count == 1)
         #expect(tag.posts.count == 1)
     }
-    
+
     @Test
     func `removing one duplicate only removes one from the other side tags remove`() async throws {
-        let dbPath = try prepareContainerLocation(name: "RelationshipRemovingOneDuplicateOnlyRemovesOneFromOtherSide")
-        
+        let dbPath =
+            try prepareContainerLocation(
+                name: "RelationshipRemovingOneDuplicateOnlyRemovesOneFromOtherSide"
+            )
+
         let container = try ModelContainer(
             V0_0_2.self,
             migration: Migration.self,
@@ -211,37 +217,41 @@ extension RelationshipTest {
             appID: "de.amethystsoft.vein.RelationshipTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-        
+
         let post = V0_0_2.Post(title: "Vein 1.0")
         let tag = V0_0_2.Tag(name: "Swift")
-        
+
         try container.context.insert(post)
         post.tags.append(tag)
         post.tags.append(tag)
-        
+
         let tagIDs = post.extractPrimitiveState().values["tags"]
         #expect((tagIDs as? [ULID])?.count == 2)
         #expect(post.tags.count == 2)
-        
+
         let postIDs = tag.extractPrimitiveState().values["posts"]
         #expect((postIDs as? [ULID])?.count == 2)
         #expect(tag.posts.count == 2)
-        
+
         tag.posts.remove(at: 0)
-        
+
         let newTagIDs = post.extractPrimitiveState().values["tags"]
         #expect((newTagIDs as? [ULID])?.count == 1)
         #expect(post.tags.count == 1)
-        
+
         let newPostIDs = tag.extractPrimitiveState().values["posts"]
         #expect((newPostIDs as? [ULID])?.count == 1)
         #expect(tag.posts.count == 1)
     }
-    
+
     @Test
-    func `removing one from many side should keep one relationship alive if Relationships are remaining`() async throws {
-        let dbPath = try prepareContainerLocation(name: "RelationshipRemovingOneDuplicateOnlyRemovesOneFromOtherSide")
-        
+    func `removing one from many side should keep one relationship alive if Relationships are remaining`(
+    ) async throws {
+        let dbPath =
+            try prepareContainerLocation(
+                name: "RelationshipRemovingOneDuplicateOnlyRemovesOneFromOtherSide"
+            )
+
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
@@ -249,39 +259,42 @@ extension RelationshipTest {
             appID: "de.amethystsoft.vein.RelationshipTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-        
+
         let userA = V0_0_1.User(name: "Mia")
         let comment = V0_0_1.Comment(text: "Transferable post")
-        
+
         try container.context.insert(userA)
         userA.comments.append(comment)
         userA.comments.append(comment)
         try container.context.save()
-        
+
         let commentIDs = userA.extractPrimitiveState().values["comments"]
         #expect((commentIDs as? [ULID])?.count == 2)
         #expect(userA.comments.count == 2)
         #expect(comment.author === userA)
-        
+
         userA.comments.remove(at: 0)
-        
+
         let newCommentIDs = userA.extractPrimitiveState().values["comments"]
         #expect((newCommentIDs as? [ULID])?.count == 1)
         #expect(userA.comments.count == 1)
         #expect(comment.author === userA)
-        
+
         userA.comments.remove(at: 0)
-        
+
         let nextCommentIDs = userA.extractPrimitiveState().values["comments"]
         #expect((nextCommentIDs as? [ULID])?.count == 0)
         #expect(userA.comments.count == 0)
         #expect(comment.author == nil)
     }
-    
+
     @Test
     func `removing OneRelationship should remove all of type from ManyRelationship`() async throws {
-        let dbPath = try prepareContainerLocation(name: "RelationshipRemovingOneDuplicateOnlyRemovesOneFromOtherSide")
-        
+        let dbPath =
+            try prepareContainerLocation(
+                name: "RelationshipRemovingOneDuplicateOnlyRemovesOneFromOtherSide"
+            )
+
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
@@ -289,32 +302,36 @@ extension RelationshipTest {
             appID: "de.amethystsoft.vein.RelationshipTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-        
+
         let userA = V0_0_1.User(name: "Mia")
         let comment = V0_0_1.Comment(text: "Transferable post")
-        
+
         try container.context.insert(userA)
         userA.comments.append(comment)
         userA.comments.append(comment)
         try container.context.save()
-        
+
         let commentIDs = userA.extractPrimitiveState().values["comments"]
         #expect((commentIDs as? [ULID])?.count == 2)
         #expect(userA.comments.count == 2)
         #expect(comment.author === userA)
-        
+
         comment.author = nil
-        
+
         let nextCommentIDs = userA.extractPrimitiveState().values["comments"]
         #expect((nextCommentIDs as? [ULID])?.count == 0)
         #expect(userA.comments.count == 0)
         #expect(comment.author == nil)
     }
-    
+
     @Test
-    func `reparenting OneRelationship should remove all of type from ManyRelationship`() async throws {
-        let dbPath = try prepareContainerLocation(name: "RelationshipRemovingOneDuplicateOnlyRemovesOneFromOtherSide")
-        
+    func `reparenting OneRelationship should remove all of type from ManyRelationship`(
+    ) async throws {
+        let dbPath =
+            try prepareContainerLocation(
+                name: "RelationshipRemovingOneDuplicateOnlyRemovesOneFromOtherSide"
+            )
+
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
@@ -322,24 +339,24 @@ extension RelationshipTest {
             appID: "de.amethystsoft.vein.RelationshipTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-        
+
         let userA = V0_0_1.User(name: "Mia")
         let userB = V0_0_1.User(name: "Skyla")
         let comment = V0_0_1.Comment(text: "Transferable post")
-        
+
         try container.context.insert(userA)
         try container.context.insert(userB)
         userA.comments.append(comment)
         userA.comments.append(comment)
         try container.context.save()
-        
+
         let commentIDs = userA.extractPrimitiveState().values["comments"]
         #expect((commentIDs as? [ULID])?.count == 2)
         #expect(userA.comments.count == 2)
         #expect(comment.author === userA)
-        
+
         comment.author = userB
-        
+
         let nextCommentIDsA = userA.extractPrimitiveState().values["comments"]
         let nextCommentIDsB = userB.extractPrimitiveState().values["comments"]
         #expect((nextCommentIDsA as? [ULID])?.count == 0)
@@ -348,11 +365,15 @@ extension RelationshipTest {
         #expect(userB.comments.count == 1)
         #expect(comment.author === userB)
     }
-    
+
     @Test
-    func `adding already parented OneRelationship to new many Relationship reparents it`() async throws {
-        let dbPath = try prepareContainerLocation(name: "RelationshipRemovingOneDuplicateOnlyRemovesOneFromOtherSide")
-        
+    func `adding already parented OneRelationship to new many Relationship reparents it`(
+    ) async throws {
+        let dbPath =
+            try prepareContainerLocation(
+                name: "RelationshipRemovingOneDuplicateOnlyRemovesOneFromOtherSide"
+            )
+
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
@@ -360,24 +381,24 @@ extension RelationshipTest {
             appID: "de.amethystsoft.vein.RelationshipTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-        
+
         let userA = V0_0_1.User(name: "Mia")
         let userB = V0_0_1.User(name: "Skyla")
         let comment = V0_0_1.Comment(text: "Transferable post")
-        
+
         try container.context.insert(userA)
         try container.context.insert(userB)
         userA.comments.append(comment)
         userA.comments.append(comment)
         try container.context.save()
-        
+
         let commentIDs = userA.extractPrimitiveState().values["comments"]
         #expect((commentIDs as? [ULID])?.count == 2)
         #expect(userA.comments.count == 2)
         #expect(comment.author === userA)
-        
+
         userB.comments.append(comment)
-        
+
         let nextCommentIDsA = userA.extractPrimitiveState().values["comments"]
         let nextCommentIDsB = userB.extractPrimitiveState().values["comments"]
         #expect((nextCommentIDsA as? [ULID])?.count == 0)
@@ -386,11 +407,14 @@ extension RelationshipTest {
         #expect(userB.comments.count == 1)
         #expect(comment.author === userB)
     }
-    
+
     @Test
     func `removing multiple leaves correct result`() async throws {
-        let dbPath = try prepareContainerLocation(name: "RelationshipRemovingOneDuplicateOnlyRemovesOneFromOtherSide")
-        
+        let dbPath =
+            try prepareContainerLocation(
+                name: "RelationshipRemovingOneDuplicateOnlyRemovesOneFromOtherSide"
+            )
+
         let container = try ModelContainer(
             V0_0_2.self,
             migration: Migration.self,
@@ -398,10 +422,10 @@ extension RelationshipTest {
             appID: "de.amethystsoft.vein.RelationshipTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-        
+
         let post = V0_0_2.Post(title: "Vein 1.0")
         let tag = V0_0_2.Tag(name: "Swift")
-        
+
         try container.context.insert(post)
         post.tags.append(tag)
         post.tags.append(tag)
@@ -409,16 +433,16 @@ extension RelationshipTest {
         post.tags.append(tag)
         post.tags.append(tag)
         try container.context.save()
-        
+
         let tagIDs = post.extractPrimitiveState().values["tags"]
         let postIDs = tag.extractPrimitiveState().values["posts"]
         #expect((tagIDs as? [ULID])?.count == 5)
         #expect((postIDs as? [ULID])?.count == 5)
         #expect(post.tags.count == 5)
         #expect(tag.posts.count == 5)
-        
+
         post.tags.removeFirst(3)
-        
+
         let newTagIDs = post.extractPrimitiveState().values["tags"]
         let newPostIDs = tag.extractPrimitiveState().values["posts"]
         #expect((newTagIDs as? [ULID])?.count == 2)
@@ -426,11 +450,14 @@ extension RelationshipTest {
         #expect(post.tags.count == 2)
         #expect(tag.posts.count == 2)
     }
-    
+
     @Test
     func `deletion removes all references`() async throws {
-        let dbPath = try prepareContainerLocation(name: "RelationshipRemovingOneDuplicateOnlyRemovesOneFromOtherSide")
-        
+        let dbPath =
+            try prepareContainerLocation(
+                name: "RelationshipRemovingOneDuplicateOnlyRemovesOneFromOtherSide"
+            )
+
         let container = try ModelContainer(
             V0_0_2.self,
             migration: Migration.self,
@@ -438,20 +465,20 @@ extension RelationshipTest {
             appID: "de.amethystsoft.vein.RelationshipTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-        
+
         let postA = V0_0_2.Post(title: "Vein 1.0")
         let postB = V0_0_2.Post(title: "Vein 1.1")
         let tag = V0_0_2.Tag(name: "Swift")
-        
+
         try container.context.insert(postA)
         try container.context.insert(postB)
         postA.tags.append(tag)
         postA.tags.append(tag)
         postB.tags.append(tag)
         postB.tags.append(tag)
-        
+
         try container.context.save()
-        
+
         let tagIDsA = postA.extractPrimitiveState().values["tags"]
         let tagIDsB = postB.extractPrimitiveState().values["tags"]
         let postIDs = tag.extractPrimitiveState().values["posts"]
@@ -460,9 +487,9 @@ extension RelationshipTest {
         #expect((tagIDsB as? [ULID])?.count == 2)
         #expect(postB.tags.count == 2)
         #expect((postIDs as? [ULID])?.count == 4)
-        
+
         try container.context.delete(tag)
-        
+
         let nextTagIDsA = postA.extractPrimitiveState().values["tags"]
         let nextTagIDsB = postB.extractPrimitiveState().values["tags"]
         let nextPostIDs = tag.extractPrimitiveState().values["posts"]
@@ -508,28 +535,28 @@ fileprivate enum V0_0_1: VersionedSchema {
 fileprivate enum V0_0_2: VersionedSchema {
     static let version = ModelVersion(0, 0, 2)
     static let models: [any Vein.PersistentModel.Type] = [Tag.self, Post.self]
-    
+
     @Model
     final class Tag: Identifiable {
         @Field
         var name: String
-        
+
         @Relationship(inverse: \Post.tags)
         var posts: Array<Post>
-        
+
         init(name: String) {
             self.name = name
         }
     }
-    
+
     @Model
     final class Post: Identifiable {
         @Relationship
         var tags: Array<Tag>
-        
+
         @Field
         var title: String
-        
+
         init(title: String) {
             self.title = title
         }

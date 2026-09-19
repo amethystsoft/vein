@@ -400,7 +400,7 @@ struct ManagedObjectContextTests {
                 throw error
             }
         }
-        
+
         #expect(field.wrappedValue == nil)
     }
 
