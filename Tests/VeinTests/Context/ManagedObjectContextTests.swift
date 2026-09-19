@@ -506,6 +506,30 @@ struct ManagedObjectContextTests {
         let results = try container.context.fetchAll(V0_0_1.Test.self)
         #expect(results.count == 1)
     }
+    
+    @Test("Model is rolled back to original state correctly")
+    func modelRollback() throws {
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.ManagedObjectContextTests",
+            encryptionEnabled: false
+        )
+        
+        let model = V0_0_1.Test(flag: true)
+        
+        try container.context.insert(model)
+        try container.context.save()
+        
+        model.flag = false
+        
+        try container.context.delete(model)
+        
+        container.context.rollback()
+        
+        #expect(model.flag)
+    }
 }
 
 fileprivate enum V0_0_1: VersionedSchema {

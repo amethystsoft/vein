@@ -151,13 +151,11 @@ extension ManagedObjectContext {
         var insertsFromSave = insertsFromSave
         var updatesFromSave = updatesFromSave
         var deletesFromSave = deletesFromSave
-        var stateFromSave = stateFromSave
         
         for (type, deletedModels) in deletesCached {
             for (id, _) in deletedModels {
                 insertsFromSave[type]?[id] = nil
                 updatesFromSave[type]?[id] = nil
-                stateFromSave[type]?[id] = nil
             }
         }
         
@@ -165,7 +163,6 @@ extension ManagedObjectContext {
             for (id, _) in insertedModels {
                 deletesFromSave[type]?[id] = nil
                 updatesFromSave[type]?[id] = nil
-                stateFromSave[type]?[id] = nil
             }
         }
         

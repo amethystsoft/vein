@@ -542,6 +542,14 @@ extension ManagedObjectContext {
             writeCache.mutate { inserts, touches, deletes, primitiveStates in
                 for (identifier, models) in inserts {
                     for (_, model) in models {
+                        if
+                            let state = primitiveStates[
+                                model.typeIdentifier,
+                                default: [:]
+                            ][model.id]
+                                {
+                            model.applyPrimitiveState(state)
+                        }
                         model.context = nil
                         identityMap.remove(identifier, id: model.id)
                     }
