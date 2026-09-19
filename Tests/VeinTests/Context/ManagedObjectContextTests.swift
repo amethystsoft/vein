@@ -207,12 +207,14 @@ struct ManagedObjectContextTests {
         try container.context.delete(toUpdate)
         try container.context.delete(toInsert)
 
-        container.context.writeCache.mutate { inserts, updates, deletes, _ in
+        container.context.writeCache.mutate { inserts, updates, deletes, states in
             #expect(inserts.isEmpty)
             #expect(updates.isEmpty)
             #expect(deletes[identifier, default: [:]].count == 2)
             #expect(deletes[identifier, default: [:]].keys.contains { $0 == toInsert.id })
             #expect(deletes[identifier, default: [:]].keys.contains { $0 == toUpdate.id })
+            #expect(states[identifier, default: [:]].count == 1)
+            #expect(states[identifier, default: [:]].keys.contains { $0 == toUpdate.id })
         }
 
         #expect(!toUpdate.isManaged)
