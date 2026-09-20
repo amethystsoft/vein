@@ -394,7 +394,7 @@ public final class ModelContainer: @unchecked Sendable {
 
         return nil
     }
-    
+
     static nonisolated func systemSetup(container: ModelContainer) throws {
         let context = container.context!
         let latestSystemTable = try context.getSystemTable()
@@ -403,22 +403,22 @@ public final class ModelContainer: @unchecked Sendable {
             UInt32(latestSystemTable.veinVersionMinor),
             UInt32(latestSystemTable.veinVersionPatch)
         )
-        
-        /*var doneAutoheals = [String]()
-        for heal in _Autoheal.allCases {
-            if
-                latestUsedVersion < heal.versionIntroduced,
-                !latestSystemTable.appliedAutheals.contains(heal.rawValue),
-                container.modelConfiguration.shouldRunAutoheal(heal)
-            {
-                try context.transaction {
-                    try heal.run(container)
-                    doneAutoheals.append(heal.rawValue)
-                }
-            }
-        }*/
+
+        /// var doneAutoheals = [String]()
+        // for heal in _Autoheal.allCases {
+        //    if
+        //        latestUsedVersion < heal.versionIntroduced,
+        //        !latestSystemTable.appliedAutheals.contains(heal.rawValue),
+        //        container.modelConfiguration.shouldRunAutoheal(heal)
+        //    {
+        //        try context.transaction {
+        //            try heal.run(container)
+        //            doneAutoheals.append(heal.rawValue)
+        //        }
+        //    }
+        // }
         try context.createSystemTable()
-        //try context.updateExecutedAutoheals(adding: doneAutoheals)
+        // try context.updateExecutedAutoheals(adding: doneAutoheals)
         try context.createMigrationsTable()
     }
 }

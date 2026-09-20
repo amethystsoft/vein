@@ -23,7 +23,7 @@ extension ManagedObjectContext {
             t.column(SystemTable.veinVersionPatch)
             t.column(SystemTable.appliedAutoheals)
         })
-        
+
         let version = Self.veinVersion
         if try _getSystemTable() == nil {
             let insert = SystemTable.systemTable.insert(
@@ -43,17 +43,17 @@ extension ManagedObjectContext {
             let update = SystemTable.systemTable.update(
                 [
                     SQLExpression<Int64>(SystemTable.veinVersionMajor)
-                    <- SQLExpression<Int64>(value: Int64(version.major)),
+                        <- SQLExpression<Int64>(value: Int64(version.major)),
                     SQLExpression<Int64>(SystemTable.veinVersionMinor)
-                    <- SQLExpression<Int64>(value: Int64(version.minor)),
+                        <- SQLExpression<Int64>(value: Int64(version.minor)),
                     SQLExpression<Int64>(SystemTable.veinVersionPatch)
-                    <- SQLExpression<Int64>(value: Int64(version.patch))
+                        <- SQLExpression<Int64>(value: Int64(version.patch))
                 ]
             )
             try connection.run(update)
         }
     }
-    
+
     internal nonisolated func updateExecutedAutoheals(adding heals: [String]) throws {
         guard !heals.isEmpty else { return }
         guard let table = try _getSystemTable() else {
@@ -61,33 +61,33 @@ extension ManagedObjectContext {
             let insert = SystemTable.systemTable.insert(
                 [
                     SQLExpression<Int64>(SystemTable.veinVersionMajor)
-                    <- SQLExpression<Int64>(value: Int64(Self.veinVersion.major)),
+                        <- SQLExpression<Int64>(value: Int64(Self.veinVersion.major)),
                     SQLExpression<Int64>(SystemTable.veinVersionMinor)
-                    <- SQLExpression<Int64>(value: Int64(Self.veinVersion.minor)),
+                        <- SQLExpression<Int64>(value: Int64(Self.veinVersion.minor)),
                     SQLExpression<Int64>(SystemTable.veinVersionPatch)
-                    <- SQLExpression<Int64>(value: Int64(Self.veinVersion.patch)),
+                        <- SQLExpression<Int64>(value: Int64(Self.veinVersion.patch)),
                     SQLExpression<String>(SystemTable.appliedAutoheals)
-                    <- SQLExpression<String>(value: "[\(serialized)]")
+                        <- SQLExpression<String>(value: "[\(serialized)]")
                 ]
             )
             try connection.run(insert)
             return
         }
-        
+
         var autoheals = table.appliedAutheals
         autoheals.append(contentsOf: heals)
         let serialized = heals.map { #""\#($0)""# }.joined(separator: ",")
-        
+
         let update = SystemTable.systemTable.filter(SQLExpression<Bool>(value: true))
             .update(SQLExpression<String>(SystemTable.appliedAutoheals)
-                    <- SQLExpression<String>(value: "[\(serialized)]"))
+                <- SQLExpression<String>(value: "[\(serialized)]"))
         try connection.run(update)
     }
-    
-    public nonisolated func runAutoheal(_ heal: _Autoheal) throws {
-        try heal.run(modelContainer)
-    }
-    
+
+    /// public nonisolated func runAutoheal(_ heal: _Autoheal) throws {
+    //    try heal.run(modelContainer)
+    // }
+
     internal nonisolated func _getSystemTable() throws -> SystemTable.DTO? {
         let select = SystemTable.systemTable.select([
             SystemTable.veinVersionMajor,
@@ -95,7 +95,7 @@ extension ManagedObjectContext {
             SystemTable.veinVersionPatch,
             SystemTable.appliedAutoheals
         ]).limit(1)
-        
+
         let result = try connection.prepare(select)
         for row in result {
             let autoheals = row[SystemTable.appliedAutoheals]
@@ -109,7 +109,7 @@ extension ManagedObjectContext {
                 veinVersionPatch: row[SystemTable.veinVersionPatch],
                 appliedAutheals: decoded
             )
-            
+
             if ModelVersion(
                 UInt32(dto.veinVersionMajor),
                 UInt32(dto.veinVersionMinor),
@@ -117,13 +117,13 @@ extension ManagedObjectContext {
             ) > Self.veinVersion {
                 throw MOCError.dbOpenedWithOlderVeinVersion
             }
-            
+
             return dto
         }
-        
+
         return nil
     }
-    
+
     internal nonisolated func getSystemTable() throws -> SystemTable.DTO {
         do {
             return try _getSystemTable() ?? SystemTable.DTO(
@@ -134,7 +134,7 @@ extension ManagedObjectContext {
             )
         } catch let error as SQLiteDB.Result {
             let parsed = error.parse()
-            
+
             if case .noSuchTable = parsed {
                 if try _tableExists(for: MigrationTable.schema) {
                     return SystemTable.DTO(
@@ -153,11 +153,11 @@ extension ManagedObjectContext {
                     )
                 }
             }
-            
+
             throw parsed
         }
     }
-    
+
     internal nonisolated func createMigrationsTable() throws {
         try connection.run(MigrationTable.migrationsTable.create(ifNotExists: true) { t in
             t.column(MigrationTable.id, primaryKey: .autoincrement)
@@ -256,7 +256,7 @@ enum SystemTable {
     static let veinVersionMinor = SQLExpression<Int64>("vein_version_minor")
     static let veinVersionPatch = SQLExpression<Int64>("vein_version_patch")
     static let appliedAutoheals = SQLExpression<String>("applied_autoheals")
-    
+
     struct DTO {
         let veinVersionMajor: Int64
         let veinVersionMinor: Int64
