@@ -11,7 +11,9 @@
 [Docs and Tutorials](https://vein.amethystsoft.de)
 
 > [!IMPORTANT]
-> Vein’s API is stable, but due to it being relatively new,
+> Vein’s API is stable and we put a lot of effort into preventing bugs via our suite of unit tests.
+>
+> Due to it being relatively new though,
 > we recommend properly testing what you do automatically or manually.
 > 
 > Please report bugs if you find them to improve Vein for everyone.
