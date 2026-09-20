@@ -162,16 +162,17 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
                             _inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
                         }
                     }
-                    
+
                     if
                         let newValue,
                         let inverseField = newValue._relationships.first(
-                        where: { $0.instanceKey == _inverseKey }
-                    ) {
+                            where: { $0.instanceKey == _inverseKey }
+                        )
+                    {
                         if
                             let oneRelationship = inverseField as? any OneRelationship,
                             let id = oneRelationship._persistableValue
-                                {
+                        {
                             oneRelationship._updateOtherSide(isRemoving: true, id: id)
                         } else if let manyRelationship = inverseField as? any ManyRelationship {
                             let predicateMatches = context._prepareForChange(of: newValue)
@@ -180,7 +181,7 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
                             context._markTouched(newValue, previouslyMatching: predicateMatches)
                         }
                     }
-                    
+
                     // Disconnect from the old relation first while wrappedValue points to it.
                     _updateOtherSide(isRemoving: true, id: previousID)
                     // Connect to the new relation now that wrappedValue points to it.

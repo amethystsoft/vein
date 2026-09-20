@@ -76,11 +76,14 @@ extension ManagedObjectContext {
 
         var autoheals = table.appliedAutheals
         autoheals.append(contentsOf: heals)
-        let serialized = heals.map { #""\#($0)""# }.joined(separator: ",")
+        let serialized = String(
+            decoding: try JSONEncoder().encode(autoheals),
+            as: UTF8.self
+        )
 
         let update = SystemTable.systemTable.filter(SQLExpression<Bool>(value: true))
             .update(SQLExpression<String>(SystemTable.appliedAutoheals)
-                <- SQLExpression<String>(value: "[\(serialized)]"))
+                <- SQLExpression<String>(value: serialized))
         try connection.run(update)
     }
 
