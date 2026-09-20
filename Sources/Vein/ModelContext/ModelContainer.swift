@@ -404,7 +404,7 @@ public final class ModelContainer: @unchecked Sendable {
             UInt32(latestSystemTable.veinVersionPatch)
         )
         
-        var doneAutoheals = [String]()
+        /*var doneAutoheals = [String]()
         for heal in _Autoheal.allCases {
             if
                 latestUsedVersion < heal.versionIntroduced,
@@ -416,9 +416,9 @@ public final class ModelContainer: @unchecked Sendable {
                     doneAutoheals.append(heal.rawValue)
                 }
             }
-        }
+        }*/
         try context.createSystemTable()
-        try context.updateExecutedAutoheals(adding: doneAutoheals)
+        //try context.updateExecutedAutoheals(adding: doneAutoheals)
         try context.createMigrationsTable()
     }
 }

@@ -1,20 +1,18 @@
 import SQLiteDB
-public enum _Autoheal: String, CaseIterable {
-    case v1_1_1_relationshipReferenceFix
+/*enum _Autoheal: String, CaseIterable {
+    _empty
 }
 
 extension _Autoheal {
     public var versionIntroduced: ModelVersion {
         return switch self {
-            case .v1_1_1_relationshipReferenceFix:
-                ModelVersion(1, 1, 1)
+            
         }
     }
     
     var implementation: AutohealImplementation {
         switch self {
-            case .v1_1_1_relationshipReferenceFix:
-                Vein1_1_1RelationshipReferenceBalanceHeal()
+            
         }
     }
     
@@ -25,4 +23,4 @@ extension _Autoheal {
 
 protocol AutohealImplementation {
     nonisolated func run(with container: ModelContainer) throws
-}
+}*/

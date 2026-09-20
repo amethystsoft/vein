@@ -81,6 +81,7 @@ extension ManagedObjectContext {
         let update = SystemTable.systemTable.filter(SQLExpression<Bool>(value: true))
             .update(SQLExpression<String>(SystemTable.appliedAutoheals)
                     <- SQLExpression<String>(value: "[\(serialized)]"))
+        try connection.run(update)
     }
     
     public nonisolated func runAutoheal(_ heal: _Autoheal) throws {

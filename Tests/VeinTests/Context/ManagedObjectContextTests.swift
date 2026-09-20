@@ -422,7 +422,7 @@ struct ManagedObjectContextTests {
         try container.context.save()
 
         let tables = try connection.schema.objectDefinitions(type: .table)
-        #expect(tables.count == 3)
+        #expect(tables.count == 4)
 
         let schemas = try container.context.getAllStoredSchemas()
         #expect(schemas == [V0_0_1.Test.schema])

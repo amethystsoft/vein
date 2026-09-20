@@ -265,7 +265,8 @@ extension ManagedObjectContext {
         let tables = try connection.schema.objectDefinitions(type: .table)
         return tables.map(\.name).filter {
             [
-                MigrationTable.schema
+                MigrationTable.schema,
+                SystemTable.schema
             ].contains($0) == false &&
                 !$0.starts(with: "sqlite_")
         }
@@ -275,7 +276,8 @@ extension ManagedObjectContext {
         let tables = try connection.schema.objectDefinitions(type: .table)
         let filtered = tables.map(\.name).filter {
             [
-                MigrationTable.schema
+                MigrationTable.schema,
+                SystemTable.schema
             ].contains($0) == false &&
                 !$0.starts(with: "sqlite_")
         }
