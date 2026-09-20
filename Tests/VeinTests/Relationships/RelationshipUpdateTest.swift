@@ -499,6 +499,166 @@ extension RelationshipTest {
         #expect(postB.tags.count == 0)
         #expect((nextPostIDs as? [ULID])?.count == 0)
     }
+
+    @Test("Reparenting OneRelationship removes other side")
+    func reparentingOneRelationshipRemovesOtherSide() throws {
+        let dbPath =
+            try prepareContainerLocation(
+                name: "RelationshipRemovingOneDuplicateOnlyRemovesOneFromOtherSide"
+            )
+
+        let container = try ModelContainer(
+            V0_0_3.self,
+            migration: Migration.self,
+            at: dbPath,
+            appID: "de.amethystsoft.vein.RelationshipTests",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+        )
+
+        let parentA = V0_0_3.Parent(name: "A")
+        let parentB = V0_0_3.Parent(name: "B")
+        let child = V0_0_3.Child(name: "Springer nach E5")
+
+        try container.context.insert(parentA)
+        try container.context.insert(parentB)
+
+        parentA.child = child
+        #expect(parentA.child === child)
+        #expect(child.parent === parentA)
+        #expect(parentA.extractPrimitiveState().values["child"] as? ULID? == child.id)
+        #expect(child.extractPrimitiveState().values["parent"] as? ULID? == parentA.id)
+
+        parentB.child = child
+        #expect(parentB.child === child)
+        #expect(child.parent === parentB)
+        #expect(parentB.extractPrimitiveState().values["child"] as? ULID? == child.id)
+        #expect(child.extractPrimitiveState().values["parent"] as? ULID? == parentB.id)
+        #expect(parentA.child == nil)
+        #expect(parentA.extractPrimitiveState().values["child"] as? ULID? == nil)
+    }
+
+    @Test("Reparenting OneRelationship removes other side with previous relationship")
+    func reparentingOneRelationshipRemovesOtherSideWithPreviousRelationship() throws {
+        let dbPath =
+            try prepareContainerLocation(
+                name: "RelationshipRemovingOneDuplicateOnlyRemovesOneFromOtherSide"
+            )
+
+        let container = try ModelContainer(
+            V0_0_3.self,
+            migration: Migration.self,
+            at: dbPath,
+            appID: "de.amethystsoft.vein.RelationshipTests",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+        )
+
+        let parentA = V0_0_3.Parent(name: "A")
+        let parentB = V0_0_3.Parent(name: "B")
+        let child = V0_0_3.Child(name: "Springer nach E5")
+        let child2 = V0_0_3.Child(name: "Springer nach E5")
+
+        try container.context.insert(parentA)
+        try container.context.insert(parentB)
+
+        parentA.child = child
+        parentB.child = child2
+        #expect(parentA.child === child)
+        #expect(child.parent === parentA)
+        #expect(parentB.child === child2)
+        #expect(child2.parent === parentB)
+        #expect(parentA.extractPrimitiveState().values["child"] as? ULID? == child.id)
+        #expect(child.extractPrimitiveState().values["parent"] as? ULID? == parentA.id)
+        #expect(parentB.extractPrimitiveState().values["child"] as? ULID? == child2.id)
+        #expect(child2.extractPrimitiveState().values["parent"] as? ULID? == parentB.id)
+
+        parentB.child = child
+        #expect(parentB.child === child)
+        #expect(child.parent === parentB)
+        #expect(parentB.extractPrimitiveState().values["child"] as? ULID? == child.id)
+        #expect(child.extractPrimitiveState().values["parent"] as? ULID? == parentB.id)
+        #expect(parentA.child == nil)
+        #expect(child2.parent == nil)
+        #expect(parentA.extractPrimitiveState().values["child"] as? ULID? == nil)
+        #expect(child2.extractPrimitiveState().values["parent"] as? ULID? == nil)
+    }
+    
+    @Test("Reparenting OneRelationship removes other side with previous relationship many relationship")
+    func reparentingOneRelationshipRemovesOtherSideWithPreviousRelationshipManyRelationship() throws {
+        let dbPath =
+        try prepareContainerLocation(
+            name: "RelationshipRemovingOneDuplicateOnlyRemovesOneFromOtherSide"
+        )
+        
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: dbPath,
+            appID: "de.amethystsoft.vein.RelationshipTests",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+        )
+        
+        let parentA = V0_0_1.Comment(text: "A")
+        let parentB = V0_0_1.Comment(text: "B")
+        let child = V0_0_1.User(name: "Springer nach E5")
+        let child2 = V0_0_1.User(name: "Springer nach E5")
+        
+        try setup()
+        try container.context.save()
+        try verify()
+        
+        func setup() throws {
+            try container.context.insert(parentA)
+            try container.context.insert(parentB)
+            
+            parentA.author = child
+            parentB.author = child2
+            #expect(parentA.author === child)
+            #expect(child.comments.contains { $0 === parentA })
+            #expect(parentB.author === child2)
+            #expect(child2.comments.contains { $0 === parentB })
+            #expect(parentA.extractPrimitiveState().values["author"] as? ULID? == child.id)
+            #expect(child.extractPrimitiveState().values["comments"] as? [ULID] == [parentA.id])
+            #expect(parentB.extractPrimitiveState().values["author"] as? ULID? == child2.id)
+            #expect(child2.extractPrimitiveState().values["comments"] as? [ULID] == [parentB.id])
+            
+            parentB.author = child
+            #expect(parentB.author === child)
+            #expect(child.comments.contains { $0 === parentB })
+            #expect(parentA.author === child)
+            #expect(child2.comments.isEmpty)
+            #expect(parentB.extractPrimitiveState().values["author"] as? ULID? == child.id)
+            #expect((child.extractPrimitiveState().values["comments"] as? [ULID])?.sorted() == [parentB.id, parentA.id].sorted())
+            #expect(parentA.extractPrimitiveState().values["author"] as? ULID? == child.id)
+            #expect(child2.extractPrimitiveState().values["comments"] as? [ULID] == [])
+        }
+        
+        func verify() throws {
+            let newContainer = try ModelContainer(
+                V0_0_1.self,
+                migration: Migration.self,
+                connection: container.getConnection(),
+                appID: "de.amethystsoft.vein.RelationshipTests",
+                encryptionEnabled: ProcessInfo.shouldEnableEncryption
+            )
+            
+            let users = try newContainer.context.fetchAll(V0_0_1.User.self)
+            let user1 = try #require(users.first { $0.id == child.id })
+            let user2 = try #require(users.first { $0.id == child2.id })
+            
+            let comments = try newContainer.context.fetchAll(V0_0_1.Comment.self)
+            let commentA = try #require(comments.first { $0.id == parentA.id })
+            let commentB = try #require(comments.first { $0.id == parentB.id })
+            
+            #expect(commentB.author === user1)
+            #expect(user1.comments.contains { $0 === commentB })
+            #expect(commentA.author === user1)
+            #expect(user2.comments.isEmpty)
+            #expect(commentB.extractPrimitiveState().values["author"] as? ULID? == user1.id)
+            #expect((user1.extractPrimitiveState().values["comments"] as? [ULID])?.sorted() == [commentB.id, commentA.id].sorted())
+            #expect(commentA.extractPrimitiveState().values["author"] as? ULID? == user1.id)
+            #expect(user2.extractPrimitiveState().values["comments"] as? [ULID] == [])
+        }
+    }
 }
 
 fileprivate enum V0_0_1: VersionedSchema {
@@ -563,9 +723,40 @@ fileprivate enum V0_0_2: VersionedSchema {
     }
 }
 
+fileprivate enum V0_0_3: VersionedSchema {
+    static let version = ModelVersion(0, 0, 3)
+    static let models: [any Vein.PersistentModel.Type] = [Parent.self, Child.self]
+
+    @Model
+    final class Parent: Identifiable {
+        @Field
+        var name: String
+
+        @Relationship(inverse: \Child.parent)
+        var child: Child?
+
+        init(name: String) {
+            self.name = name
+        }
+    }
+
+    @Model
+    final class Child: Identifiable {
+        @Relationship
+        var parent: Parent?
+
+        @Field
+        var name: String
+
+        init(name: String) {
+            self.name = name
+        }
+    }
+}
+
 fileprivate enum Migration: SchemaMigrationPlan {
     static var schemas: [any Vein.VersionedSchema.Type] {
-        [V0_0_1.self, V0_0_2.self]
+        [V0_0_1.self, V0_0_2.self, V0_0_3.self]
     }
 
     static var stages: [MigrationStage] {[]}
