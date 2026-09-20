@@ -10,6 +10,12 @@
 [Table of Contents](#table-of-contents)
 [Docs and Tutorials](https://vein.amethystsoft.de)
 
+> [!IMPORTANT]
+> Vein’s API is stable, but due to it being relatively new,
+> we recommend properly testing what you do automatically or manually.
+> 
+> Please report bugs if you find them to improve Vein for everyone.
+
 ## Example
 ### Declaring Models
 ```swift
