@@ -533,7 +533,7 @@
             let child = V0_0_1.Child()
             try container.context.insert(model)
             model.children.append(child)
-                
+
             // TODO: decrease count to 1 and fix cause
             try await confirmation(
                 "Confirm objectWillChange was signaled",
@@ -590,7 +590,7 @@
             let child = V0_0_1.Child()
             try container.context.insert(child)
             child.parent = model
-            
+
             // TODO: decrease count to 1 and fix cause
             try await confirmation(
                 "Confirm objectWillChange was signaled",
