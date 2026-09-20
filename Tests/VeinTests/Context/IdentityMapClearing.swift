@@ -32,38 +32,17 @@ struct IdentityMapClearing {
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
 
-        let test = V0_0_1.Test(flag: true)
-        let test2 = V0_0_1.Test(flag: false)
-
-        try container.context.insert(test)
-        try container.context.insert(test2)
-
-        let identityMap = container.context.identityMap
-
-        let mapPreSave = identityMap.dump()
-
-        #expect(mapPreSave[V0_0_1.Test.typeIdentifier]?[test.id]?.wrappedValue != nil)
-        #expect(mapPreSave[V0_0_1.Test.typeIdentifier]?[test2.id]?.wrappedValue != nil)
-
-        identityMap.setToNil(type: V0_0_1.Test.typeIdentifier, id: test.id)
-
-        guard let wrapperPostMutation = identityMap.dump()[V0_0_1.Test.typeIdentifier]?[test.id]
-        else {
-            Issue.record("Unexpectedly didn't find the test object in the map.")
-            return
+        try await assertIdentityMapCleanup(container: container) { map, id1, id2, count in
+            #expect(count == 2)
+            #expect(map[V0_0_1.Test.typeIdentifier]?[id1]?.wrappedValue != nil)
+            #expect(map[V0_0_1.Test.typeIdentifier]?[id2]?.wrappedValue != nil)
+        } performChange: { context, _ in
+            try context.save()
+        } validateResult: { map, id1, id2, count in
+            #expect(count == 1)
+            #expect(map[id1] == nil)
+            #expect(map[id2]?.wrappedValue != nil)
         }
-
-        #expect(wrapperPostMutation.isDeallocated)
-
-        try container.context.save()
-
-        guard let mapPostSave = identityMap.dump()[V0_0_1.Test.typeIdentifier] else {
-            Issue.record("Unexpectedly didn't find type in identity map.")
-            return
-        }
-
-        #expect(mapPostSave[test.id] == nil)
-        #expect(mapPostSave[test2.id]?.wrappedValue != nil)
     }
 
     @Test func cleanUpAfterTimeout() async throws {
@@ -79,6 +58,62 @@ struct IdentityMapClearing {
             modelConfiguration: config
         )
 
+        try await assertIdentityMapCleanup(container: container) { map, id1, id2, count in
+            #expect(count == 2)
+            #expect(map[V0_0_1.Test.typeIdentifier]?[id1]?.wrappedValue != nil)
+            #expect(map[V0_0_1.Test.typeIdentifier]?[id2]?.wrappedValue != nil)
+        } performChange: { context, id in
+            let timeout = Date().addingTimeInterval(5)
+            while context.identityMap.dump()[V0_0_1.Test.typeIdentifier]?[id] != nil {
+                if Date() > timeout {
+                    Issue.record("Timed out waiting for identity map key to be purged.")
+                    return
+                }
+                await Task.yield()
+                try await Task.sleep(for: .milliseconds(50))
+            }
+        } validateResult: { map, id1, id2, count in
+            #expect(count == 1)
+            #expect(map[id1] == nil)
+            #expect(map[id2]?.wrappedValue != nil)
+        }
+    }
+
+    @Test
+    func manualCleanup() async throws {
+        var config = ModelConfiguration.default
+        config.cleanStaleIdentityMapEntriesTimeoutSeconds = nil
+        config.cleanStaleIdentityMapEntriesOnSave = false
+
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.IdentityMapClearing",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption,
+            modelConfiguration: config
+        )
+
+        try await assertIdentityMapCleanup(container: container) { map, id1, id2, count in
+            #expect(count == 2)
+            #expect(map[V0_0_1.Test.typeIdentifier]?[id1]?.wrappedValue != nil)
+            #expect(map[V0_0_1.Test.typeIdentifier]?[id2]?.wrappedValue != nil)
+        } performChange: { context, _ in
+            try container.context.save()
+            container.context.compactIdentityMap()
+        } validateResult: { map, id1, id2, count in
+            #expect(count == 1)
+            #expect(map[id1] == nil)
+            #expect(map[id2]?.wrappedValue != nil)
+        }
+    }
+
+    private func assertIdentityMapCleanup(
+        container: ModelContainer,
+        validate: ([ObjectIdentifier : [ULID : WeakModel]], ULID, ULID, Int) -> Void,
+        performChange: (ManagedObjectContext, ULID) async throws -> Void,
+        validateResult: ([ULID : WeakModel], ULID, ULID, Int) -> Void
+    ) async throws {
         let test = V0_0_1.Test(flag: true)
         let test2 = V0_0_1.Test(flag: false)
 
@@ -86,11 +121,9 @@ struct IdentityMapClearing {
         try container.context.insert(test2)
 
         let identityMap = container.context.identityMap
-
         let mapPreSave = identityMap.dump()
 
-        #expect(mapPreSave[V0_0_1.Test.typeIdentifier]?[test.id]?.wrappedValue != nil)
-        #expect(mapPreSave[V0_0_1.Test.typeIdentifier]?[test2.id]?.wrappedValue != nil)
+        validate(mapPreSave, test.id, test2.id, identityMap.getTrackedCount())
 
         identityMap.setToNil(type: V0_0_1.Test.typeIdentifier, id: test.id)
 
@@ -102,23 +135,14 @@ struct IdentityMapClearing {
 
         #expect(wrapperPostMutation.isDeallocated)
 
-        let timeout = Date().addingTimeInterval(5)
-        while identityMap.dump()[V0_0_1.Test.typeIdentifier]?[test.id] != nil {
-            if Date() > timeout {
-                Issue.record("Timed out waiting for identity map key to be purged.")
-                return
-            }
-            await Task.yield()
-            try await Task.sleep(for: .milliseconds(50))
-        }
+        try await performChange(container.context, test.id)
 
-        guard let mapPostTimeout = identityMap.dump()[V0_0_1.Test.typeIdentifier] else {
+        guard let mapPostSave = identityMap.dump()[V0_0_1.Test.typeIdentifier] else {
             Issue.record("Unexpectedly didn't find type in identity map.")
             return
         }
 
-        #expect(mapPostTimeout[test.id] == nil)
-        #expect(mapPostTimeout[test2.id]?.wrappedValue != nil)
+        validateResult(mapPostSave, test.id, test2.id, identityMap.getTrackedCount())
     }
 }
 

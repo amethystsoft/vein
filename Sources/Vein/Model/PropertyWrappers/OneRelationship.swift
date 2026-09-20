@@ -138,12 +138,13 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
     }
 
     private func setAndNotify(_ newValue: Value) {
+        guard let model, let context = model.context else { return }
         let newID = newValue?.id
         var previousID: ULID?
 
         VeinNotificationGuard.$isProcessing.withValue(true) {
             _withObservationNotification({
-                model?.notifyOfChanges()
+                model.notifyOfChanges()
                 #if VeinSCUI
                     didChange.mutate { $0.send() }
                 #endif
@@ -156,13 +157,35 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
                 let isDifferent = previousID != newID
 
                 if isDifferent {
-                    // Disconnect from the old relation first while wrappedValue points to it.
-                    updateOtherSide(isRemoving: true, id: previousID)
-                }
+                    lock.withLock {
+                        if _inverseKey == nil {
+                            _inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
+                        }
+                    }
 
-                if isDifferent {
+                    if
+                        let newValue,
+                        let inverseField = newValue._relationships.first(
+                            where: { $0.instanceKey == _inverseKey }
+                        )
+                    {
+                        if
+                            let oneRelationship = inverseField as? any OneRelationship,
+                            let id = oneRelationship._persistableValue
+                        {
+                            oneRelationship._updateOtherSide(isRemoving: true, id: id)
+                        } else if let manyRelationship = inverseField as? any ManyRelationship {
+                            let predicateMatches = context._prepareForChange(of: newValue)
+                            manyRelationship._persistableValue.removeAll { $0 == model.id }
+                            manyRelationship.wasTouched = true
+                            context._markTouched(newValue, previouslyMatching: predicateMatches)
+                        }
+                    }
+
+                    // Disconnect from the old relation first while wrappedValue points to it.
+                    _updateOtherSide(isRemoving: true, id: previousID)
                     // Connect to the new relation now that wrappedValue points to it.
-                    updateOtherSide(isRemoving: false, id: newID)
+                    _updateOtherSide(isRemoving: false, id: newID)
                 }
             }
         }
@@ -170,14 +193,8 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
         wasTouched = true
     }
 
-    private func updateOtherSide(isRemoving: Bool, id: ULID?) {
+    public func _updateOtherSide(isRemoving: Bool, id: ULID?) {
         guard let model, let context = model.context else { return }
-
-        lock.withLock {
-            if _inverseKey == nil {
-                _inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
-            }
-        }
 
         guard let target = get(for: id) else { return }
         target._observers.value.removeObserver(id: model.id, key: instanceKey)
@@ -206,7 +223,6 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
                 inverseField.didChange.mutate { $0.send() }
             #endif
         }) {
-
             if let manyField = matchingField as? (any ManyRelationship) {
                 if isRemoving {
                     manyField._persistableValue.removeAll { $0 == model.id }
