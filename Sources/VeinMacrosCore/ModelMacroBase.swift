@@ -148,7 +148,7 @@ public struct ModelMacroBase {
             /// Gets  used to reference models in relationships.
             /// Immutable after insertion into the context.
             @Vein.PrimaryKey
-            var id: Vein.ULID
+            var id: Vein.ULID = ULID()
 
             @Vein.LazyField(suppressUIUpdates: true)
             var _updatedAt: Foundation.Date?

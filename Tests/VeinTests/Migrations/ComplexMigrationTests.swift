@@ -26,7 +26,9 @@ let testID = UUID()
 
 @MainActor
 @Suite(.serialized)
-struct MigrationTests {
+struct MigrationTests: @MainActor DiskUsingTest {
+    var additionalPath: String { "" }
+
     let logger = Logger(label: "de.amethystsoft.vein.test.migration")
 
     @Test
@@ -67,7 +69,7 @@ struct MigrationTests {
         let newContainer = try ModelContainer(
             ComplexSchemaV0_0_2.self,
             migration: ComplexMigrationSuccess.self,
-            at: dbPath,
+            connection: container.getConnection(),
             appID: "de.amethystsoft.vein.MigrationTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
@@ -83,28 +85,6 @@ struct MigrationTests {
         // Check if tables got updated/deleted like expected
         let newStoredSchemas = try newContainer.context.getAllStoredSchemas()
         #expect(newStoredSchemas == [ComplexSchemaV0_0_2.Test.schema])
-    }
-
-    func prepareContainerLocation(name: String) throws -> String {
-        let containerPath = FileManager.default.temporaryDirectory
-
-        let dbDir = containerPath.relativePath.appending("/veinTests/\(testID.uuidString)")
-
-        let dbPath = dbDir.appending("/\(name).sqlite3")
-
-        try FileManager.default.createDirectory(
-            atPath: dbDir,
-            withIntermediateDirectories: true
-        )
-
-        if !FileManager.default.fileExists(atPath: dbPath) {
-            FileManager.default.createFile(
-                atPath: dbPath,
-                contents: nil
-            )
-        }
-
-        return dbPath
     }
 }
 

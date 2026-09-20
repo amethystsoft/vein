@@ -39,7 +39,7 @@ extension MigrationTests {
         let newContainer = try ModelContainer(
             Version0_0_2.self,
             migration: MigrationPlan.self,
-            at: path,
+            connection: container.getConnection(),
             appID: "de.amethystsoft.vein.MigrationTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )

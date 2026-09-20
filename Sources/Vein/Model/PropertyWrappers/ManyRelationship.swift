@@ -69,7 +69,18 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
     // Post insert: read from idStore
     public var wrappedValue: Value {
         get {
-            get(for: lock.withLock { idStore })
+            return lock.withLock {
+                let models = get(for: idStore)
+                var resultModels = [T]()
+
+                for id in idStore {
+                    if let model = models[id] {
+                        resultModels.append(model)
+                    }
+                }
+
+                return resultModels
+            }
         }
         set {
             guard
@@ -93,9 +104,9 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
         self.deleteRule = deleteRule
     }
 
-    private func get(for ids: [ULID]) -> Value {
-        guard let model, let context = model.context else { return [] }
-        guard !ids.isEmpty else { return [] }
+    private func get(for ids: [ULID]) -> [ULID: T] {
+        guard let model, let context = model.context else { return [:] }
+        guard !ids.isEmpty else { return [:] }
 
         if _inverseKey.isNil {
             _inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
@@ -112,13 +123,13 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
             return result
         } catch {
             if case .noSuchTable = error {
-                return []
+                return [:]
             }
             if case .unexpectedlyEmptyResult = error {
                 if context.modelContainer.logConfiguration.unexpectedlyEmptyResults {
                     Self.logger.warning("Unexpectedly empty result for \(T.self)")
                 }
-                return []
+                return [:]
             }
 
             fatalError(error.localizedDescription)
@@ -146,16 +157,40 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
 
             let oldValue = get(for: oldIDs)
 
-            let removed = oldValue.filter { !newIDs.contains($0.id) }
-            let added = newValue.filter { !oldIDs.contains($0.id) }
+            var removed = [T]()
+            var added = [T]()
 
-            updateOtherSide(removed: removed, added: added)
+            let newValuesMapped = newValue.asIDDictionary
+
+            for op in newIDs.difference(from: oldIDs) {
+                switch op {
+                    case .insert(_, let element, _):
+                        if let value = newValuesMapped[element] {
+                            added.append(value)
+                        }
+                    case .remove(_, let element, _):
+                        if let value = oldValue[element] {
+                            removed.append(value)
+                        }
+                }
+            }
+
+            var remainingReferences: [ULID: Int] = [:]
+            for id in newIDs {
+                remainingReferences[id, default: 0] += 1
+            }
+
+            updateOtherSide(
+                removed: removed,
+                added: added,
+                remainingReferences: remainingReferences
+            )
 
             wasTouched = true
         }
     }
 
-    private func updateOtherSide(removed: [T], added: [T]) {
+    private func updateOtherSide(removed: [T], added: [T], remainingReferences: [ULID: Int]) {
         guard let model, let context = model.context else { return }
 
         if _inverseKey.isNil {
@@ -163,12 +198,17 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
         }
 
         for target in removed {
-            target._observers.value.removeObserver(id: model.id, key: instanceKey)
+            let remainingReferences = remainingReferences[target.id] ?? 0
+            if remainingReferences == 0 {
+                target._observers.value.removeObserver(id: model.id, key: instanceKey)
+            }
 
             guard let _inverseKey else {
                 continue
             }
-            model._observers.value.removeObserver(id: target.id, key: _inverseKey)
+            if remainingReferences == 0 {
+                model._observers.value.removeObserver(id: target.id, key: _inverseKey)
+            }
 
             target._setupFields()
             let predicateMatches = context._prepareForChange(of: target)
@@ -182,10 +222,12 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                 #endif
             }) {
                 if let manyField = matchingField as? (any ManyRelationship) {
-                    manyField._persistableValue.removeAll { $0 == model.id }
-                    manyField.wasTouched = true
+                    if let index = manyField._persistableValue.firstIndex(of: model.id) {
+                        manyField._persistableValue.remove(at: index)
+                        manyField.wasTouched = true
+                    }
                 } else if let oneField = matchingField as? (any OneRelationship) {
-                    if oneField._persistableValue == model.id {
+                    if oneField._persistableValue == model.id && remainingReferences == 0 {
                         oneField._persistableValue = nil
                     }
                     oneField.wasTouched = true
@@ -233,11 +275,13 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                 }
 
                 if let manyField = matchingField as? (any ManyRelationship) {
-                    if !manyField._persistableValue.contains(model.id) {
-                        manyField._persistableValue.append(model.id)
-                    }
+                    manyField._persistableValue.append(model.id)
                     manyField.wasTouched = true
                 } else if let oneField = matchingField as? (any OneRelationship) {
+                    let persistableValue = oneField._persistableValue
+                    if persistableValue != nil && persistableValue != model.id {
+                        oneField._updateOtherSide(isRemoving: true, id: persistableValue)
+                    }
                     oneField._persistableValue = model.id
                     oneField.wasTouched = true
                 }
@@ -334,6 +378,7 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                         if let manyField = inverse as? (any ManyRelationship) {
                             manyField._persistableValue.removeAll(where: { $0 == model.id })
                             manyField.wasTouched = true
+
                         } else if let oneField = inverse as? (any OneRelationship) {
                             oneField._persistableValue = nil
                             oneField.wasTouched = true
@@ -352,6 +397,14 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                         }
                 }
             }
+        }
+
+        _withObservationNotification({ model.notifyOfChanges() }) {
+            let matches = context._prepareForChange(of: model)
+
+            _persistableValue = []
+
+            context._markTouched(model, previouslyMatching: matches)
         }
     }
 

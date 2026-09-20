@@ -56,7 +56,7 @@ struct SortedFetch {
                 try container.context.insert(item)
             }
 
-            let descriptor = try FetchDescriptor(
+            let descriptor = FetchDescriptor(
                 model: Test.self,
                 sortBy: [SortRule<Test>(\.someValue)]
             )
@@ -64,7 +64,7 @@ struct SortedFetch {
 
             #expect(results.isSortedBy(\.someValue))
 
-            let resultByIDDescriptor = try FetchDescriptor(
+            let resultByIDDescriptor = FetchDescriptor(
                 model: Test.self,
                 sortBy: [SortRule(\.id)]
             )

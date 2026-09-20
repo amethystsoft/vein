@@ -23,48 +23,24 @@ import Logging
 #endif
 
 @Suite
-struct RealDatabaseSortRuleTests {
-    func prepareContainerLocation(name: String) throws -> String {
-        let containerPath = FileManager.default.temporaryDirectory
-
-        let dbDir = containerPath.relativePath.appending("/veinTests/\(testID.uuidString)")
-
-        let dbPath = dbDir.appending("/\(name).sqlite3")
-
-        try FileManager.default.createDirectory(
-            atPath: dbDir,
-            withIntermediateDirectories: true
-        )
-
-        if !FileManager.default.fileExists(atPath: dbPath) {
-            FileManager.default.createFile(
-                atPath: dbPath,
-                contents: nil
-            )
-        }
-
-        return dbPath
-    }
+struct RealDatabaseSortRuleTests: DiskUsingTest {
+    var additionalPath: String { "" }
 
     private func makeContainer(name: String) throws -> ModelContainer {
         let dbPath = try prepareContainerLocation(name: name)
-        try makeTestData(name: name)
-
-        var logConfig = LogConfiguration.debug
-        logConfig.sqlQueries = true
+        let connection = try makeTestData(name: name)
 
         return try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
-            at: dbPath,
+            connection: connection,
             appID: "de.amethystsoft.vein.RealDatabaseSortRuleTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption,
-            // logConfiguration: logConfig
         )
     }
 
     // Helper to spin up a container and seed test users
-    private func makeTestData(name: String) throws {
+    private func makeTestData(name: String) throws -> Connection {
         let dbPath = try prepareContainerLocation(name: name)
 
         let container = try ModelContainer(
@@ -95,13 +71,15 @@ struct RealDatabaseSortRuleTests {
         try container.context.insert(user2)
         try container.context.insert(user3)
         try container.context.save()
+
+        return container.getConnection()
     }
 
     @Test
     func testDoubleAscending() async throws {
         let container = try makeContainer(name: "DoubleAscending")
 
-        let descriptor = try FetchDescriptor(
+        let descriptor = FetchDescriptor(
             model: V0_0_1.User.self,
             sortBy: [SortRule<V0_0_1.User>(\.balance)]
         )
@@ -116,7 +94,7 @@ struct RealDatabaseSortRuleTests {
     func testDoubleDescending() async throws {
         let container = try makeContainer(name: "DoubleDescending")
 
-        let descriptor = try FetchDescriptor(
+        let descriptor = FetchDescriptor(
             model: V0_0_1.User.self,
             sortBy: [SortRule(\.balance, order: .descending)]
         )
@@ -131,7 +109,7 @@ struct RealDatabaseSortRuleTests {
     func testStringAscending() async throws {
         let container = try makeContainer(name: "StringAscending")
 
-        let descriptor = try FetchDescriptor(
+        let descriptor = FetchDescriptor(
             model: V0_0_1.User.self,
             sortBy: [SortRule<V0_0_1.User>(\.name, comparator: .lexical)]
         )
@@ -146,7 +124,7 @@ struct RealDatabaseSortRuleTests {
     func testStringDescending() async throws {
         let container = try makeContainer(name: "StringDescending")
 
-        let descriptor = try FetchDescriptor(
+        let descriptor = FetchDescriptor(
             model: V0_0_1.User.self,
             sortBy: [SortRule(\.name, comparator: .lexical, order: .descending)]
         )
@@ -161,7 +139,7 @@ struct RealDatabaseSortRuleTests {
     func testOptionalAscending() async throws {
         let container = try makeContainer(name: "OptionalAscending")
 
-        let descriptor = try FetchDescriptor(
+        let descriptor = FetchDescriptor(
             model: V0_0_1.User.self,
             sortBy: [SortRule<V0_0_1.User>(\.somethingOptional)]
         )
@@ -177,7 +155,7 @@ struct RealDatabaseSortRuleTests {
     func testOptionalDescending() async throws {
         let container = try makeContainer(name: "OptionalDescending")
 
-        let descriptor = try FetchDescriptor(
+        let descriptor = FetchDescriptor(
             model: V0_0_1.User.self,
             sortBy: [SortRule(\.somethingOptional, order: .descending)]
         )
@@ -195,14 +173,14 @@ struct RealDatabaseSortRuleTests {
 
         let container = try setup(at: dbPath)
 
-        let descriptor1 = try FetchDescriptor(model: V0_0_1.User.self, sortBy: [SortRule(\.name)])
+        let descriptor1 = FetchDescriptor(model: V0_0_1.User.self, sortBy: [SortRule(\.name)])
         let caseInsensitiveSorted = try container.context.fetch(descriptor1)
 
         #expect(caseInsensitiveSorted[0].name == "apple")
         #expect(caseInsensitiveSorted[1].name == "Banana")
         #expect(caseInsensitiveSorted[2].name == "cherry")
 
-        let descriptor2 = try FetchDescriptor(
+        let descriptor2 = FetchDescriptor(
             model: V0_0_1.User.self,
             sortBy: [SortRule(\.name, order: .descending)]
         )
@@ -212,7 +190,7 @@ struct RealDatabaseSortRuleTests {
         #expect(caseInsensitiveSortedReverse[1].name == "Banana")
         #expect(caseInsensitiveSortedReverse[0].name == "cherry")
 
-        let descriptor3 = try FetchDescriptor(
+        let descriptor3 = FetchDescriptor(
             model: V0_0_1.User.self,
             sortBy: [SortRule(\.name, comparator: .lexical)]
         )
@@ -222,7 +200,7 @@ struct RealDatabaseSortRuleTests {
         #expect(caseSensitiveSorted[1].name == "apple")
         #expect(caseSensitiveSorted[2].name == "cherry")
 
-        let descriptor4 = try FetchDescriptor(
+        let descriptor4 = FetchDescriptor(
             model: V0_0_1.User.self,
             sortBy: [SortRule(\.name, comparator: .lexical, order: .descending)]
         )
@@ -232,7 +210,7 @@ struct RealDatabaseSortRuleTests {
         #expect(caseSensitiveSortedReverse[1].name == "apple")
         #expect(caseSensitiveSortedReverse[0].name == "cherry")
 
-        func setup(at path: String) throws -> ModelContainer {
+        func setup(at path: String?) throws -> ModelContainer {
             let setupContainer = try ModelContainer(
                 V0_0_1.self,
                 migration: Migration.self,

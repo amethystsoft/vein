@@ -24,6 +24,7 @@ package extension SQLiteDB.Result {
 
     private func mapCode(_ code: Int32, msg: String) -> ManagedObjectContextError {
         switch code {
+            case 0: .operationCouldNotBeCompleted(message: msg)
             case 1:
                 .noSuchTable(message: msg)
             case 3: // PERM

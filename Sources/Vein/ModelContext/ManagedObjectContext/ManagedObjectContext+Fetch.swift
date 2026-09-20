@@ -250,7 +250,7 @@ extension ManagedObjectContext {
             }
             throw MOCError
                 .unexpectedlyEmptyResult(
-                    message: "raised by field with property name '\(key)' of Model '\(T.self)' with id \(model.id.ulidString)"
+                    message: "raised by field with property name '\(key)' of Model '\(model._getSchema())' with id \(model.id.ulidString)"
                 )
         } catch let error as ManagedObjectContextError {
             throw error
@@ -265,7 +265,8 @@ extension ManagedObjectContext {
         let tables = try connection.schema.objectDefinitions(type: .table)
         return tables.map(\.name).filter {
             [
-                MigrationTable.schema
+                MigrationTable.schema,
+                SystemTable.schema
             ].contains($0) == false &&
                 !$0.starts(with: "sqlite_")
         }
@@ -275,7 +276,8 @@ extension ManagedObjectContext {
         let tables = try connection.schema.objectDefinitions(type: .table)
         let filtered = tables.map(\.name).filter {
             [
-                MigrationTable.schema
+                MigrationTable.schema,
+                SystemTable.schema
             ].contains($0) == false &&
                 !$0.starts(with: "sqlite_")
         }

@@ -12,6 +12,7 @@
 
 import Foundation
 import Testing
+import SQLiteDB
 @testable import Vein
 #if TEST_SWIFTUI
     @_spi(VeinTesting) @testable import VeinSwiftUI
@@ -22,51 +23,47 @@ import Testing
 #endif
 
 @Suite
-struct FieldSpecificTests {
-    @Test
-    func testLazyFieldReturnsStoreWithoutContext() async throws {
-        let field = LazyField(wrappedValue: "Test")
-        #expect(field.wrappedValue == "Test")
-    }
-
-    @Test
-    func `@LazyField doesn't get fetched initially`() async throws {
-        let expectedText = "Wow, what a beautiful text that is"
-        let connection = try await prepareContainer()
+struct FieldBehaviorTests {
+    @Test(arguments: [true, false])
+    func `read does't change _updatedAt`(_ save: Bool) throws {
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
-            connection: connection,
-            appID: "de.amethystsoft.vein.tests.fieldSpecific",
+            at: nil,
+            appID: "de.amethystsoft.vein.tests.FieldBehaviorTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
 
-        guard let model = try container.context.fetchAll(V0_0_1.Test.self).first else {
-            Issue.record("Unexpectedly didn't find model")
-            return
-        }
+        let model = V0_0_1.Test(someValue: "")
 
-        let lazyField = model.getLazyField()
+        try container.context.insert(model)
+        model.someValue = "a"
 
-        #expect(lazyField.testingStoreSnapshot.isNil)
-        #expect(model.text == expectedText)
-        #expect(lazyField.testingStoreSnapshot == expectedText)
+        let updatedAt = model._updatedAt
 
-        func prepareContainer() async throws -> Connection {
-            let container = try ModelContainer(
-                V0_0_1.self,
-                migration: Migration.self,
-                at: nil,
-                appID: "de.amethystsoft.vein.tests.fieldSpecific",
-                encryptionEnabled: ProcessInfo.shouldEnableEncryption
-            )
-            let model = V0_0_1.Test(someValue: "Test")
-            model.text = expectedText
-            try container.context.insert(model)
+        if save {
             try container.context.save()
-
-            return container.getConnection()
+            #expect(updatedAt == model._updatedAt)
         }
+
+        _ = model.text
+        #expect(updatedAt == model._updatedAt)
+
+        _ = model.someValue
+        #expect(updatedAt == model._updatedAt)
+
+        _ = model.id
+        #expect(updatedAt == model._updatedAt)
+    }
+
+    @Test
+    func `Writes don't change updatedAt while uninserted`() async throws {
+        let model = V0_0_1.Test(someValue: "")
+        #expect(model._updatedAt == nil)
+        model.someValue = "a"
+        #expect(model._updatedAt == nil)
+        model.text = "b"
+        #expect(model._updatedAt == nil)
     }
 }
 

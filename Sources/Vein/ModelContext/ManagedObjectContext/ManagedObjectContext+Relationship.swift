@@ -33,7 +33,7 @@ extension ManagedObjectContext {
         requestingModel: any PersistentModel,
         fieldKey: String,
         inverseKey: String?
-    ) throws(MOCError) -> [T] {
+    ) throws(MOCError) -> [ULID: T] {
         var models = [ULID: T]()
 
         var identityMapMisses: [ULID] = []
@@ -50,7 +50,6 @@ extension ManagedObjectContext {
             models.merge(dbFetchedModels, uniquingKeysWith: { lhs, _ in lhs})
         }
 
-        var sortedModels: [T] = []
         let isInMigration = isInActiveMigration.value
         for id in ids {
             if let target = models[id] {
@@ -76,7 +75,7 @@ extension ManagedObjectContext {
                         }
                     )
                 }
-                sortedModels.append(target)
+                models[id] = target
             } else {
                 if !isInMigration {
                     if modelContainer.logConfiguration.potentialDataCorruption {
@@ -94,7 +93,7 @@ extension ManagedObjectContext {
             }
         }
 
-        return sortedModels
+        return models
     }
 
     private nonisolated func _fetchAllMatchingIDs<T: PersistentModel>(ids: [ULID]) throws(MOCError)

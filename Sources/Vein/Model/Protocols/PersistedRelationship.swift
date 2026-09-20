@@ -27,6 +27,7 @@ public protocol ManyRelationship: PersistedRelationship {
 /// This is mostly an implementation detail, currently making your own relationships is not supported.
 public protocol OneRelationship: PersistedRelationship {
     var _persistableValue: ULID? { get set }
+    func _updateOtherSide(isRemoving: Bool, id: ULID?)
 }
 
 /// Constants that define the cleanup behavior for related objects when a parent object is deleted.

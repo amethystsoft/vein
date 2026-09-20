@@ -69,8 +69,6 @@ public actor ManagedObjectContext {
     // MARK: - In memory write caching and rollback
     package nonisolated let writeCache = WriteCache()
 
-    package nonisolated let stagingCache = WriteCache()
-
     // Used in `ManagedObjectContext/save` to
     // make sure only one save is running at a time
     nonisolated let saveLock = NSLock()
@@ -155,6 +153,13 @@ public actor ManagedObjectContext {
                 .modelConfiguration
                 .cleanStaleIdentityMapEntriesTimeoutSeconds
         )
+
+        // TODO: Add breaking change for 2.0
+        // guard !modelContainer.encryptionEnabled else {
+        //    throw ManagedObjectContextError.other(
+        //        message: "Encryption is only supported on disk-stored databases."
+        //    )
+        // }
 
         do {
             self.connection = try Connection(.inMemory)

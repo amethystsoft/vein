@@ -141,6 +141,40 @@ extension ManagedObjectContext {
         }
     }
 
+    static func mergeWriteCaches(
+        insertsCached: inout WriteCacheDictionary,
+        insertsFromSave: WriteCacheDictionary,
+        updatesCached: inout WriteCacheDictionary,
+        updatesFromSave: WriteCacheDictionary,
+        deletesCached: inout WriteCacheDictionary,
+        deletesFromSave: WriteCacheDictionary,
+        stateCached: inout [ObjectIdentifier: [ULID: PrimitiveState]],
+        stateFromSave: [ObjectIdentifier: [ULID: PrimitiveState]]
+    ) {
+        var insertsFromSave = insertsFromSave
+        var updatesFromSave = updatesFromSave
+        var deletesFromSave = deletesFromSave
+
+        for (type, deletedModels) in deletesCached {
+            for (id, _) in deletedModels {
+                insertsFromSave[type]?[id] = nil
+                updatesFromSave[type]?[id] = nil
+            }
+        }
+
+        for (type, insertedModels) in insertsCached {
+            for (id, _) in insertedModels {
+                deletesFromSave[type]?[id] = nil
+                updatesFromSave[type]?[id] = nil
+            }
+        }
+
+        insertsFromSave.merge(into: &insertsCached)
+        updatesFromSave.merge(into: &updatesCached)
+        deletesFromSave.merge(into: &deletesCached)
+        stateFromSave.merge(into: &stateCached)
+    }
+
     package nonisolated func run(_ query: String) throws(ManagedObjectContextError) {
         if modelContainer.logConfiguration.sqlQueries {
             Self.logger.info(
@@ -154,6 +188,21 @@ extension ManagedObjectContext {
         } catch {
             throw .other(message: error.localizedDescription)
         }
+    }
+
+    package nonisolated func _tableExists(for name: String) throws -> Bool {
+        let query = Table("sqlite_master")
+            .select([SQLExpression<String>("name")])
+            .where(
+                SQLExpression<String>("type") == "table" &&
+                    SQLExpression<String>("name") == name
+            )
+
+        let results = try connection.prepare(query)
+
+        let mapped = try results.map { row in try row.get(SQLExpression<String>("name")) }.first
+
+        return mapped == name
     }
 
     package nonisolated func runDetached(_ query: String) {

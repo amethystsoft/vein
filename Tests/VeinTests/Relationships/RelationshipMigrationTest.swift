@@ -22,7 +22,9 @@ import Logging
     @_spi(VeinTesting) @testable import VeinCore
 #endif
 @MainActor
-@Suite struct RelationshipTest {
+@Suite struct RelationshipTest: @MainActor DiskUsingTest {
+    var additionalPath: String { "" }
+
     static let logger = Logger(label: "de.amethystsoft.vein.test.relationship")
 
     @Test func testPersist() async throws {
@@ -60,7 +62,7 @@ import Logging
         let newContainer = try ModelContainer(
             V0_0_2.self,
             migration: Migration.self,
-            at: dbPath,
+            connection: container.getConnection(),
             appID: "de.amethystsoft.vein.RelationshipTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
@@ -111,7 +113,7 @@ import Logging
         let newContainer = try ModelContainer(
             V0_0_3.self,
             migration: Migration.self,
-            at: dbPath,
+            connection: container.getConnection(),
             appID: "de.amethystsoft.vein.ManyToManyTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
@@ -141,28 +143,6 @@ import Logging
         for comment in migratedComments {
             #expect(comment.authors.contains(where: { $0.id == migratedUser.id }))
         }
-    }
-
-    func prepareContainerLocation(name: String) throws -> String {
-        let containerPath = FileManager.default.temporaryDirectory
-
-        let dbDir = containerPath.relativePath.appending("/veinTests/\(testID.uuidString)")
-
-        let dbPath = dbDir.appending("/\(name).sqlite3")
-
-        try FileManager.default.createDirectory(
-            atPath: dbDir,
-            withIntermediateDirectories: true
-        )
-
-        if !FileManager.default.fileExists(atPath: dbPath) {
-            FileManager.default.createFile(
-                atPath: dbPath,
-                contents: nil
-            )
-        }
-
-        return dbPath
     }
 }
 
