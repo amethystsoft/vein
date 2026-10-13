@@ -69,7 +69,7 @@
                         encryptionEnabled: false
                     )
 
-                    return try State.matches(verificationContainer) <?> "diverged after save"
+                    return try State.matches(verificationContainer, oldContainer: container) <?> "diverged after save"
                 }
         }
     }
@@ -153,7 +153,7 @@
 
     fileprivate struct State {
         /// Reads everything back from the container and compares it to this reference.
-        static func matches(_ container: ModelContainer) throws -> Bool {
+        static func matches(_ container: ModelContainer, oldContainer: ModelContainer? = nil) throws -> Bool {
             let realOwners = try container.context.fetchAll(V0_0_1.Owner.self)
             let realTargets = try container.context.fetchAll(V0_0_1.Target.self)
 
@@ -163,6 +163,23 @@
 
             for target in realTargets {
                 if let owner = target.owner, owner.target !== target { return false }
+            }
+            
+            // Skip this half if oldContainer wasn't provided
+            guard let oldContainer else { return true }
+            
+            let inMemoryOwners = try oldContainer.context.fetchAll(V0_0_1.Owner.self)
+            let inMemoryTargets = try oldContainer.context.fetchAll(V0_0_1.Target.self)
+            
+            guard realOwners.count == inMemoryOwners.count else { return false }
+            guard realTargets.count == inMemoryTargets.count else { return false }
+            
+            for (index, owner) in inMemoryOwners.enumerated() {
+                if realOwners[index].target?.id != owner.target?.id { return false }
+            }
+            
+            for (index, target) in inMemoryTargets.enumerated() {
+                if realTargets[index].owner?.id != target.owner?.id { return false }
             }
 
             return true

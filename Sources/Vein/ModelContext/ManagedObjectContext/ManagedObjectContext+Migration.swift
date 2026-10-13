@@ -87,10 +87,6 @@ extension ManagedObjectContext {
         try connection.run(update)
     }
 
-    /// public nonisolated func runAutoheal(_ heal: _Autoheal) throws {
-    //    try heal.run(modelContainer)
-    // }
-
     internal nonisolated func _getSystemTable() throws -> SystemTable.DTO? {
         let select = SystemTable.systemTable.select([
             SystemTable.veinVersionMajor,

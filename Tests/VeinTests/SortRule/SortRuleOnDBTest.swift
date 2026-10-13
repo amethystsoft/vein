@@ -27,7 +27,6 @@ struct RealDatabaseSortRuleTests: DiskUsingTest {
     var additionalPath: String { "" }
 
     private func makeContainer(name: String) throws -> ModelContainer {
-        let dbPath = try prepareContainerLocation(name: name)
         let connection = try makeTestData(name: name)
 
         return try ModelContainer(

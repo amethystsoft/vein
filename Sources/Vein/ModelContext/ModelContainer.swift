@@ -398,27 +398,8 @@ public final class ModelContainer: @unchecked Sendable {
     static nonisolated func systemSetup(container: ModelContainer) throws {
         let context = container.context!
         let latestSystemTable = try context.getSystemTable()
-        let latestUsedVersion = ModelVersion(
-            UInt32(latestSystemTable.veinVersionMajor),
-            UInt32(latestSystemTable.veinVersionMinor),
-            UInt32(latestSystemTable.veinVersionPatch)
-        )
-
-        /// var doneAutoheals = [String]()
-        // for heal in _Autoheal.allCases {
-        //    if
-        //        latestUsedVersion < heal.versionIntroduced,
-        //        !latestSystemTable.appliedAutheals.contains(heal.rawValue),
-        //        container.modelConfiguration.shouldRunAutoheal(heal)
-        //    {
-        //        try context.transaction {
-        //            try heal.run(container)
-        //            doneAutoheals.append(heal.rawValue)
-        //        }
-        //    }
-        // }
+        
         try context.createSystemTable()
-        // try context.updateExecutedAutoheals(adding: doneAutoheals)
         try context.createMigrationsTable()
     }
 }
