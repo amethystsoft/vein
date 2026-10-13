@@ -245,6 +245,12 @@ Vein is designed to be highly portable, relying on standard Swift Evolution tool
 - **Testing**: `typelift/SwiftCheck` for property based testing.
 - **SwiftCrossUI**: VeinSCUI depends on SwiftCrossUI. It's only used when the trait `VeinSCUI` is active.
 
+### Dependency Management Policy
+Vein manages its dependencies following strict open-source security and stability guidelines:
+- **Selection:** Dependencies are chosen based on active maintenance, cross-platform compatibility, external footprint, and open-source license compatibility.
+- **Obtaining:** All dependencies are automatically fetched via **Swift Package Manager (SPM)** using the project's `Package.swift` manifest.
+- **Tracking:** Dependency versions are tracked and bounded via semantic version rules (such as `.upToNextMajorFrom`) defined directly in `Package.swift` to ensure compatibility and safe updates for downstream consumers.
+
 ## Sponsoring, Alternative Licensing & CLA
 
 Amethyst Vein is independent open source. Swift and an open ecosystem are incredibly important to me. My goal is to strengthen the cross-platform Swift ecosystem (including my work as a core contributor to SwiftCrossUI). I currently work on these projects without traditional funding.
