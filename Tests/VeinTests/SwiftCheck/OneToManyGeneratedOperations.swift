@@ -94,6 +94,8 @@
 
         case setOwnerNil(Int)
 
+        case setOwner(Int, to: Int)
+
         var description: String {
             switch self {
                 case .add(let target, let to, let amount):
@@ -106,6 +108,8 @@
                     return "removeAll(target: \(target), from: \(from))"
                 case .setOwnerNil(let target):
                     return "setOwnerNil(\(target))"
+                case .setOwner(let owner, let target):
+                    return "setOwner(\(owner), \(target)"
             }
         }
     }
@@ -145,6 +149,10 @@
                 case .setOwnerNil(let targetIndex):
                     let target = targets[targetIndex % count]
                     target.owner = nil
+                case .setOwner(let ownerIndex, let targetIndex):
+                    let target = targets[targetIndex % count]
+                    let owner = owners[ownerIndex % count]
+                    target.owner = owner
             }
         }
     }
@@ -232,22 +240,6 @@
 
     fileprivate struct MissingModelError: Error {}
 
-    extension ModelContainer {
-        fileprivate func owner(_ id: ULID) throws -> V0_0_1.Owner {
-            let predicate = #Predicate<V0_0_1.Owner> { $0.id == id }
-            guard let owner = try context.fetchAll(predicate).first
-            else { throw MissingModelError() }
-            return owner
-        }
-
-        fileprivate func target(_ id: ULID) throws -> V0_0_1.Target {
-            let predicate = #Predicate<V0_0_1.Target> { $0.id == id }
-            guard let target = try context.fetchAll(predicate).first
-            else { throw MissingModelError() }
-            return target
-        }
-    }
-
     fileprivate enum V0_0_1: VersionedSchema {
         static let version = ModelVersion(0, 0, 1)
         static let models: [any Vein.PersistentModel.Type] = [Owner.self, Target.self]
@@ -294,22 +286,6 @@
                 Target(name: gen.generate())
             }
         }
-    }
-
-    fileprivate struct Row: Arbitrary {
-        static var arbitrary: SwiftCheck.Gen<Row> {
-            Gen<Row>.compose { gen in
-                Row(
-                    owner: gen.generate(using: Owner.arbitrary),
-                    target: gen.generate(using: Target.arbitrary),
-                    op: gen.generate(using: RelationshipOp.arbitrary)
-                )
-            }
-        }
-
-        let owner: Owner
-        let target: Target
-        let op: RelationshipOp
     }
 
     fileprivate enum Migration: SchemaMigrationPlan {

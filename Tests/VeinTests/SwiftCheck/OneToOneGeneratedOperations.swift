@@ -89,19 +89,26 @@
     fileprivate enum RelationshipOp: CustomStringConvertible {
         /// Assign a target that is already inserted (and may belong to another owner).
         case setExistingTarget(owner: Int, target: Int)
+        /// Assign an owner that is already inserted (and may belong to another target).
+        case setExistingOwner(target: Int, owner: Int)
 
         /// owner.target = nil
-        case remove(owner: Int)
+        case removeOwner(owner: Int)
+        case removeTarget(target: Int)
 
         /// Move a target to another owner by assigning from the inverse side:
         /// target.owner = newOwner
-        case reparent(target: Int, to: Int)
+        case reparentTarget(target: Int, to: Int)
+        case reparentOwner(owner: Int, to: Int)
 
         var description: String {
             switch self {
                 case .setExistingTarget(let o, let t): return "setExistingTarget(owner: \(o), target: \(t))"
-                case .remove(let o): return "remove(owner: \(o))"
-                case .reparent(let t, let o): return "reparent(target: \(t), to: \(o))"
+                case .setExistingOwner(let t, let o): return "setExistingOwner(target: \(t), owner: \(o))"
+                case .removeOwner(let o): return "remove(owner: \(o))"
+                case .removeTarget(let t): return "removeTarget(target: \(t))"
+                case .reparentTarget(let t, let o): return "reparentTarget(target: \(t), to: \(o))"
+                case .reparentOwner(let o, let t): return "reparentOwner(owner: \(t), to: \(o))"
             }
         }
     }
@@ -122,15 +129,31 @@
 
                     owner.target = target
 
-                case .remove(let ownerIndex):
+                case .setExistingOwner(let targetIndex, let ownerIndex):
+                    let owner = owners[ownerIndex % count]
+                    let target = targets[targetIndex % count]
+
+                    owner.target = target
+
+                case .removeTarget(let ownerIndex):
                     let owner = owners[ownerIndex % count]
                     owner.target = nil
 
-                case .reparent(let targetIndex, let ownerIndex):
+                case .removeOwner(let targetIndex):
+                    let target = targets[targetIndex % count]
+                    target.owner = nil
+
+                case .reparentTarget(let targetIndex, let ownerIndex):
                     let owner = owners[ownerIndex % count]
                     let target = targets[targetIndex % count]
 
                     target.owner = owner
+
+                case .reparentOwner(let ownerIndex, let targetIndex):
+                    let owner = owners[ownerIndex % count]
+                    let target = targets[targetIndex % count]
+
+                    owner.target = target
             }
         }
     }
@@ -141,7 +164,7 @@
                 Gen<Int>.choose((0, 100))
             }
 
-            let opChoice = Gen<Int>.choose((0, 2))
+            let opChoice = Gen<Int>.choose((0, 5))
 
             return Gen<RelationshipOp>.compose { gen in
                 return switch gen.generate(using: opChoice) {
@@ -149,15 +172,20 @@
                             owner: gen.generate(using: index),
                             target: gen.generate(using: index)
                         )
-                    case 1: .reparent(
+                    case 1: .setExistingOwner(
+                            target: gen.generate(using: index),
+                            owner: gen.generate(using: index)
+                        )
+                    case 2: .reparentTarget(
                             target: gen.generate(using: index),
                             to: gen.generate(using: index)
                         )
-                    case 2: .remove(owner: gen.generate(using: index))
-                    default: .setExistingTarget(
+                    case 3: .reparentOwner(
                             owner: gen.generate(using: index),
-                            target: gen.generate(using: index)
+                            to: gen.generate(using: index)
                         )
+                    case 4: .removeOwner(owner: gen.generate(using: index))
+                    default: .removeTarget(target: gen.generate(using: index))
                 }
             }
         }
@@ -202,22 +230,6 @@
     }
 
     fileprivate struct MissingModelError: Error {}
-
-    extension ModelContainer {
-        fileprivate func owner(_ id: ULID) throws -> V0_0_1.Owner {
-            let predicate = #Predicate<V0_0_1.Owner> { $0.id == id }
-            guard let owner = try context.fetchAll(predicate).first
-            else { throw MissingModelError() }
-            return owner
-        }
-
-        fileprivate func target(_ id: ULID) throws -> V0_0_1.Target {
-            let predicate = #Predicate<V0_0_1.Target> { $0.id == id }
-            guard let target = try context.fetchAll(predicate).first
-            else { throw MissingModelError() }
-            return target
-        }
-    }
 
     fileprivate enum V0_0_1: VersionedSchema {
         static let version = ModelVersion(0, 0, 1)

@@ -83,24 +83,36 @@
     }
 
     fileprivate enum RelationshipOp: CustomStringConvertible {
-        case add(target: Int, to: Int, amount: Int)
+        case addTarget(target: Int, to: Int, amount: Int)
+        case addOwner(owner: Int, to: Int, amount: Int)
 
-        case removeOne(target: Int, from: Int)
+        case removeOneTarget(target: Int, from: Int)
+        case removeOneOwner(owner: Int, from: Int)
 
-        case removeEverything(from: Int)
+        case removeEverythingFromOwner(from: Int)
+        case removeEverythingFromTarget(from: Int)
 
-        case removeAll(target: Int, from: Int)
+        case removeAllTargets(target: Int, from: Int)
+        case removeAllOwners(owner: Int, from: Int)
 
         var description: String {
             switch self {
-                case .add(let target, let to, let amount):
-                    return "add(target: \(target), to: \(to), amount: \(amount))"
-                case .removeOne(let target, let from):
-                    return "removeOne(target: \(target), from: \(from))"
-                case .removeEverything(let from):
-                    return "removeEverything(from: \(from))"
-                case .removeAll(let target, let from):
+                case .addTarget(let target, let to, let amount):
+                    return "addTarget(target: \(target), to: \(to), amount: \(amount))"
+                case .addOwner(let target, let to, let amount):
+                    return "addTarget(target: \(target), to: \(to), amount: \(amount))"
+                case .removeOneTarget(let target, let from):
+                    return "removeOneTarget(target: \(target), from: \(from))"
+                case .removeOneOwner(let owner, let from):
+                    return "removeOneOwner(owner: \(owner), from: \(from))"
+                case .removeEverythingFromTarget(let from):
+                    return "removeEverythingFromTarget(from: \(from))"
+                case .removeEverythingFromOwner(let from):
+                    return "removeEverythingFromOwner(from: \(from))"
+                case .removeAllTargets(let target, let from):
                     return "removeAll(target: \(target), from: \(from))"
+                case .removeAllOwners(let owner, let from):
+                    return "removeAll(target: \(owner), from: \(from))"
             }
         }
     }
@@ -115,27 +127,49 @@
         ) throws {
             let count = owners.count
             switch self {
-                case .add(let targetIndex, let ownerIndex, let amount):
+                case .addTarget(let targetIndex, let ownerIndex, let amount):
                     let target = targets[targetIndex % count]
                     let owner = owners[ownerIndex % count]
                     owner.targets.append(contentsOf: Array(repeating: target, count: amount))
-                case .removeOne(let targetIndex, let ownerIndex):
+                case .addOwner(let ownerIndex, let targetIndex, let amount):
+                    let target = targets[targetIndex % count]
+                    let owner = owners[ownerIndex % count]
+                    target.owners.append(contentsOf: Array(repeating: owner, count: amount))
+                case .removeOneTarget(let targetIndex, let ownerIndex):
                     let target = targets[targetIndex % count]
                     let owner = owners[ownerIndex % count]
 
                     if let index = owner.targets.firstIndex(where: { $0 === target }) {
                         owner.targets.remove(at: index)
                     }
-                case .removeEverything(let ownerIndex):
+                case .removeOneOwner(let ownerIndex, let targetIndex):
+                    let target = targets[targetIndex % count]
+                    let owner = owners[ownerIndex % count]
+
+                    if let index = owner.targets.firstIndex(where: { $0 === target }) {
+                        owner.targets.remove(at: index)
+                    }
+                case .removeEverythingFromOwner(let ownerIndex):
                     let owner = owners[ownerIndex % count]
 
                     owner.targets = []
-                case .removeAll(let targetIndex, let ownerIndex):
+                case .removeEverythingFromTarget(let targetIndex):
+                    let target = targets[targetIndex % count]
+
+                    target.owners = []
+                case .removeAllTargets(let targetIndex, let ownerIndex):
                     let target = targets[targetIndex % count]
                     let owner = owners[ownerIndex % count]
 
                     owner.targets.removeAll {
                         $0 === target
+                    }
+                case .removeAllOwners(let targetIndex, let ownerIndex):
+                    let target = targets[targetIndex % count]
+                    let owner = owners[ownerIndex % count]
+
+                    target.owners.removeAll {
+                        $0 === owner
                     }
             }
         }
@@ -149,27 +183,47 @@
 
             let opChoice = Gen<Int>.frequency([
                 (6, Gen<Int>.choose((0, 0))),
-                (3, Gen<Int>.choose((1, 1))),
-                (1, Gen<Int>.choose((2, 2))),
-                (1, Gen<Int>.choose((3, 3))),
+                (6, Gen<Int>.choose((1, 1))),
+                (3, Gen<Int>.choose((2, 2))),
+                (3, Gen<Int>.choose((3, 3))),
+                (1, Gen<Int>.choose((4, 4))),
+                (1, Gen<Int>.choose((5, 5))),
+                (1, Gen<Int>.choose((6, 6))),
+                (1, Gen<Int>.choose((7, 7))),
             ])
 
             return Gen<RelationshipOp>.compose { gen in
                 return switch gen.generate(using: opChoice) {
-                    case 0: .add(
+                    case 0: .addTarget(
                             target: gen.generate(using: index),
                             to: gen.generate(using: index),
                             amount: gen.generate(using: Gen<Int>.choose((1, 3)))
                         )
-                    case 1: .removeOne(
+                    case 1: .addOwner(
+                            owner: gen.generate(using: index),
+                            to: gen.generate(using: index),
+                            amount: gen.generate(using: Gen<Int>.choose((1, 3)))
+                        )
+                    case 2: .removeOneTarget(
                             target: gen.generate(using: index),
                             from: gen.generate(using: index)
                         )
-                    case 2: .removeEverything(
+                    case 3: .removeOneOwner(
+                            owner: gen.generate(using: index),
                             from: gen.generate(using: index)
                         )
-                    default: .removeAll(
+                    case 4: .removeEverythingFromOwner(
+                            from: gen.generate(using: index)
+                        )
+                    case 5: .removeEverythingFromTarget(
+                            from: gen.generate(using: index)
+                        )
+                    case 6: .removeAllTargets(
                             target: gen.generate(using: index),
+                            from: gen.generate(using: index)
+                        )
+                    default:.removeAllOwners(
+                            owner: gen.generate(using: index),
                             from: gen.generate(using: index)
                         )
                 }
@@ -227,22 +281,6 @@
 
     fileprivate struct MissingModelError: Error {}
 
-    extension ModelContainer {
-        fileprivate func owner(_ id: ULID) throws -> V0_0_1.Owner {
-            let predicate = #Predicate<V0_0_1.Owner> { $0.id == id }
-            guard let owner = try context.fetchAll(predicate).first
-            else { throw MissingModelError() }
-            return owner
-        }
-
-        fileprivate func target(_ id: ULID) throws -> V0_0_1.Target {
-            let predicate = #Predicate<V0_0_1.Target> { $0.id == id }
-            guard let target = try context.fetchAll(predicate).first
-            else { throw MissingModelError() }
-            return target
-        }
-    }
-
     fileprivate enum V0_0_1: VersionedSchema {
         static let version = ModelVersion(0, 0, 1)
         static let models: [any Vein.PersistentModel.Type] = [Owner.self, Target.self]
@@ -297,22 +335,6 @@
                 Target(name: gen.generate())
             }
         }
-    }
-
-    fileprivate struct Row: Arbitrary {
-        static var arbitrary: SwiftCheck.Gen<Row> {
-            Gen<Row>.compose { gen in
-                Row(
-                    owner: gen.generate(using: Owner.arbitrary),
-                    target: gen.generate(using: Target.arbitrary),
-                    op: gen.generate(using: RelationshipOp.arbitrary)
-                )
-            }
-        }
-
-        let owner: Owner
-        let target: Target
-        let op: RelationshipOp
     }
 
     fileprivate enum Migration: SchemaMigrationPlan {
