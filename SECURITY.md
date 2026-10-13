@@ -65,4 +65,8 @@ If you have questions about this security policy, please open a discussion or co
 
 ---
 
+## Security & Vulnerabilities
+Vein currently has **no known or reported vulnerabilities**. 
+If you discover a security vulnerability, please report it privately via one of the methods stated in [How to Report](#how-to-report).
+
 Thank you for helping keep this project secure! 🔒
