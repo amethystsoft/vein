@@ -23,56 +23,65 @@
         @_spi(VeinTesting) @testable import VeinCore
     #endif
 
-    final class SwiftCheckOneToOneRelationshipSuite: XCTestCase {
-        func testRandomOneToOneOperations() throws {
-            property("State matches local reference after random operations") <-
-                forAll { (rows: [Row]) in
-                    let ops = rows.map(\.op)
-                    let owners = rows.map(\.owner)
-                    let targets = rows.map(\.target)
-
-                    let appID = "de.amethystsoft.vein.tests.RandomOneToOne"
-
-                    let container = try ModelContainer(
-                        V0_0_1.self,
-                        migration: Migration.self,
-                        at: nil,
-                        appID: appID,
-                        encryptionEnabled: false
-                    )
-
-                    for owner in owners {
-                        try container.context.insert(owner)
-                    }
-
-                    for target in targets {
-                        try container.context.insert(target)
-                    }
-
-                    for op in ops {
-                        try op.perform(on: container, owners: owners, targets: targets)
-
-                        // Compare after EVERY step, so a failure names the operation that broke it.
-                        guard try State.matches(container) else {
-                            return false <?> "diverged after: \(op)"
-                        }
-                    }
-
-                    try container.context.save()
-
-                    // Verification using a fresh context to ensure changes are read from db
-                    let verificationContainer = try ModelContainer(
-                        V0_0_1.self,
-                        migration: Migration.self,
-                        connection: container.getConnection(),
-                        appID: appID,
-                        encryptionEnabled: false
-                    )
-
-                    return try State.matches(verificationContainer, oldContainer: container) <?> "diverged after save"
+final class SwiftCheckOneToOneRelationshipSuite: XCTestCase {
+    func testRandomOneToOneOperations() throws {
+        let args = CheckerArguments.init(maxTestCaseSize: 1000)
+        
+        property("State matches local reference after random operations", arguments: args) <-
+        forAll { (ops: [RelationshipOp]) in
+            let owners = [String](repeating: "", count: max(1, ops.count / 50)).map {
+                Owner(name: $0)
+            }
+            let targets = [String](repeating: "", count: max(1, ops.count / 50)).map {
+                Target(name: $0)
+            }
+            
+            let appID = "de.amethystsoft.vein.tests.RandomOneToOne"
+            
+            let container = try ModelContainer(
+                V0_0_1.self,
+                migration: Migration.self,
+                at: nil,
+                appID: appID,
+                encryptionEnabled: false
+            )
+            
+            for owner in owners {
+                try container.context.insert(owner)
+            }
+            
+            for target in targets {
+                try container.context.insert(target)
+            }
+            
+            for op in ops {
+                try op.perform(on: container, owners: owners, targets: targets)
+                
+                // Compare after EVERY step, so a failure names the operation that broke it.
+                guard try State.matches(container) else {
+                    return false <?> "diverged after: \(op)"
                 }
+            }
+            
+            try container.context.save()
+            
+            // Verification using a fresh context to ensure changes are read from db
+            let verificationContainer = try ModelContainer(
+                V0_0_1.self,
+                migration: Migration.self,
+                connection: container.getConnection(),
+                appID: appID,
+                encryptionEnabled: false
+            )
+            
+            if try State.matches(verificationContainer, oldContainer: container) {
+                return true
+            }
+            
+            return false <?> "diverged after save"
         }
     }
+}
 
     fileprivate enum RelationshipOp: CustomStringConvertible {
         /// Assign a target that is already inserted (and may belong to another owner).
@@ -250,22 +259,6 @@
                 Target(name: gen.generate())
             }
         }
-    }
-
-    fileprivate struct Row: Arbitrary {
-        static var arbitrary: SwiftCheck.Gen<Row> {
-            Gen<Row>.compose { gen in
-                Row(
-                    owner: gen.generate(using: Owner.arbitrary),
-                    target: gen.generate(using: Target.arbitrary),
-                    op: gen.generate(using: RelationshipOp.arbitrary)
-                )
-            }
-        }
-
-        let owner: Owner
-        let target: Target
-        let op: RelationshipOp
     }
 
     fileprivate enum Migration: SchemaMigrationPlan {

@@ -22,16 +22,21 @@ import XCTest
 #else
 @_spi(VeinTesting) @testable import VeinCore
 #endif
-/*
-final class SwiftCheckOneToOneRelationshipSuite: XCTestCase {
+
+final class SwiftCheckOneToManyRelationshipSuite: XCTestCase {
     func testRandomOneToOneOperations() throws {
-        property("State matches local reference after random operations") <-
-        forAll { (rows: [Row]) in
-            let ops = rows.map(\.op)
-            let owners = rows.map(\.owner)
-            let targets = rows.map(\.target)
+        let args = CheckerArguments.init(maxTestCaseSize: 10000)
+        
+        property("State matches local reference after random operations", arguments: args) <-
+        forAll { (ops: [RelationshipOp]) in
+            let owners = [String](repeating: "", count: max(1, ops.count / 500)).map {
+                Owner(name: $0)
+            }
+            let targets = [String](repeating: "", count: max(1, ops.count / 500)).map {
+                Target(name: $0)
+            }
             
-            let appID = "de.amethystsoft.vein.tests.RandomOneToOne"
+            let appID = "de.amethystsoft.vein.tests.RandomOneToMany"
             
             let container = try ModelContainer(
                 V0_0_1.self,
@@ -69,27 +74,35 @@ final class SwiftCheckOneToOneRelationshipSuite: XCTestCase {
                 encryptionEnabled: false
             )
             
-            return try State.matches(verificationContainer) <?> "diverged after save"
+            return try State.matches(verificationContainer, oldContainer: container) <?> "diverged after save"
         }
     }
 }
 
 fileprivate enum RelationshipOp: CustomStringConvertible {
-    /// Assign a target that is already inserted (and may belong to another owner).
-    case setExistingTarget(owner: Int, target: Int)
+    // Add and reparent are effectively the same thing
+    case add(target: Int, to: Int, amount: Int)
     
-    /// owner.target = nil
-    case remove(owner: Int)
+    case removeOne(target: Int, from: Int)
     
-    /// Move a target to another owner by assigning from the inverse side:
-    /// target.owner = newOwner
-    case reparent(target: Int, to: Int)
+    case removeEverything(from: Int)
+    
+    case removeAll(target: Int, from: Int)
+    
+    case setOwnerNil(Int)
     
     var description: String {
         switch self {
-            case .setExistingTarget(let o, let t): return "setExistingTarget(owner: \(o), target: \(t))"
-            case .remove(let o): return "remove(owner: \(o))"
-            case .reparent(let t, let o): return "reparent(target: \(t), to: \(o))"
+            case .add(let target, let to, let amount):
+                return "add(target: \(target), to: \(to), amount: \(amount))"
+            case .removeOne(let target, let from):
+                return "removeOne(target: \(target), from: \(from))"
+            case .removeEverything(let from):
+                return "removeEverything(from: \(from))"
+            case .removeAll(let target, let from):
+                return "removeAll(target: \(target), from: \(from))"
+            case .setOwnerNil(let target):
+                return "setOwnerNil(\(target))"
         }
     }
 }
@@ -104,21 +117,31 @@ extension RelationshipOp {
     ) throws {
         let count = owners.count
         switch self {
-            case .setExistingTarget(let ownerIndex, let targetIndex):
-                let owner = owners[ownerIndex % count]
+            case .add(let targetIndex, let ownerIndex, let amount):
                 let target = targets[targetIndex % count]
-                
-                owner.target = target
-                
-            case .remove(let ownerIndex):
                 let owner = owners[ownerIndex % count]
-                owner.target = nil
-                
-            case .reparent(let targetIndex, let ownerIndex):
-                let owner = owners[ownerIndex % count]
+                owner.targets.append(contentsOf: Array(repeating: target, count: amount))
+            case .removeOne(let targetIndex, let ownerIndex):
                 let target = targets[targetIndex % count]
+                let owner = owners[ownerIndex % count]
                 
-                target.owner = owner
+                if let index = owner.targets.firstIndex(where: { $0 === target }) {
+                    owner.targets.remove(at: index)
+                }
+            case .removeEverything(let ownerIndex):
+                let owner = owners[ownerIndex % count]
+                
+                owner.targets = []
+            case .removeAll(let targetIndex, let ownerIndex):
+                let target = targets[targetIndex % count]
+                let owner = owners[ownerIndex % count]
+                
+                owner.targets.removeAll {
+                    $0 === target
+                }
+            case .setOwnerNil(let targetIndex):
+                let target = targets[targetIndex % count]
+                target.owner = nil
         }
     }
 }
@@ -129,23 +152,33 @@ extension RelationshipOp: Arbitrary {
             Gen<Int>.choose((0, 100))
         }
         
-        let opChoice = Gen<Int>.choose((0, 2))
+        let opChoice = Gen<Int>.frequency([
+            (6, Gen<Int>.choose((0, 0))),
+            (3, Gen<Int>.choose((1, 1))),
+            (1, Gen<Int>.choose((2, 2))),
+            (1, Gen<Int>.choose((3, 3))),
+            (1, Gen<Int>.choose((4, 4)))
+        ])
         
         return Gen<RelationshipOp>.compose { gen in
             return switch gen.generate(using: opChoice) {
-                case 0: .setExistingTarget(
-                    owner: gen.generate(using: index),
-                    target: gen.generate(using: index)
-                )
-                case 1: .reparent(
+                case 0: .add(
                     target: gen.generate(using: index),
-                    to: gen.generate(using: index)
+                    to: gen.generate(using: index),
+                    amount: gen.generate(using: Gen<Int>.choose((1, 3)))
                 )
-                case 2: .remove(owner: gen.generate(using: index))
-                default: .setExistingTarget(
-                    owner: gen.generate(using: index),
-                    target: gen.generate(using: index)
+                case 1: .removeOne(
+                    target: gen.generate(using: index),
+                    from: gen.generate(using: index)
                 )
+                case 2: .removeEverything(
+                    from: gen.generate(using: index)
+                )
+                case 3: .removeAll(
+                    target: gen.generate(using: index),
+                    from: gen.generate(using: index)
+                )
+                default: .setOwnerNil(gen.generate(using: index))
             }
         }
     }
@@ -153,16 +186,38 @@ extension RelationshipOp: Arbitrary {
 
 fileprivate struct State {
     /// Reads everything back from the container and compares it to this reference.
-    static func matches(_ container: ModelContainer) throws -> Bool {
+    static func matches(_ container: ModelContainer, oldContainer: ModelContainer? = nil) throws -> Bool {
         let realOwners = try container.context.fetchAll(V0_0_1.Owner.self)
         let realTargets = try container.context.fetchAll(V0_0_1.Target.self)
         
         for owner in realOwners {
-            for target in owner.targets where target.owner !== owner { return false }
+            for target in owner.targets {
+                if target.owner !== owner { return false }
+            }
         }
         
         for target in realTargets {
-            if let owner = target.owner, owner.target !== target { return false }
+            if
+                let owner = target.owner,
+                !owner.targets.contains(where: { $0 === target })
+            { return false }
+        }
+        
+        // Skip this half if oldContainer wasn't provided
+        guard let oldContainer else { return true }
+        
+        let inMemoryOwners = try oldContainer.context.fetchAll(V0_0_1.Owner.self)
+        let inMemoryTargets = try oldContainer.context.fetchAll(V0_0_1.Target.self)
+        
+        guard realOwners.count == inMemoryOwners.count else { return false }
+        guard realTargets.count == inMemoryTargets.count else { return false }
+        
+        for (index, owner) in inMemoryOwners.enumerated() {
+            if realOwners[index].targets.map(\.id) != owner.targets.map(\.id) { return false }
+        }
+        
+        for (index, target) in inMemoryTargets.enumerated() {
+            if realTargets[index].owner?.id != target.owner?.id { return false }
         }
         
         return true
@@ -260,5 +315,6 @@ fileprivate enum Migration: SchemaMigrationPlan {
         []
     }
 }
-*/
+
 #endif
+
