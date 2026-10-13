@@ -148,8 +148,8 @@ extension ManagedObjectContext {
         updatesFromSave: WriteCacheDictionary,
         deletesCached: inout WriteCacheDictionary,
         deletesFromSave: WriteCacheDictionary,
-        stateCached: inout [ObjectIdentifier : [ULID : PrimitiveState]],
-        stateFromSave: [ObjectIdentifier : [ULID : PrimitiveState]]
+        stateCached: inout [ObjectIdentifier: [ULID: PrimitiveState]],
+        stateFromSave: [ObjectIdentifier: [ULID: PrimitiveState]]
     ) {
         var insertsFromSave = insertsFromSave
         var updatesFromSave = updatesFromSave

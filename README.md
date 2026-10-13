@@ -6,9 +6,19 @@
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/amethystsoft/vein/swift-test-linux.yml?label=linux)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/amethystsoft/vein/swift-test-android.yml?label=android)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/amethystsoft/vein/swift-test-windows.yml?label=windows)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15440/badge)](https://www.bestpractices.dev/projects/15440)
+[![OpenSSF Baseline](https://www.bestpractices.dev/projects/15440/baseline)](https://www.bestpractices.dev/projects/15440)
 
 [Table of Contents](#table-of-contents)
 [Docs and Tutorials](https://vein.amethystsoft.de)
+
+> [!IMPORTANT]
+> Vein’s API is stable and we put a lot of effort into preventing bugs via our suite of unit tests.
+>
+> Due to it being relatively new though,
+> we recommend properly testing what you do automatically or manually.
+> 
+> Please report bugs if you find them to improve Vein for everyone.
 
 ## Example
 ### Declaring Models
@@ -236,6 +246,12 @@ Vein is designed to be highly portable, relying on standard Swift Evolution tool
 - **Metadata & Tooling**: `swiftlang/swift-syntax` (compile time macros), `apple/swift-log`, `apple/swift-atomics` (used only in a write once, read a lot place), `amethystsoft/vein-filter` our back-port of `#Predicate` to macOS 13/iOS 16, available as `#Filter` when the `VeinFilter` trait is enabled)
 - **Testing**: `typelift/SwiftCheck` for property based testing.
 - **SwiftCrossUI**: VeinSCUI depends on SwiftCrossUI. It's only used when the trait `VeinSCUI` is active.
+
+### Dependency Management Policy
+Vein manages its dependencies following strict open-source security and stability guidelines:
+- **Selection:** Dependencies are chosen based on active maintenance, cross-platform compatibility, external footprint, and open-source license compatibility.
+- **Obtaining:** All dependencies are automatically fetched via **Swift Package Manager (SPM)** using the project's `Package.swift` manifest.
+- **Tracking:** Dependency versions are tracked and bounded via semantic version rules (such as `.upToNextMajorFrom`) defined directly in `Package.swift` to ensure compatibility and safe updates for downstream consumers.
 
 ## Sponsoring, Alternative Licensing & CLA
 
