@@ -68,6 +68,11 @@
 
                     try container.context.save()
 
+                    // To make sure something happened
+                    if ops.count > 300 {
+                        XCTAssertTrue(owners.contains { !$0.target.isNil })
+                    }
+
                     // Verification using a fresh context to ensure changes are read from db
                     let verificationContainer = try ModelContainer(
                         V0_0_1.self,
