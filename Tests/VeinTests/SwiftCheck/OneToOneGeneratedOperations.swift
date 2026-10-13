@@ -98,8 +98,8 @@
         case setExistingOwner(target: Int, owner: Int)
 
         /// owner.target = nil
-        case removeOwner(owner: Int)
-        case removeTarget(target: Int)
+        case removeOwner(target: Int)
+        case removeTarget(owner: Int)
 
         /// Move a target to another owner by assigning from the inverse side:
         /// target.owner = newOwner
@@ -110,8 +110,8 @@
             switch self {
                 case .setExistingTarget(let o, let t): return "setExistingTarget(owner: \(o), target: \(t))"
                 case .setExistingOwner(let t, let o): return "setExistingOwner(target: \(t), owner: \(o))"
-                case .removeOwner(let o): return "remove(owner: \(o))"
-                case .removeTarget(let t): return "removeTarget(target: \(t))"
+                case .removeOwner(let o): return "remove(target: \(o))"
+                case .removeTarget(let t): return "removeTarget(owner: \(t))"
                 case .reparentTarget(let t, let o): return "reparentTarget(target: \(t), to: \(o))"
                 case .reparentOwner(let o, let t): return "reparentOwner(owner: \(t), to: \(o))"
             }
@@ -138,7 +138,7 @@
                     let owner = owners[ownerIndex % count]
                     let target = targets[targetIndex % count]
 
-                    owner.target = target
+                    target.owner = owner
 
                 case .removeTarget(let ownerIndex):
                     let owner = owners[ownerIndex % count]
@@ -189,8 +189,8 @@
                             owner: gen.generate(using: index),
                             to: gen.generate(using: index)
                         )
-                    case 4: .removeOwner(owner: gen.generate(using: index))
-                    default: .removeTarget(target: gen.generate(using: index))
+                    case 4: .removeOwner(target: gen.generate(using: index))
+                    default: .removeTarget(owner: gen.generate(using: index))
                 }
             }
         }

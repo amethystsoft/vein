@@ -104,8 +104,8 @@
             switch self {
                 case .addTarget(let target, let to, let amount):
                     return "addTarget(target: \(target), to: \(to), amount: \(amount))"
-                case .addOwner(let target, let to, let amount):
-                    return "addTarget(target: \(target), to: \(to), amount: \(amount))"
+                case .addOwner(let owner, let to, let amount):
+                    return "addOwner(owner: \(owner), to: \(to), amount: \(amount))"
                 case .removeOneTarget(let target, let from):
                     return "removeOneTarget(target: \(target), from: \(from))"
                 case .removeOneOwner(let owner, let from):
@@ -115,9 +115,9 @@
                 case .removeEverythingFromOwner(let from):
                     return "removeEverythingFromOwner(from: \(from))"
                 case .removeAllTargets(let target, let from):
-                    return "removeAll(target: \(target), from: \(from))"
+                    return "removeAllTargets(target: \(target), from: \(from))"
                 case .removeAllOwners(let owner, let from):
-                    return "removeAll(target: \(owner), from: \(from))"
+                    return "removeAllOwners(owner: \(owner), from: \(from))"
             }
         }
     }
@@ -151,8 +151,8 @@
                     let target = targets[targetIndex % count]
                     let owner = owners[ownerIndex % count]
 
-                    if let index = owner.targets.firstIndex(where: { $0 === target }) {
-                        owner.targets.remove(at: index)
+                    if let index = target.owners.firstIndex(where: { $0 === owner }) {
+                        target.owners.remove(at: index)
                     }
                 case .removeEverythingFromOwner(let ownerIndex):
                     let owner = owners[ownerIndex % count]
@@ -169,7 +169,7 @@
                     owner.targets.removeAll {
                         $0 === target
                     }
-                case .removeAllOwners(let targetIndex, let ownerIndex):
+                case .removeAllOwners(let ownerIndex, let targetIndex):
                     let target = targets[targetIndex % count]
                     let owner = owners[ownerIndex % count]
 

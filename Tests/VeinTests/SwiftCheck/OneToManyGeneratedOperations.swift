@@ -114,7 +114,7 @@
                 case .setOwnerNil(let target):
                     return "setOwnerNil(\(target))"
                 case .setOwner(let owner, let target):
-                    return "setOwner(\(owner), \(target)"
+                    return "setOwner(\(owner), \(target))"
             }
         }
     }
@@ -173,7 +173,8 @@
                 (3, Gen<Int>.choose((1, 1))),
                 (1, Gen<Int>.choose((2, 2))),
                 (1, Gen<Int>.choose((3, 3))),
-                (1, Gen<Int>.choose((4, 4)))
+                (1, Gen<Int>.choose((4, 4))),
+                (3, Gen<Int>.choose((5, 5)))
             ])
 
             return Gen<RelationshipOp>.compose { gen in
@@ -194,7 +195,11 @@
                             target: gen.generate(using: index),
                             from: gen.generate(using: index)
                         )
-                    default: .setOwnerNil(gen.generate(using: index))
+                    case 4: .setOwnerNil(gen.generate(using: index))
+                    default: .setOwner(
+                            gen.generate(using: index),
+                            to: gen.generate(using: index)
+                        )
                 }
             }
         }
