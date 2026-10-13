@@ -25,7 +25,10 @@
 
     final class SwiftCheckOneToOneRelationshipSuite: XCTestCase {
         func testRandomOneToOneOperations() throws {
-            let args = CheckerArguments.init(maxTestCaseSize: 1000)
+            let args = CheckerArguments.init(
+                maxAllowableSuccessfulTests: ProcessInfo.swiftCheckIterations,
+                maxTestCaseSize: 1000
+            )
 
             property("State matches local reference after random operations", arguments: args) <-
                 forAll { (ops: [RelationshipOp]) in
