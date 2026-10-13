@@ -6,6 +6,8 @@
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/amethystsoft/vein/swift-test-linux.yml?label=linux)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/amethystsoft/vein/swift-test-android.yml?label=android)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/amethystsoft/vein/swift-test-windows.yml?label=windows)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15440/badge)](https://www.bestpractices.dev/projects/15440)
+[![OpenSSF Baseline](https://www.bestpractices.dev/projects/15440/baseline)](https://www.bestpractices.dev/projects/15440)
 
 [Table of Contents](#table-of-contents)
 [Docs and Tutorials](https://vein.amethystsoft.de)
