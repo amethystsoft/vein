@@ -23,65 +23,65 @@
         @_spi(VeinTesting) @testable import VeinCore
     #endif
 
-final class SwiftCheckOneToOneRelationshipSuite: XCTestCase {
-    func testRandomOneToOneOperations() throws {
-        let args = CheckerArguments.init(maxTestCaseSize: 1000)
-        
-        property("State matches local reference after random operations", arguments: args) <-
-        forAll { (ops: [RelationshipOp]) in
-            let owners = [String](repeating: "", count: max(1, ops.count / 50)).map {
-                Owner(name: $0)
-            }
-            let targets = [String](repeating: "", count: max(1, ops.count / 50)).map {
-                Target(name: $0)
-            }
-            
-            let appID = "de.amethystsoft.vein.tests.RandomOneToOne"
-            
-            let container = try ModelContainer(
-                V0_0_1.self,
-                migration: Migration.self,
-                at: nil,
-                appID: appID,
-                encryptionEnabled: false
-            )
-            
-            for owner in owners {
-                try container.context.insert(owner)
-            }
-            
-            for target in targets {
-                try container.context.insert(target)
-            }
-            
-            for op in ops {
-                try op.perform(on: container, owners: owners, targets: targets)
-                
-                // Compare after EVERY step, so a failure names the operation that broke it.
-                guard try State.matches(container) else {
-                    return false <?> "diverged after: \(op)"
+    final class SwiftCheckOneToOneRelationshipSuite: XCTestCase {
+        func testRandomOneToOneOperations() throws {
+            let args = CheckerArguments.init(maxTestCaseSize: 1000)
+
+            property("State matches local reference after random operations", arguments: args) <-
+                forAll { (ops: [RelationshipOp]) in
+                    let owners = [String](repeating: "", count: max(1, ops.count / 50)).map {
+                        Owner(name: $0)
+                    }
+                    let targets = [String](repeating: "", count: max(1, ops.count / 50)).map {
+                        Target(name: $0)
+                    }
+
+                    let appID = "de.amethystsoft.vein.tests.RandomOneToOne"
+
+                    let container = try ModelContainer(
+                        V0_0_1.self,
+                        migration: Migration.self,
+                        at: nil,
+                        appID: appID,
+                        encryptionEnabled: false
+                    )
+
+                    for owner in owners {
+                        try container.context.insert(owner)
+                    }
+
+                    for target in targets {
+                        try container.context.insert(target)
+                    }
+
+                    for op in ops {
+                        try op.perform(on: container, owners: owners, targets: targets)
+
+                        // Compare after EVERY step, so a failure names the operation that broke it.
+                        guard try State.matches(container) else {
+                            return false <?> "diverged after: \(op)"
+                        }
+                    }
+
+                    try container.context.save()
+
+                    // Verification using a fresh context to ensure changes are read from db
+                    let verificationContainer = try ModelContainer(
+                        V0_0_1.self,
+                        migration: Migration.self,
+                        connection: container.getConnection(),
+                        appID: appID,
+                        encryptionEnabled: false
+                    )
+
+                    if try State.matches(verificationContainer, oldContainer: container) {
+                        return true
+                    }
+
+                    return false <?> "diverged after save"
                 }
-            }
-            
-            try container.context.save()
-            
-            // Verification using a fresh context to ensure changes are read from db
-            let verificationContainer = try ModelContainer(
-                V0_0_1.self,
-                migration: Migration.self,
-                connection: container.getConnection(),
-                appID: appID,
-                encryptionEnabled: false
-            )
-            
-            if try State.matches(verificationContainer, oldContainer: container) {
-                return true
-            }
-            
-            return false <?> "diverged after save"
         }
     }
-}
 
     fileprivate enum RelationshipOp: CustomStringConvertible {
         /// Assign a target that is already inserted (and may belong to another owner).
@@ -162,7 +162,10 @@ final class SwiftCheckOneToOneRelationshipSuite: XCTestCase {
 
     fileprivate struct State {
         /// Reads everything back from the container and compares it to this reference.
-        static func matches(_ container: ModelContainer, oldContainer: ModelContainer? = nil) throws -> Bool {
+        static func matches(
+            _ container: ModelContainer,
+            oldContainer: ModelContainer? = nil
+        ) throws -> Bool {
             let realOwners = try container.context.fetchAll(V0_0_1.Owner.self)
             let realTargets = try container.context.fetchAll(V0_0_1.Target.self)
 
@@ -173,20 +176,20 @@ final class SwiftCheckOneToOneRelationshipSuite: XCTestCase {
             for target in realTargets {
                 if let owner = target.owner, owner.target !== target { return false }
             }
-            
+
             // Skip this half if oldContainer wasn't provided
             guard let oldContainer else { return true }
-            
+
             let inMemoryOwners = try oldContainer.context.fetchAll(V0_0_1.Owner.self)
             let inMemoryTargets = try oldContainer.context.fetchAll(V0_0_1.Target.self)
-            
+
             guard realOwners.count == inMemoryOwners.count else { return false }
             guard realTargets.count == inMemoryTargets.count else { return false }
-            
+
             for (index, owner) in inMemoryOwners.enumerated() {
                 if realOwners[index].target?.id != owner.target?.id { return false }
             }
-            
+
             for (index, target) in inMemoryTargets.enumerated() {
                 if realTargets[index].owner?.id != target.owner?.id { return false }
             }

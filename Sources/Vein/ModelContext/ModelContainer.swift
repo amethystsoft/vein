@@ -398,7 +398,7 @@ public final class ModelContainer: @unchecked Sendable {
     static nonisolated func systemSetup(container: ModelContainer) throws {
         let context = container.context!
         let latestSystemTable = try context.getSystemTable()
-        
+
         try context.createSystemTable()
         try context.createMigrationsTable()
     }
