@@ -17,11 +17,11 @@ jobs:
         with:
           persist-credentials: false
       - name: Test VeinCore
-        run: ReduceSwiftCheckIterations=1 ./Scripts/tsan-test.sh
+        run: ./Scripts/tsan-test.sh
       - name: Test VeinSwiftUI
-        run: ReduceSwiftCheckIterations=1 IS_RUNNING_HEADLESS=1 TEST_SWIFTUI=1 ./Scripts/tsan-test.sh
+        run: IS_RUNNING_HEADLESS=1 TEST_SWIFTUI=1 ./Scripts/tsan-test.sh
       - name: Test VeinSCUI
-        run: TEST_SCUI=1 ReduceSwiftCheckIterations=1 ./Scripts/tsan-test.sh
+        run: TEST_SCUI=1 ./Scripts/tsan-test.sh
   build-example:
     runs-on: macos-26
     steps:

@@ -24,18 +24,22 @@
     #endif
 
     final class SwiftCheckManyToManyRelationshipSuite: XCTestCase {
+        static let modelAmount = 5
+        // Scope: Test it always leaves a result that makes sense.
         func testRandomManyToManyOperations() throws {
             let args = CheckerArguments.init(
                 maxAllowableSuccessfulTests: ProcessInfo.swiftCheckIterations,
-                maxTestCaseSize: 1000
+                maxTestCaseSize: 200
             )
+
+            var oneOrMoreDidSomething = false
 
             property("State matches local reference after random operations", arguments: args) <-
                 forAll { (ops: [RelationshipOp]) in
-                    let owners = [String](repeating: "", count: max(1, ops.count / 50)).map {
+                    let owners = [String](repeating: "", count: Self.modelAmount).map {
                         Owner(name: $0)
                     }
-                    let targets = [String](repeating: "", count: max(1, ops.count / 50)).map {
+                    let targets = [String](repeating: "", count: Self.modelAmount).map {
                         Target(name: $0)
                     }
 
@@ -69,9 +73,9 @@
                     try container.context.save()
 
                     // To make sure something happened
-                    if ops.count > 300 {
-                        XCTAssertTrue(owners.contains { !$0.underlyingValue.isEmpty })
-                    }
+                    oneOrMoreDidSomething = owners.contains {
+                        !$0.underlyingValue.isEmpty
+                    } || oneOrMoreDidSomething
 
                     // Verification using a fresh context to ensure changes are read from db
                     let verificationContainer = try ModelContainer(
@@ -84,6 +88,7 @@
 
                     return try State.matches(verificationContainer, oldContainer: container) <?> "diverged after save"
                 }
+            XCTAssertTrue(oneOrMoreDidSomething)
         }
     }
 
@@ -123,55 +128,52 @@
     }
 
     extension RelationshipOp {
-        /// Does the operation on the real models, then mirrors it in the reference.
-        /// Each case keeps those two steps next to each other on purpose.
         fileprivate func perform(
             on container: ModelContainer,
             owners: [Owner],
             targets: [Target]
         ) throws {
-            let count = owners.count
             switch self {
                 case .addTarget(let targetIndex, let ownerIndex, let amount):
-                    let target = targets[targetIndex % count]
-                    let owner = owners[ownerIndex % count]
+                    let target = targets[targetIndex]
+                    let owner = owners[ownerIndex]
                     owner.targets.append(contentsOf: Array(repeating: target, count: amount))
                 case .addOwner(let ownerIndex, let targetIndex, let amount):
-                    let target = targets[targetIndex % count]
-                    let owner = owners[ownerIndex % count]
+                    let target = targets[targetIndex]
+                    let owner = owners[ownerIndex]
                     target.owners.append(contentsOf: Array(repeating: owner, count: amount))
                 case .removeOneTarget(let targetIndex, let ownerIndex):
-                    let target = targets[targetIndex % count]
-                    let owner = owners[ownerIndex % count]
+                    let target = targets[targetIndex]
+                    let owner = owners[ownerIndex]
 
                     if let index = owner.targets.firstIndex(where: { $0 === target }) {
                         owner.targets.remove(at: index)
                     }
                 case .removeOneOwner(let ownerIndex, let targetIndex):
-                    let target = targets[targetIndex % count]
-                    let owner = owners[ownerIndex % count]
+                    let target = targets[targetIndex]
+                    let owner = owners[ownerIndex]
 
                     if let index = target.owners.firstIndex(where: { $0 === owner }) {
                         target.owners.remove(at: index)
                     }
                 case .removeEverythingFromOwner(let ownerIndex):
-                    let owner = owners[ownerIndex % count]
+                    let owner = owners[ownerIndex]
 
                     owner.targets = []
                 case .removeEverythingFromTarget(let targetIndex):
-                    let target = targets[targetIndex % count]
+                    let target = targets[targetIndex]
 
                     target.owners = []
                 case .removeAllTargets(let targetIndex, let ownerIndex):
-                    let target = targets[targetIndex % count]
-                    let owner = owners[ownerIndex % count]
+                    let target = targets[targetIndex]
+                    let owner = owners[ownerIndex]
 
                     owner.targets.removeAll {
                         $0 === target
                     }
                 case .removeAllOwners(let ownerIndex, let targetIndex):
-                    let target = targets[targetIndex % count]
-                    let owner = owners[ownerIndex % count]
+                    let target = targets[targetIndex]
+                    let owner = owners[ownerIndex]
 
                     target.owners.removeAll {
                         $0 === owner
@@ -183,7 +185,7 @@
     extension RelationshipOp: Arbitrary {
         fileprivate static var arbitrary: Gen<RelationshipOp> {
             let index = Gen<Int>.sized { size in
-                Gen<Int>.choose((0, 100))
+                Gen<Int>.choose((0, SwiftCheckManyToManyRelationshipSuite.modelAmount - 1))
             }
 
             let opChoice = Gen<Int>.frequency([
@@ -237,7 +239,7 @@
     }
 
     fileprivate struct State {
-        /// Reads everything back from the container and compares it to this reference.
+        /// Reads everything back from the container and compares the two relationship sides.
         static func matches(
             _ container: ModelContainer,
             oldContainer: ModelContainer? = nil
@@ -284,8 +286,6 @@
         }
     }
 
-    fileprivate struct MissingModelError: Error {}
-
     fileprivate enum V0_0_1: VersionedSchema {
         static let version = ModelVersion(0, 0, 1)
         static let models: [any Vein.PersistentModel.Type] = [Owner.self, Target.self]
@@ -325,22 +325,6 @@
 
     fileprivate typealias Owner = V0_0_1.Owner
     fileprivate typealias Target = V0_0_1.Target
-
-    extension Owner: Arbitrary {
-        fileprivate static var arbitrary: SwiftCheck.Gen<Owner> {
-            Gen<Owner>.compose { gen in
-                Owner(name: gen.generate())
-            }
-        }
-    }
-
-    extension Target: Arbitrary {
-        fileprivate static var arbitrary: SwiftCheck.Gen<Target> {
-            Gen<Target>.compose { gen in
-                Target(name: gen.generate())
-            }
-        }
-    }
 
     fileprivate enum Migration: SchemaMigrationPlan {
         static var schemas: [any Vein.VersionedSchema.Type] {
