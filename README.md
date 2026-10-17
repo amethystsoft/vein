@@ -173,7 +173,7 @@ struct ContentView: View {
 ## What?
 Vein is a local first, highly abstracted ORM for Swift, backed by an SQLite (+ SQLCipher) database. Its API is heavily inspired by Apple's SwiftData framework.
 
-Unlike SwiftData, Amethyst Vein is open source and aims to use the least amount of runtime magic possible while still providing a very user-friendly API. It is also compatible with every major consumer OS (Apple, Android, Linux and Windows), SwiftUI, SwiftCrossUI and functions independent of UI framework too, just without automatic reactivity.
+Unlike SwiftData, Amethyst Vein is open source and aims to use the least amount of runtime magic possible while still providing a very user-friendly API. It is also compatible with every major consumer OS (Apple, Android, Linux and Windows), SwiftUI, SwiftCrossUI and functions independent of UI framework too, just without automatic reactivity (VeinCore for example works with Skip).
 
 ## Getting started & Documentation
 You can find our tutorials and docs at [vein.amethystsoft.de](https://vein.amethystsoft.de).
