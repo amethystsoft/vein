@@ -16,5 +16,7 @@ jobs:
           persist-credentials: false
       - name: Install SwiftFormat
         run: brew install swiftformat
+      - name: Update SwiftFormat
+        run: brew update SwiftFormat
       - name: Check formatting
         run: ./Scripts/swiftformat-lint.sh
