@@ -126,7 +126,7 @@ public struct ModelMacroBase {
                 let inverseArg = arguments.first(where: { $0.label?.text == "inverse" }),
                 let (root, last) = inverseArg.expression.extractKeyPathComponents(),
                 let key = $0.bindings.first?.pattern.as(IdentifierPatternSyntax.self)?.identifier
-                .text
+                    .text
             else { return nil }
 
             return """
@@ -281,13 +281,13 @@ public struct ModelMacroBase {
            let inverseArg = argumentList.first(where: { $0.label?.text == "inverse" }),
            let (root, last) = inverseArg.expression.extractKeyPathComponents(),
            let typeDecl = varDecl
-           .bindings
-           .first?
-           .typeAnnotation?
-           .type
-           .description
-           .trimmingCharacters(in: .whitespacesAndNewlines)
-           .trimmingCharacters(in: ["?"])
+               .bindings
+               .first?
+               .typeAnnotation?
+               .type
+               .description
+               .trimmingCharacters(in: .whitespacesAndNewlines)
+               .trimmingCharacters(in: ["?"])
         {
             guard
                 typeDecl == root || typeDecl == "[\(root)]" || typeDecl == "Array<\(root)>"
@@ -524,7 +524,7 @@ extension ExprSyntax {
             let rootComponent = keyPath.root,
             let lastComponent = keyPath.components.last,
             let lastPropertyComponent = lastComponent.component
-            .as(KeyPathPropertyComponentSyntax.self)
+                .as(KeyPathPropertyComponentSyntax.self)
         else { return nil }
 
         return (

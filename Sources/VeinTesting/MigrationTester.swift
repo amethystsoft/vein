@@ -231,9 +231,9 @@ extension MigrationTester.Error: @MainActor Equatable {
     public static func == (lhs: MigrationTester.Error, rhs: MigrationTester.Error) -> Bool {
         switch (lhs, rhs) {
             case (
-            usesUnknownSchema(let lhsSchema, let lhsMigrationStage),
-            usesUnknownSchema(let rhsSchema, let rhsMigrationStage)
-        ):
+                usesUnknownSchema(let lhsSchema, let lhsMigrationStage),
+                usesUnknownSchema(let rhsSchema, let rhsMigrationStage)
+            ):
                 return lhsSchema == rhsSchema && lhsMigrationStage == rhsMigrationStage
             case
             (.schemasNotSorted, .schemasNotSorted),
@@ -255,9 +255,9 @@ extension MigrationStage: @MainActor Equatable {
     public static func == (lhs: Vein.MigrationStage, rhs: Vein.MigrationStage) -> Bool {
         switch (lhs, rhs) {
             case (
-            .complex(let lhsStartSchema, let lhsEndSchema, _, _),
-            .complex(let rhsStartSchema, let rhsEndSchema, _, _)
-        ):
+                .complex(let lhsStartSchema, let lhsEndSchema, _, _),
+                .complex(let rhsStartSchema, let rhsEndSchema, _, _)
+            ):
                 return lhsStartSchema == rhsStartSchema && lhsEndSchema == rhsEndSchema
         }
 

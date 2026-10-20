@@ -96,8 +96,8 @@ extension FacetCLI {
                 while true {
                     guard
                         let input = readLine()?
-                        .trimmingCharacters(in: .whitespacesAndNewlines)
-                        .lowercased()
+                            .trimmingCharacters(in: .whitespacesAndNewlines)
+                            .lowercased()
                     else {
                         print("No input received. Aborting.")
                         return
