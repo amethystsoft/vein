@@ -112,8 +112,8 @@ struct ModelContainerTests {
         } catch {
             switch error {
                 case .schemaNotRegisteredOnMigrationPlan(let schema, let migration):
-                    #expect("\(schema)" == "\(UnregisteredSchema.self)")
-                    #expect("\(migration)" == "\(Migration.self)")
+                    #expect("\(schema)" == "UnregisteredSchema")
+                    #expect("\(migration)" == "Migration")
                 default:
                     throw error
             }
@@ -135,8 +135,8 @@ struct ModelContainerTests {
         } catch {
             switch error {
                 case .schemaNotRegisteredOnMigrationPlan(let schema, let migration):
-                    #expect("\(schema)" == "\(UnregisteredSchema.self)")
-                    #expect("\(migration)" == "\(Migration.self)")
+                    #expect("\(schema)" == "UnregisteredSchema")
+                    #expect("\(migration)" == "Migration")
                 default:
                     throw error
             }
