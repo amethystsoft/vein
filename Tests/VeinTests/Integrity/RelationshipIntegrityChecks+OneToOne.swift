@@ -23,173 +23,131 @@ import SQLiteDB
 #endif
 
 @Suite("Relationship Integrity Check Tests One to One")
-struct RelationshipIntegrityChecksOneToOne {
+struct RelationshipIntegrityChecksOneToOne: RelationshipIntegrityCheckHelper {
     @Test
     func `one side doesn't have table`() async throws {
-        let container = try ModelContainer(
-            V0_0_1.self,
-            migration: Migration.self,
-            at: nil,
-            appID: "de.amethystsoft.vein.test.relationship-integrity-check.onetoone",
-            encryptionEnabled: false
-        )
-
         let owner = Owner(name: "Mia")
         let target = Target(name: "Coral")
 
-        try container.context.insert(owner)
-        owner.target = target
-        try container.context.save()
-
-        let connection = container.getConnection()
-        _ = try connection.execute("DROP TABLE IF EXISTS '\(Target.schema)';")
-
-        let tables = try container.context.getAllStoredSchemas()
-        #expect(!tables.contains(Target.schema))
-
-        try expectInverseMissing(
-            container,
-            ownerID: owner.id,
-            targetID: target.id
-        )
+        try check(V0_0_1.self, Migration.self) { context in
+            try context.insert(owner)
+            owner.target = target
+        } corrupt: { connection in
+            _ = try connection.execute("DROP TABLE IF EXISTS '\(Target.schema)';")
+        } validate: { reports in
+            expectInverseMissing(
+                reports: reports,
+                ownerID: owner.id,
+                targetID: target.id
+            )
+        }
     }
 
     @Test
     func `one side doesn't have model`() async throws {
-        let container = try ModelContainer(
-            V0_0_1.self,
-            migration: Migration.self,
-            at: nil,
-            appID: "de.amethystsoft.vein.test.relationship-integrity-check.onetoone",
-            encryptionEnabled: false
-        )
-
         let owner = Owner(name: "Mia")
         let owner2 = Owner(name: "amogus")
         let target = Target(name: "Coral")
         let target2 = Target(name: "sugoma")
 
-        try container.context.insert(owner)
-        try container.context.insert(owner2)
-        owner.target = target
-        owner2.target = target2
-        try container.context.save()
-
-        let connection = container.getConnection()
-        let query = Table(Target.schema)
-            .where(SQLExpression<String>("id") == target.id.ulidString)
-            .delete()
-        _ = try connection.run(query)
-
-        let fetchedTargets = try container.context.fetchAll(Target.self)
-        #expect(fetchedTargets.count == 1)
-
-        try expectInverseMissing(
-            container,
-            ownerID: owner.id,
-            targetID: target.id
-        )
+        try check(V0_0_1.self, Migration.self) { context in
+            try context.insert(owner)
+            try context.insert(owner2)
+            owner.target = target
+            owner2.target = target2
+        } corrupt: { connection in
+            let query = Table(Target.schema)
+                .where(SQLExpression<String>("id") == target.id.ulidString)
+                .delete()
+            _ = try connection.run(query)
+        } validate: { reports in
+            expectInverseMissing(
+                reports: reports,
+                ownerID: owner.id,
+                targetID: target.id
+            )
+        }
     }
 
     @Test
     func `inverse is nil`() async throws {
-        let container = try ModelContainer(
-            V0_0_1.self,
-            migration: Migration.self,
-            at: nil,
-            appID: "de.amethystsoft.vein.test.relationship-integrity-check.onetoone",
-            encryptionEnabled: false
-        )
-
         let owner = Owner(name: "Mia")
         let target = Target(name: "Coral")
 
-        try container.context.insert(owner)
-        owner.target = target
-        try container.context.save()
+        try check(V0_0_1.self, Migration.self) { context in
+            try context.insert(owner)
+            owner.target = target
+        } corrupt: { connection in
+            let query = Table(Target.schema)
+                .where(SQLExpression<String>("id") == target.id.ulidString)
+                .update(SQLExpression<String?>("owner") <- nil)
+            try connection.run(query)
+        } validate: { reports in
+            let ownerReport = reports.first { $0.schema == Owner.schema }!
+            let targetReport = reports.first { $0.schema == Target.schema }!
 
-        let connection = container.getConnection()
-        let query = Table(Target.schema)
-            .where(SQLExpression<String>("id") == target.id.ulidString)
-            .update(SQLExpression<String?>("owner") <- nil)
-        try connection.run(query)
+            #expect(targetReport.models.count == 0)
+            #expect(ownerReport.models.count == 1)
 
-        let reports = try container.context.checkRelationshipIntegrity()
+            guard let ownerReport = ownerReport.models.first else { return }
 
-        let ownerReport = reports.first { $0.schema == Owner.schema }!
-        let targetReport = reports.first { $0.schema == Target.schema }!
-
-        #expect(targetReport.models.count == 0)
-        #expect(ownerReport.models.count == 1)
-
-        guard
-            let ownerReport = ownerReport.models.first
-        else { return }
-
-        #expect(ownerReport.idString == owner.id.ulidString)
-        #expect(ownerReport.inverseMismatches.count == 1)
-        #expect(ownerReport.localMismatches.isEmpty)
-        #expect(ownerReport.inverseMismatches["target"]?[target.id.ulidString] == .inverseMismatch(
-            found: nil,
-            expected: owner.id
-        ))
+            #expect(ownerReport.idString == owner.id.ulidString)
+            #expect(ownerReport.inverseMismatches.count == 1)
+            #expect(ownerReport.localMismatches.isEmpty)
+            #expect(
+                ownerReport.inverseMismatches["target"]?[target.id.ulidString]
+                    == .inverseMismatch(found: nil, expected: owner.id)
+            )
+        }
     }
 
     @Test
     func `inverse is different (missingInInverse covered too)`() async throws {
-        let container = try ModelContainer(
-            V0_0_1.self,
-            migration: Migration.self,
-            at: nil,
-            appID: "de.amethystsoft.vein.test.relationship-integrity-check.onetoone",
-            encryptionEnabled: false
-        )
-
         let owner = Owner(name: "Mia")
         let target = Target(name: "Coral")
-
-        try container.context.insert(owner)
-        owner.target = target
-        try container.context.save()
-
         let ulid = ULID()
 
-        let connection = container.getConnection()
-        let query = Table(Target.schema)
-            .where(SQLExpression<String>("id") == target.id.ulidString)
-            .update(SQLExpression<String?>("owner") <- ulid.ulidString)
-        try connection.run(query)
+        try check(V0_0_1.self, Migration.self) { context in
+            try context.insert(owner)
+            owner.target = target
+        } corrupt: { connection in
+            let query = Table(Target.schema)
+                .where(SQLExpression<String>("id") == target.id.ulidString)
+                .update(SQLExpression<String?>("owner") <- ulid.ulidString)
+            try connection.run(query)
+        } validate: { reports in
+            let ownerReport = reports.first { $0.schema == Owner.schema }!
+            let targetReport = reports.first { $0.schema == Target.schema }!
 
-        let reports = try container.context.checkRelationshipIntegrity()
+            #expect(targetReport.models.count == 1)
+            #expect(ownerReport.models.count == 1)
 
-        let ownerReport = reports.first { $0.schema == Owner.schema }!
-        let targetReport = reports.first { $0.schema == Target.schema }!
+            guard
+                let ownerReport = ownerReport.models.first,
+                let targetReport = targetReport.models.first
+            else { return }
 
-        #expect(targetReport.models.count == 1)
-        #expect(ownerReport.models.count == 1)
+            #expect(ownerReport.idString == owner.id.ulidString)
+            #expect(ownerReport.inverseMismatches.count == 1)
+            #expect(ownerReport.localMismatches.isEmpty)
+            #expect(
+                ownerReport.inverseMismatches["target"]?[target.id.ulidString]
+                    == .inverseMismatch(found: ulid, expected: owner.id)
+            )
 
-        guard
-            let ownerReport = ownerReport.models.first,
-            let targetReport = targetReport.models.first
-        else { return }
-
-        #expect(ownerReport.idString == owner.id.ulidString)
-        #expect(ownerReport.inverseMismatches.count == 1)
-        #expect(ownerReport.localMismatches.isEmpty)
-        #expect(ownerReport.inverseMismatches["target"]?[target.id.ulidString] == .inverseMismatch(
-            found: ulid,
-            expected: owner.id
-        ))
-
-        #expect(targetReport.idString == target.id.ulidString)
-        #expect(targetReport.inverseMismatches.count == 1)
-        #expect(targetReport.localMismatches.isEmpty)
-        // used a fake ulid
-        #expect(targetReport.inverseMismatches["owner"]?[ulid.ulidString] == .missingInInverse)
+            #expect(targetReport.idString == target.id.ulidString)
+            #expect(targetReport.inverseMismatches.count == 1)
+            #expect(targetReport.localMismatches.isEmpty)
+            // used a fake ulid
+            #expect(targetReport.inverseMismatches["owner"]?[ulid.ulidString] == .missingInInverse)
+        }
     }
 
-    func expectInverseMissing(_ container: ModelContainer, ownerID: ULID, targetID: ULID) throws {
-        let reports = try container.context.checkRelationshipIntegrity()
+    func expectInverseMissing(
+        reports: [RelationshipIntegrityReport],
+        ownerID: ULID,
+        targetID: ULID
+    ) {
         let ownerReport = reports.first { $0.schema == Owner.schema }!
         let targetReport = reports.first { $0.schema == Target.schema }!
 

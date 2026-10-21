@@ -93,7 +93,8 @@ extension ManagedObjectContext {
     ///
     /// Saves will be locked while running the integrity check.
     public nonisolated func checkRelationshipIntegrity() throws(MOCError)
-        -> [RelationshipIntegrityReport] {
+        -> [RelationshipIntegrityReport]
+    {
         saveLock.lock()
         defer {
             saveLock.unlock()
@@ -177,7 +178,7 @@ extension [FieldInformation] {
 
         for relationship in self
             where inverses[relationship.key] != nil
-                && inverseInformation[relationship.key] != nil
+            && inverseInformation[relationship.key] != nil
         {
             let value = SQLiteValue(
                 typeName: relationship.typeName,

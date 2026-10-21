@@ -22,152 +22,120 @@ import SQLiteDB
     @_spi(VeinTesting) @testable import VeinCore
 #endif
 
-struct RelationshipIntegrityChecks {
+struct RelationshipIntegrityChecks: RelationshipIntegrityCheckHelper {
     @Test
     func `corrupted primaryULID`() async throws {
-        let container = try ModelContainer(
-            V0_0_1.self,
-            migration: Migration.self,
-            at: nil,
-            appID: "de.amethystsoft.vein.test.relationship-integrity-check.onetoone",
-            encryptionEnabled: false
-        )
-
         let owner = Owner(name: "Mia")
         let target = Target(name: "Coral")
 
-        try container.context.insert(owner)
-        owner.target = target
-        try container.context.save()
+        try check(V0_0_1.self, Migration.self) { context in
+            try context.insert(owner)
+            owner.target = target
+        } corrupt: { connection in
+            let query = Table(Owner.schema)
+                .where(SQLExpression<String>("id") == owner.id.ulidString)
+                .update(SQLExpression<String>("id") <- "notAValidULID")
+            _ = try connection.run(query)
+        } validate: { reports in
+            let ownerReport = reports.first { $0.schema == Owner.schema }!
+            let targetReport = reports.first { $0.schema == Target.schema }!
 
-        let connection = container.getConnection()
-        let query = Table(Owner.schema)
-            .where(SQLExpression<String>("id") == owner.id.ulidString)
-            .update(SQLExpression<String>("id") <- "notAValidULID")
-        _ = try connection.run(query)
+            #expect(targetReport.models.count == 1)
+            #expect(ownerReport.models.count == 1)
 
-        let reports = try container.context.checkRelationshipIntegrity()
+            guard
+                let ownerReport = ownerReport.models.first,
+                let targetReport = targetReport.models.first
+            else { return }
 
-        let ownerReport = reports.first { $0.schema == Owner.schema }!
-        let targetReport = reports.first { $0.schema == Target.schema }!
+            #expect(ownerReport.idString == "notAValidULID")
+            #expect(ownerReport.inverseMismatches.isEmpty)
+            #expect(ownerReport.localMismatches.count == 1)
+            #expect(ownerReport.localMismatches["id"] == .corruptedData)
 
-        #expect(targetReport.models.count == 1)
-        #expect(ownerReport.models.count == 1)
-
-        guard
-            let ownerReport = ownerReport.models.first,
-            let targetReport = targetReport.models.first
-        else {
-            return
+            #expect(targetReport.id == target.id)
+            #expect(targetReport.localMismatches.isEmpty)
+            #expect(targetReport.inverseMismatches.count == 1)
+            #expect(targetReport
+                .inverseMismatches["owner"]?[owner.id.ulidString] == .missingInInverse)
         }
-
-        #expect(ownerReport.idString == "notAValidULID")
-        #expect(ownerReport.inverseMismatches.isEmpty)
-        #expect(ownerReport.localMismatches.count == 1)
-        #expect(ownerReport.localMismatches["id"] == .corruptedData)
-
-        #expect(targetReport.id == target.id)
-        #expect(targetReport.localMismatches.isEmpty)
-        #expect(targetReport.inverseMismatches.count == 1)
-        #expect(targetReport.inverseMismatches["owner"]?[owner.id.ulidString] == .missingInInverse)
     }
 
     @Test
     func `Corrupted one-relationship data`() async throws {
-        let container = try ModelContainer(
-            V0_0_1.self,
-            migration: Migration.self,
-            at: nil,
-            appID: "de.amethystsoft.vein.test.relationship-integrity-check.onetoone",
-            encryptionEnabled: false
-        )
-
         let owner = Owner(name: "Mia")
         let target = Target(name: "Coral")
 
-        try container.context.insert(owner)
-        owner.target = target
-        try container.context.save()
+        try check(V0_0_1.self, Migration.self) { context in
+            try context.insert(owner)
+            owner.target = target
+        } corrupt: { connection in
+            let query = Table(Owner.schema)
+                .where(SQLExpression<String>("id") == owner.id.ulidString)
+                .update(SQLExpression<String>("target") <- "notAValidULID")
+            _ = try connection.run(query)
+        } validate: { reports in
+            let ownerReport = reports.first { $0.schema == Owner.schema }!
+            let targetReport = reports.first { $0.schema == Target.schema }!
 
-        let connection = container.getConnection()
-        let query = Table(Owner.schema)
-            .where(SQLExpression<String>("id") == owner.id.ulidString)
-            .update(SQLExpression<String>("target") <- "notAValidULID")
-        _ = try connection.run(query)
+            #expect(targetReport.models.count == 1)
+            #expect(ownerReport.models.count == 1)
 
-        let reports = try container.context.checkRelationshipIntegrity()
+            guard
+                let ownerReport = ownerReport.models.first,
+                let targetReport = targetReport.models.first
+            else { return }
 
-        let ownerReport = reports.first { $0.schema == Owner.schema }!
-        let targetReport = reports.first { $0.schema == Target.schema }!
+            #expect(ownerReport.idString == owner.id.ulidString)
+            #expect(ownerReport.inverseMismatches.isEmpty)
+            #expect(ownerReport.localMismatches.count == 1)
+            #expect(ownerReport.localMismatches["target"] == .corruptedData)
 
-        #expect(targetReport.models.count == 1)
-        #expect(ownerReport.models.count == 1)
-
-        guard
-            let ownerReport = ownerReport.models.first,
-            let targetReport = targetReport.models.first
-        else { return }
-
-        #expect(ownerReport.idString == owner.id.ulidString)
-        #expect(ownerReport.inverseMismatches.isEmpty)
-        #expect(ownerReport.localMismatches.count == 1)
-        #expect(ownerReport.localMismatches["target"] == .corruptedData)
-
-        #expect(targetReport.idString == target.id.ulidString)
-        #expect(targetReport.inverseMismatches.count == 1)
-        #expect(targetReport.localMismatches.isEmpty)
-        #expect(targetReport.inverseMismatches["owner"]?[owner.id.ulidString] == .corruptedData)
+            #expect(targetReport.idString == target.id.ulidString)
+            #expect(targetReport.inverseMismatches.count == 1)
+            #expect(targetReport.localMismatches.isEmpty)
+            #expect(targetReport.inverseMismatches["owner"]?[owner.id.ulidString] == .corruptedData)
+        }
     }
 
     @Test
     func `Corrupted many-relationship data`() async throws {
-        let container = try ModelContainer(
-            V0_0_2.self,
-            migration: Migration.self,
-            at: nil,
-            appID: "de.amethystsoft.vein.test.relationship-integrity-check.manytoone",
-            encryptionEnabled: false
-        )
-
         let owner = V0_0_2.Owner(name: "Mia")
         let target = V0_0_2.Target(name: "Coral")
 
-        try container.context.insert(owner)
-        owner.targets.append(target)
-        try container.context.save()
+        try check(V0_0_2.self, Migration.self) { context in
+            try context.insert(owner)
+            owner.targets.append(target)
+        } corrupt: { connection in
+            let query = Table(V0_0_2.Owner.schema)
+                .where(SQLExpression<String>("id") == owner.id.ulidString)
+                .update(SQLExpression<Data>("targets") <- SQLExpression<Data>(
+                    "jsonb(?)",
+                    ["{\"id\": 1234}"]
+                ))
+            _ = try connection.run(query)
+        } validate: { reports in
+            let ownerReport = reports.first { $0.schema == V0_0_2.Owner.schema }!
+            let targetReport = reports.first { $0.schema == V0_0_2.Target.schema }!
 
-        let connection = container.getConnection()
+            #expect(targetReport.models.count == 1)
+            #expect(ownerReport.models.count == 1)
 
-        let query = Table(V0_0_2.Owner.schema)
-            .where(SQLExpression<String>("id") == owner.id.ulidString)
-            .update(SQLExpression<Data>("targets") <- SQLExpression<Data>(
-                "jsonb(?)",
-                ["{\"id\": 1234}"]
-            ))
-        _ = try connection.run(query)
+            guard
+                let ownerReport = ownerReport.models.first,
+                let targetReport = targetReport.models.first
+            else { return }
 
-        let reports = try container.context.checkRelationshipIntegrity()
+            #expect(ownerReport.idString == owner.id.ulidString)
+            #expect(ownerReport.inverseMismatches.isEmpty)
+            #expect(ownerReport.localMismatches.count == 1)
+            #expect(ownerReport.localMismatches["targets"] == .corruptedData)
 
-        let ownerReport = reports.first { $0.schema == V0_0_2.Owner.schema }!
-        let targetReport = reports.first { $0.schema == V0_0_2.Target.schema }!
-
-        #expect(targetReport.models.count == 1)
-        #expect(ownerReport.models.count == 1)
-
-        guard
-            let ownerReport = ownerReport.models.first,
-            let targetReport = targetReport.models.first
-        else { return }
-
-        #expect(ownerReport.idString == owner.id.ulidString)
-        #expect(ownerReport.inverseMismatches.isEmpty)
-        #expect(ownerReport.localMismatches.count == 1)
-        #expect(ownerReport.localMismatches["targets"] == .corruptedData)
-
-        #expect(targetReport.idString == target.id.ulidString)
-        #expect(targetReport.inverseMismatches.count == 1)
-        #expect(targetReport.localMismatches.isEmpty)
-        #expect(targetReport.inverseMismatches["owner"]?[owner.id.ulidString] == .corruptedData)
+            #expect(targetReport.idString == target.id.ulidString)
+            #expect(targetReport.inverseMismatches.count == 1)
+            #expect(targetReport.localMismatches.isEmpty)
+            #expect(targetReport.inverseMismatches["owner"]?[owner.id.ulidString] == .corruptedData)
+        }
     }
 }
 
