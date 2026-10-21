@@ -1,3 +1,4 @@
+import Foundation
 import ULID
 
 public struct RelationshipIntegrityReport: Codable {
@@ -23,7 +24,6 @@ public struct RelationshipIntegrityReport: Codable {
             case inverseUnexpectedlyNotRelationship
             case unexpectedlyNotRelationship
             case inverseMismatch(found: ULID?, expected: ULID)
-            case modelNotFound
         }
         
         public static var corruptedData: Self { Self(kind: .corruptedData) }
@@ -33,7 +33,6 @@ public struct RelationshipIntegrityReport: Codable {
         public static var missingInInverse: Self {
             Self(kind: .missingInInverse)
         }
-        public static var modelNotFound: Self { Self(kind: .modelNotFound) }
         public static var unexpectedlyNotRelationship: Self {
             Self(kind: .unexpectedlyNotRelationship)
         }
@@ -49,5 +48,30 @@ public struct RelationshipIntegrityReport: Codable {
 extension RelationshipIntegrityReport {
     var didPass: Bool {
         models.isEmpty
+    }
+}
+
+extension RelationshipIntegrityReport.Mismatch.Kind {
+    var description: String {
+        switch self {
+            case .corruptedData:
+                "corruptedData"
+            case .inverseCountMismatch(let found, let expected):
+                "inverseCountMismatch: found: \(found), expected: \(expected)"
+            case .missingInInverse:
+                "missingInInverse"
+            case .inverseUnexpectedlyNotRelationship:
+                "inverseUnexpectedlyNotRelationship"
+            case .unexpectedlyNotRelationship:
+                "unexpectedlyNotRelationship"
+            case .inverseMismatch(let found, let expected):
+                "inverseMismatch: found: \(found?.ulidString ?? "nil"), expected: \(expected.ulidString)"
+        }
+    }
+}
+
+extension RelationshipIntegrityReport.Mismatch: Equatable {
+    public static func == (lhs: borrowing RelationshipIntegrityReport.Mismatch, rhs: borrowing RelationshipIntegrityReport.Mismatch) -> Bool {
+        return lhs.kind.description == rhs.kind.description
     }
 }

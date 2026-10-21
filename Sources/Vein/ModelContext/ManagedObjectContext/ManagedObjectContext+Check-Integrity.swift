@@ -62,7 +62,11 @@ extension ManagedObjectContext {
                 }
             }
         } catch let error as SQLiteDB.Result {
-            throw error.parse()
+            let parsed = error.parse()
+            if case .noSuchTable = parsed {
+                return RelationshipIntegrityReport(schema: model.schema, models: [])
+            }
+            throw parsed
         } catch {
             throw .other(message: error.localizedDescription)
         }
@@ -142,7 +146,7 @@ extension [FieldInformation] {
             }
         }
         
-        for information in self where !inverses.keys.contains(information.key) {
+        for information in self {
             guard let oppositeType = information.relationshipToType else { continue }
             if
                 let inversesToThis = oppositeType._inverseFields[type.typeIdentifier],
@@ -168,7 +172,6 @@ extension [FieldInformation] {
             }
             
             guard case .text(let string) = value else {
-                print(value)
                 localMismatches[relationship.key] = .unexpectedlyNotRelationship
                 continue
             }
@@ -184,7 +187,20 @@ extension [FieldInformation] {
                     .select([idExpr, inverseInformation.fetchExpressible])
                     .where(stringArray.contains(idExpr))
                 
-                let rows = try connection.prepare(query)
+                var rows: AnySequence<Row>
+                do {
+                    rows = try connection.prepare(query)
+                } catch let error as SQLiteDB.Result {
+                    let parsed = error.parse()
+                    if case .noSuchTable = parsed {
+                        for ulid in ulids {
+                            inverseMismatches[relationship.key, default: [:]][ulid.ulidString] = .missingInInverse
+                        }
+                        return (localMismatches, inverseMismatches)
+                    }
+                    throw error
+                }
+                
                 for row in rows {
                     let idExpr = SQLExpression<String>("id")
                     let rowIDStr = row[idExpr]
@@ -196,7 +212,7 @@ extension [FieldInformation] {
                         ulids,
                         rowIDStr: rowIDStr,
                     ) {
-                        inverseMismatches[relationship.key, default: [:]][string] = mismatch
+                        inverseMismatches[relationship.key, default: [:]][rowIDStr] = mismatch
                     }
                     
                     let index = stringArray.firstIndex(of: rowIDStr)!
@@ -204,7 +220,7 @@ extension [FieldInformation] {
                 }
                 
                 for string in stringArray {
-                    inverseMismatches[relationship.key, default: [:]][string] = .modelNotFound
+                    inverseMismatches[relationship.key, default: [:]][string] = .missingInInverse
                 }
             } else if let _ = ULID(fromPersistent: string) {
                 let query = Table(relationship.relationshipToType!.schema)
@@ -212,7 +228,18 @@ extension [FieldInformation] {
                     .where(idExpr == string)
                     .limit(1)
                 
-                let rows = try connection.prepare(query)
+                var rows: AnySequence<Row>
+                do {
+                    rows = try connection.prepare(query)
+                } catch let error as SQLiteDB.Result {
+                    let parsed = error.parse()
+                    if case .noSuchTable = parsed {
+                        inverseMismatches[relationship.key, default: [:]][string] = .missingInInverse
+                        return (localMismatches, inverseMismatches)
+                    }
+                    throw error
+                }
+                
                 var called = false
                 for row in rows {
                     if let mismatch = row.checkFieldMatchesRelationship(
@@ -226,7 +253,7 @@ extension [FieldInformation] {
                 }
                 
                 if !called {
-                    inverseMismatches[relationship.key, default: [:]][string] = .modelNotFound
+                    inverseMismatches[relationship.key, default: [:]][string] = .missingInInverse
                 }
             } else {
                 localMismatches[relationship.key] = .unexpectedlyNotRelationship
