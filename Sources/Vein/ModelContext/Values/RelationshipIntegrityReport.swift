@@ -14,16 +14,22 @@ import Foundation
 import ULID
 
 public struct RelationshipIntegrityReport: Codable {
+    /// The schema checked.
     public let schema: String
+    /// The rows an issue was found with.
     public let models: [Model]
 
     public struct Model: Codable {
+        /// The primary key of the scanned row.
         public let idString: String
-        /// field, mismatch
+        /// Mismatches in the current row, keyed by field name.
         public let localMismatches: [String: Mismatch]
-        /// field, id on other side, mismatch
+        /// Mismatches in the inverses of the current row.
+        /// First keyed by the field whose inverse it's looking at,
+        /// then by the id an issue was detected with from the references of said field.
         public let inverseMismatches: [String: [String: Mismatch]]
 
+        /// The id of the scanned row or `nil` if the primary key is not a valid ULID.
         public var id: ULID? {
             ULID(ulidString: idString)
         }
@@ -31,28 +37,41 @@ public struct RelationshipIntegrityReport: Codable {
 
     public struct Mismatch: Codable {
         public let kind: Kind
+        @nonexhaustive
         public enum Kind: Codable {
+            /// The field is corrupted.
             case corruptedData
+            /// The amount of references to the current row doesn't match the amount required by the field.
             case inverseCountMismatch(found: Int, expected: Int)
+            /// Row for the given ID was not found in the inverse table.
             case missingInInverse
+            /// The type of the inverse field doesn't fit a relationship.
             case inverseUnexpectedlyNotRelationship
+            /// The type of the field declared as relationship didn't fit a relationship.
             case unexpectedlyNotRelationship
+            /// The id value of the inverse field doesn't point to the ulid of the current row.
             case inverseMismatch(found: ULID?, expected: ULID)
         }
 
+        /// The field is corrupted.
         public static var corruptedData: Self { Self(kind: .corruptedData) }
+        /// The type of the inverse field doesn't fit a relationship.
         public static var inverseUnexpectedlyNotRelationship: Self {
             Self(kind: .inverseUnexpectedlyNotRelationship)
         }
+        /// Row for the given ID was not found in the inverse table.
         public static var missingInInverse: Self {
             Self(kind: .missingInInverse)
         }
+        /// The type of the field declared as relationship didn't fit a relationship.
         public static var unexpectedlyNotRelationship: Self {
             Self(kind: .unexpectedlyNotRelationship)
         }
+        /// The amount of references to the current row doesn't match the amount required by the field.
         public static func inverseCountMismatch(found: Int, expected: Int) -> Self {
             Self(kind: .inverseCountMismatch(found: found, expected: expected))
         }
+        /// The id value of the inverse field doesn't point to the ulid of the current row.
         public static func inverseMismatch(found: ULID?, expected: ULID) -> Self {
             Self(kind: .inverseMismatch(found: found, expected: expected))
         }
@@ -60,7 +79,8 @@ public struct RelationshipIntegrityReport: Codable {
 }
 
 extension RelationshipIntegrityReport {
-    var didPass: Bool {
+    /// Whether the integrity check passed without errors.
+    public var didPass: Bool {
         models.isEmpty
     }
 }

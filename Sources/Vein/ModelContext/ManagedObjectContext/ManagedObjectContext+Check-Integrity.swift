@@ -89,7 +89,7 @@ extension ManagedObjectContext {
         )
     }
 
-    /// Checks the plausibility for all relationships of a row for each row for all schemas this context manages
+    /// Checks the plausibility for all relationships of a row for each row for all schemas this context manages.
     ///
     /// Saves will be locked while running the integrity check.
     public nonisolated func checkRelationshipIntegrity() throws(MOCError)
