@@ -27,18 +27,26 @@ public struct FieldInformation: Sendable {
     let key: String
     let eagerLoaded: Bool
     let relationshipToType: (any PersistentModel.Type)?
+    let relationshipType: RelationshipType?
 
     public nonisolated init(
         _ typeName: SQLiteTypeName,
         _ key: String,
         _ eagerLoaded: Bool,
-        _ relationshipToType: (any PersistentModel.Type)? = nil
+        _ relationshipToType: (any PersistentModel.Type)? = nil,
+        _ relationshipType: RelationshipType? = nil
     ) {
         self.typeName = typeName
         self.key = key
         self.eagerLoaded = eagerLoaded
         self.relationshipToType = relationshipToType
+        self.relationshipType = relationshipType
     }
+}
+
+public enum RelationshipType: Sendable {
+    case one
+    case many
 }
 
 extension FieldInformation: Hashable {

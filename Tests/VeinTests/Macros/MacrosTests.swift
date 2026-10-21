@@ -462,7 +462,7 @@ struct MacrosTests {
                             case \._isDeleted: Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false)
                             case \._isSynced: Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false)
                             case \._updatedAt: Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false)
-                            case \.doNotUseInInit: Vein.FieldInformation(ULID?.sqliteTypeName, "doNotUseInInit", true, Test.self)
+                            case \.doNotUseInInit: Vein.FieldInformation(ULID?.sqliteTypeName, "doNotUseInInit", true, Test.self, .one)
                             case \.id: Vein.FieldInformation(ULID.sqliteTypeName, "id", true)
                             default: nil
                         }
@@ -473,7 +473,7 @@ struct MacrosTests {
                         Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false),
                         Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false),
                         Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false),
-                        Vein.FieldInformation(ULID?.sqliteTypeName, "doNotUseInInit", true, Test.self)
+                        Vein.FieldInformation(ULID?.sqliteTypeName, "doNotUseInInit", true, Test.self, .one)
                     ]
 
                     \#(sharedSuffix)
@@ -603,7 +603,7 @@ struct MacrosTests {
                             case \._isDeleted: Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false)
                             case \._isSynced: Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false)
                             case \._updatedAt: Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false)
-                            case \.doNotUseInInit: Vein.FieldInformation(ULID?.sqliteTypeName, "doNotUseInInit", true, Test.self)
+                            case \.doNotUseInInit: Vein.FieldInformation(ULID?.sqliteTypeName, "doNotUseInInit", true, Test.self, .one)
                             case \.id: Vein.FieldInformation(ULID.sqliteTypeName, "id", true)
                             default: nil
                         }
@@ -614,7 +614,7 @@ struct MacrosTests {
                         Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false),
                         Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false),
                         Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false),
-                        Vein.FieldInformation(ULID?.sqliteTypeName, "doNotUseInInit", true, Test.self)
+                        Vein.FieldInformation(ULID?.sqliteTypeName, "doNotUseInInit", true, Test.self, .one)
                     ]
 
                     \#(sharedSuffix)
@@ -756,7 +756,7 @@ struct MacrosTests {
                             case \._isDeleted: Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false)
                             case \._isSynced: Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false)
                             case \._updatedAt: Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false)
-                            case \.doNotUseInInit: Vein.FieldInformation(ULID?.sqliteTypeName, "doNotUseInInit", true, Test.self)
+                            case \.doNotUseInInit: Vein.FieldInformation(ULID?.sqliteTypeName, "doNotUseInInit", true, Test.self, .one)
                             case \.id: Vein.FieldInformation(ULID.sqliteTypeName, "id", true)
                             default: nil
                         }
@@ -767,7 +767,7 @@ struct MacrosTests {
                         Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false),
                         Vein.FieldInformation(Bool?.sqliteTypeName, "_isSynced", false),
                         Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false),
-                        Vein.FieldInformation(ULID?.sqliteTypeName, "doNotUseInInit", true, Test.self)
+                        Vein.FieldInformation(ULID?.sqliteTypeName, "doNotUseInInit", true, Test.self, .one)
                     ]
 
                     \#(sharedSuffix)

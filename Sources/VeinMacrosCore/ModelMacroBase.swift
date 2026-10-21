@@ -96,7 +96,7 @@ public struct ModelMacroBase {
             let relationshipType = "\(value.coreRelationshipType).self"
             // currently only ULID or ULID array is supported
             let value = value.isCollection ? "[ULID]": "ULID?"
-            let information = "Vein.FieldInformation(\(value).sqliteTypeName, \"\(key)\", true, \(relationshipType))"
+            let information = "Vein.FieldInformation(\(value).sqliteTypeName, \"\(key)\", true, \(relationshipType), \(value.isCollection ? ".many": ".one"))"
 
             fieldInformation.append(information)
             predicateInformation.append("case \\.\(key): \(information)")

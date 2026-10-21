@@ -53,10 +53,14 @@ struct RelationshipIntegrityChecks {
         )
         
         let owner = Owner(name: "Mia")
+        let owner2 = Owner(name: "amogus")
         let target = Target(name: "Coral")
+        let target2 = Target(name: "sugoma")
         
         try container.context.insert(owner)
+        try container.context.insert(owner2)
         owner.target = target
+        owner2.target = target2
         try container.context.save()
         
         let connection = container.getConnection()
@@ -66,7 +70,7 @@ struct RelationshipIntegrityChecks {
         _ = try connection.run(query)
         
         let fetchedTargets = try container.context.fetchAll(Target.self)
-        #expect(fetchedTargets.isEmpty)
+        #expect(fetchedTargets.count == 1)
         
         try expectInverseMissing(
             container,

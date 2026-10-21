@@ -178,9 +178,9 @@ extension [FieldInformation] {
             
             let inverseInformation = inverseInformation[relationship.key]!
             
-            if
-                string.hasPrefix("["),
-                let ulids = [ULID](fromPersistent: SQLiteJSONB(jsonString: string)) {
+            if relationship.relationshipType == .many,
+                let ulids = [ULID](fromPersistent: SQLiteJSONB(jsonString: string))
+            {
                 let uniqued = Set(ulids)
                 var stringArray = uniqued.map(\.ulidString)
                 let query = Table(relationship.relationshipToType!.schema)
@@ -222,7 +222,10 @@ extension [FieldInformation] {
                 for string in stringArray {
                     inverseMismatches[relationship.key, default: [:]][string] = .missingInInverse
                 }
-            } else if let _ = ULID(fromPersistent: string) {
+            } else if
+                relationship.relationshipType == .one,
+                let _ = ULID(fromPersistent: string)
+            {
                 let query = Table(relationship.relationshipToType!.schema)
                     .select([idExpr, inverseInformation.fetchExpressible])
                     .where(idExpr == string)
@@ -256,7 +259,7 @@ extension [FieldInformation] {
                     inverseMismatches[relationship.key, default: [:]][string] = .missingInInverse
                 }
             } else {
-                localMismatches[relationship.key] = .unexpectedlyNotRelationship
+                localMismatches[relationship.key] = .corruptedData
                 continue
             }
         }
@@ -287,7 +290,7 @@ extension SQLiteDB.Row {
             return .inverseUnexpectedlyNotRelationship
         }
         
-        if string.hasPrefix("["),
+        if information.relationshipType == .many,
             let foundUlids = [ULID](fromPersistent: SQLiteJSONB(jsonString: string)) {
             let countOfRowInOriginal = ulids.count { $0.ulidString == rowIDStr }
             let countOfRowInFound = foundUlids.count { $0.ulidString == id.ulidString }
@@ -295,12 +298,14 @@ extension SQLiteDB.Row {
             if countOfRowInOriginal != countOfRowInFound {
                 return .inverseCountMismatch(found: countOfRowInFound, expected: countOfRowInOriginal)
             }
-        } else if let ulid = ULID(fromPersistent: string) {
+        } else if information.relationshipType == .one,
+            let ulid = ULID(fromPersistent: string)
+        {
             if ulid != id {
                 return .inverseMismatch(found: ulid, expected: id)
             }
         } else {
-            return .inverseUnexpectedlyNotRelationship
+            return .corruptedData
         }
         return nil
     }
@@ -324,7 +329,7 @@ extension SQLiteDB.Row {
             return .inverseUnexpectedlyNotRelationship
         }
         
-        if string.hasPrefix("["),
+        if information.relationshipType == .many,
             let foundUlids = [ULID](fromPersistent: SQLiteJSONB(jsonString: string))
         {
             let countOfRowInFound = foundUlids.count { $0.ulidString == id.ulidString }
@@ -332,12 +337,14 @@ extension SQLiteDB.Row {
             if countOfRowInFound < 1 {
                 return .missingInInverse
             }
-        } else if let ulid = ULID(fromPersistent: string) {
+        } else if information.relationshipType == .one,
+            let ulid = ULID(fromPersistent: string)
+        {
             if ulid != id {
                 return .inverseMismatch(found: ulid, expected: id)
             }
         } else {
-            return .inverseUnexpectedlyNotRelationship
+            return .corruptedData
         }
         
         return nil
