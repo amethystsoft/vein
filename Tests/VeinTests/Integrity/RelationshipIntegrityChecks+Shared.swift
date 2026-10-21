@@ -137,6 +137,65 @@ struct RelationshipIntegrityChecks: RelationshipIntegrityCheckHelper {
             #expect(targetReport.inverseMismatches["owner"]?[owner.id.ulidString] == .corruptedData)
         }
     }
+
+    @Test func `Multiple one fields can report`() async throws {
+        let owner = V0_0_3.Owner(name: "Mia")
+        let target = V0_0_3.Target(name: "Coral")
+
+        try check(V0_0_3.self, Migration.self) { context in
+            try context.insert(owner)
+            owner.target = target
+            owner.target2 = target
+        } corrupt: { connection in
+            let query = Table(V0_0_3.Target.schema)
+                .drop()
+            _ = try connection.run(query)
+        } validate: { reports in
+            let ownerReport = reports.first { $0.schema == V0_0_3.Owner.schema }!
+            let targetReport = reports.first { $0.schema == V0_0_3.Target.schema }!
+
+            #expect(targetReport.models.count == 0)
+            #expect(ownerReport.models.count == 1)
+
+            guard let ownerReport = ownerReport.models.first else { return }
+            let targetID = target.id.ulidString
+
+            #expect(ownerReport.idString == owner.id.ulidString)
+            #expect(ownerReport.inverseMismatches.count == 2)
+            #expect(ownerReport.inverseMismatches["target"]?[targetID] == .missingInInverse)
+            #expect(ownerReport.inverseMismatches["target2"]?[targetID] == .missingInInverse)
+        }
+    }
+
+    @Test
+    func `Multiple many fields can report`() async throws {
+        let owner = V0_0_4.Owner(name: "Mia")
+        let target = V0_0_4.Target(name: "Coral")
+
+        try check(V0_0_4.self, Migration.self) { context in
+            try context.insert(owner)
+            owner.targets = [target]
+            owner.targets2 = [target]
+        } corrupt: { connection in
+            let query = Table(V0_0_4.Target.schema)
+                .drop()
+            _ = try connection.run(query)
+        } validate: { reports in
+            let ownerReport = reports.first { $0.schema == V0_0_4.Owner.schema }!
+            let targetReport = reports.first { $0.schema == V0_0_4.Target.schema }!
+
+            #expect(targetReport.models.count == 0)
+            #expect(ownerReport.models.count == 1)
+
+            guard let ownerReport = ownerReport.models.first else { return }
+            let targetID = target.id.ulidString
+
+            #expect(ownerReport.idString == owner.id.ulidString)
+            #expect(ownerReport.inverseMismatches.count == 2)
+            #expect(ownerReport.inverseMismatches["targets"]?[targetID] == .missingInInverse)
+            #expect(ownerReport.inverseMismatches["targets2"]?[targetID] == .missingInInverse)
+        }
+    }
 }
 
 fileprivate enum V0_0_1: VersionedSchema {
@@ -169,7 +228,7 @@ fileprivate enum V0_0_1: VersionedSchema {
 }
 
 fileprivate enum V0_0_2: VersionedSchema {
-    static let version = ModelVersion(0, 0, 1)
+    static let version = ModelVersion(0, 0, 2)
     static let models: [any Vein.PersistentModel.Type] = [Owner.self, Target.self]
 
     @Model
@@ -197,12 +256,82 @@ fileprivate enum V0_0_2: VersionedSchema {
     }
 }
 
+fileprivate enum V0_0_3: VersionedSchema {
+    static let version = ModelVersion(0, 0, 3)
+    static let models: [any Vein.PersistentModel.Type] = [Owner.self, Target.self]
+
+    @Model
+    final class Owner: Identifiable {
+        var name: String
+
+        @Relationship(inverse: \Target.owner)
+        var target: Target?
+
+        @Relationship(inverse: \Target.owner2)
+        var target2: Target?
+
+        init(name: String) {
+            self.name = name
+        }
+    }
+
+    @Model
+    final class Target: Identifiable {
+        var name: String
+
+        @Relationship
+        var owner: Owner?
+
+        @Relationship
+        var owner2: Owner?
+
+        init(name: String) {
+            self.name = name
+        }
+    }
+}
+
+fileprivate enum V0_0_4: VersionedSchema {
+    static let version = ModelVersion(0, 0, 4)
+    static let models: [any Vein.PersistentModel.Type] = [Owner.self, Target.self]
+
+    @Model
+    final class Owner: Identifiable {
+        var name: String
+
+        @Relationship(inverse: \Target.owners)
+        var targets: [Target]
+
+        @Relationship(inverse: \Target.owners2)
+        var targets2: [Target]
+
+        init(name: String) {
+            self.name = name
+        }
+    }
+
+    @Model
+    final class Target: Identifiable {
+        var name: String
+
+        @Relationship
+        var owners: [Owner]
+
+        @Relationship
+        var owners2: [Owner]
+
+        init(name: String) {
+            self.name = name
+        }
+    }
+}
+
 fileprivate typealias Owner = V0_0_1.Owner
 fileprivate typealias Target = V0_0_1.Target
 
 fileprivate enum Migration: SchemaMigrationPlan {
     static var schemas: [any Vein.VersionedSchema.Type] {
-        [V0_0_1.self, V0_0_2.self]
+        [V0_0_1.self, V0_0_2.self, V0_0_3.self, V0_0_4.self]
     }
 
     static var stages: [MigrationStage] {

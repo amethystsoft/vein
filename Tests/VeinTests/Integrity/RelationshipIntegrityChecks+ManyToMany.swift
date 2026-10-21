@@ -27,17 +27,23 @@ struct RelationshipIntegrityChecksManyToMany: RelationshipIntegrityCheckHelper {
     @Test
     func `one side doesn't have table`() async throws {
         let owner = Owner(name: "Mia")
+        let owner2 = Owner(name: "Mia")
         let target = Target(name: "Coral")
+        let target2 = Target(name: "Coral")
         try check(V0_0_1.self, Migration.self) { context in
             try context.insert(owner)
+            try context.insert(owner2)
             owner.targets.append(target)
+            owner2.targets.append(target2)
         } corrupt: { connection in
             _ = try connection.execute("DROP TABLE IF EXISTS '\(Target.schema)';")
         } validate: { reports in
             expectInverseMissing(
                 reports: reports,
                 ownerID: owner.id,
-                targetID: target.id
+                owner2ID: owner2.id,
+                targetID: target.id,
+                target2ID: target2.id
             )
         }
     }
@@ -52,14 +58,23 @@ struct RelationshipIntegrityChecksManyToMany: RelationshipIntegrityCheckHelper {
         try check(V0_0_1.self, Migration.self) { context in
             try context.insert(owner)
             try context.insert(owner2)
-            owner.targets = [target, target2]
+            owner.targets = [target]
+            owner2.targets = [target2]
         } corrupt: { connection in
-            _ = try connection.execute("DROP TABLE IF EXISTS '\(Target.schema)';")
+            let query = Table(Target.schema)
+                .where(
+                    SQLExpression<String>("id") == target.id.ulidString
+                        || SQLExpression<String>("id") == target2.id.ulidString
+                )
+                .delete()
+            _ = try connection.run(query)
         } validate: { reports in
             expectInverseMissing(
                 reports: reports,
                 ownerID: owner.id,
-                targetID: target.id
+                owner2ID: owner2.id,
+                targetID: target.id,
+                target2ID: target2.id
             )
         }
     }
@@ -113,22 +128,28 @@ struct RelationshipIntegrityChecksManyToMany: RelationshipIntegrityCheckHelper {
     func expectInverseMissing(
         reports: [RelationshipIntegrityReport],
         ownerID: ULID,
-        targetID: ULID
+        owner2ID: ULID,
+        targetID: ULID,
+        target2ID: ULID
     ) {
         let ownerReport = reports.first { $0.schema == Owner.schema }!
         let targetReport = reports.first { $0.schema == Target.schema }!
 
-        #expect(targetReport.models.isEmpty == true)
-        #expect(ownerReport.models.count == 1)
+        #expect(targetReport.models.isEmpty)
+        #expect(ownerReport.models.count == 2)
 
-        guard let report = ownerReport.models.first else {
-            return
-        }
+        guard
+            let report = ownerReport.models.first(where: { $0.id == ownerID }),
+            let report2 = ownerReport.models.first(where: { $0.id == owner2ID })
+        else { return }
 
         #expect(report.id == ownerID)
         #expect(report.localMismatches.isEmpty)
-
         #expect(report.inverseMismatches["targets"]?[targetID.ulidString] == .missingInInverse)
+
+        #expect(report2.id == owner2ID)
+        #expect(report2.localMismatches.isEmpty)
+        #expect(report2.inverseMismatches["targets"]?[target2ID.ulidString] == .missingInInverse)
     }
 }
 

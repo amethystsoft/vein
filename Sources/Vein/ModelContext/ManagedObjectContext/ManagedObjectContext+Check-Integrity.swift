@@ -218,7 +218,7 @@ extension [FieldInformation] {
                                 default: [:]
                             ][ulid.ulidString] = .missingInInverse
                         }
-                        return (localMismatches, inverseMismatches)
+                        continue
                     }
                     throw error
                 }
@@ -263,7 +263,7 @@ extension [FieldInformation] {
                             relationship.key,
                             default: [:]
                         ][string] = .missingInInverse
-                        return (localMismatches, inverseMismatches)
+                        continue
                     }
                     throw error
                 }
