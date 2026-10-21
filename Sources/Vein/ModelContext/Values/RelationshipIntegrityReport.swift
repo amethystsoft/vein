@@ -7,7 +7,9 @@ public struct RelationshipIntegrityReport: Codable {
     
     public struct Model: Codable {
         public let idString: String
+        /// field, mismatch
         public let localMismatches: [String: Mismatch]
+        /// field, id on other side, mismatch
         public let inverseMismatches: [String: [String: Mismatch]]
         
         public var id: ULID? {

@@ -222,8 +222,7 @@ extension [FieldInformation] {
                 for string in stringArray {
                     inverseMismatches[relationship.key, default: [:]][string] = .missingInInverse
                 }
-            } else if
-                relationship.relationshipType == .one,
+            } else if relationship.relationshipType == .one,
                 let _ = ULID(fromPersistent: string)
             {
                 let query = Table(relationship.relationshipToType!.schema)
@@ -335,7 +334,7 @@ extension SQLiteDB.Row {
             let countOfRowInFound = foundUlids.count { $0.ulidString == id.ulidString }
             
             if countOfRowInFound < 1 {
-                return .missingInInverse
+                return .inverseCountMismatch(found: 0, expected: 1)
             }
         } else if information.relationshipType == .one,
             let ulid = ULID(fromPersistent: string)

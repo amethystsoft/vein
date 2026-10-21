@@ -10,7 +10,7 @@ import SQLiteDB
 @_spi(VeinTesting) @testable import VeinCore
 #endif
 
-extension RelationshipIntegrityChecks {
+struct RelationshipIntegrityChecks {
     @Test
     func `corrupted primaryULID`() async throws {
         let container = try ModelContainer(

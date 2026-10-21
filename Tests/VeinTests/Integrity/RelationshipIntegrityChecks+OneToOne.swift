@@ -10,8 +10,8 @@ import SQLiteDB
 @_spi(VeinTesting) @testable import VeinCore
 #endif
 
-@Suite("Relationship Integrity Check Tests")
-struct RelationshipIntegrityChecks {
+@Suite("Relationship Integrity Check Tests One to One")
+struct RelationshipIntegrityChecksOneToOne {
     @Test
     func `one side doesn't have table`() async throws {
         let container = try ModelContainer(
@@ -77,6 +77,97 @@ struct RelationshipIntegrityChecks {
             ownerID: owner.id,
             targetID: target.id
         )
+    }
+    
+    @Test
+    func `inverse is nil`() async throws {
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.test.relationship-integrity-check.onetoone",
+            encryptionEnabled: false
+        )
+        
+        let owner = Owner(name: "Mia")
+        let target = Target(name: "Coral")
+        
+        try container.context.insert(owner)
+        owner.target = target
+        try container.context.save()
+        
+        let connection = container.getConnection()
+        let query = Table(Target.schema)
+            .where(SQLExpression<String>("id") == target.id.ulidString)
+            .update(SQLExpression<String?>("owner") <- nil)
+        try connection.run(query)
+        
+        let reports = try container.context.checkRelationshipIntegrity()
+        
+        let ownerReport = reports.first { $0.schema == Owner.schema }!
+        let targetReport = reports.first { $0.schema == Target.schema }!
+        
+        #expect(targetReport.models.count == 0)
+        #expect(ownerReport.models.count == 1)
+        
+        guard
+            let ownerReport = ownerReport.models.first
+                else { return }
+        
+        #expect(ownerReport.idString == owner.id.ulidString)
+        #expect(ownerReport.inverseMismatches.count == 1)
+        #expect(ownerReport.localMismatches.isEmpty)
+        #expect(ownerReport.inverseMismatches["target"]?[target.id.ulidString] == .inverseMismatch(found: nil, expected: owner.id))
+    }
+    
+    @Test
+    func `inverse is different (missingInInverse covered too)`() async throws {
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.test.relationship-integrity-check.onetoone",
+            encryptionEnabled: false
+        )
+        
+        let owner = Owner(name: "Mia")
+        let target = Target(name: "Coral")
+        
+        try container.context.insert(owner)
+        owner.target = target
+        try container.context.save()
+        
+        let ulid = ULID()
+        
+        let connection = container.getConnection()
+        let query = Table(Target.schema)
+            .where(SQLExpression<String>("id") == target.id.ulidString)
+            .update(SQLExpression<String?>("owner") <- ulid.ulidString)
+        try connection.run(query)
+        
+        let reports = try container.context.checkRelationshipIntegrity()
+        
+        let ownerReport = reports.first { $0.schema == Owner.schema }!
+        let targetReport = reports.first { $0.schema == Target.schema }!
+        
+        #expect(targetReport.models.count == 1)
+        #expect(ownerReport.models.count == 1)
+        
+        guard
+            let ownerReport = ownerReport.models.first,
+            let targetReport = targetReport.models.first
+                else { return }
+        
+        #expect(ownerReport.idString == owner.id.ulidString)
+        #expect(ownerReport.inverseMismatches.count == 1)
+        #expect(ownerReport.localMismatches.isEmpty)
+        #expect(ownerReport.inverseMismatches["target"]?[target.id.ulidString] == .inverseMismatch(found: ulid, expected: owner.id))
+        
+        #expect(targetReport.idString == target.id.ulidString)
+        #expect(targetReport.inverseMismatches.count == 1)
+        #expect(targetReport.localMismatches.isEmpty)
+        // used a fake ulid
+        #expect(targetReport.inverseMismatches["owner"]?[ulid.ulidString] == .missingInInverse)
     }
     
     func expectInverseMissing(_ container: ModelContainer, ownerID: ULID, targetID: ULID) throws {
