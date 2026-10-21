@@ -82,9 +82,11 @@
                         appID: appID,
                         encryptionEnabled: false
                     )
-                    
-                    let ownerResult = try verificationContainer.context.checkRelationshipIntegrity(of: Owner.self)
-                    let targetResult = try verificationContainer.context.checkRelationshipIntegrity(of: Target.self)
+
+                    let ownerResult = try verificationContainer.context
+                        .checkRelationshipIntegrity(of: Owner.self)
+                    let targetResult = try verificationContainer.context
+                        .checkRelationshipIntegrity(of: Target.self)
 
                     if
                         try State.matches(verificationContainer, oldContainer: container),

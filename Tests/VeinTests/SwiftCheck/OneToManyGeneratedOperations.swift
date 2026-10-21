@@ -84,15 +84,17 @@
                         appID: appID,
                         encryptionEnabled: false
                     )
-                    
-                    let ownerResult = try verificationContainer.context.checkRelationshipIntegrity(of: Owner.self)
-                    let targetResult = try verificationContainer.context.checkRelationshipIntegrity(of: Target.self)
+
+                    let ownerResult = try verificationContainer.context
+                        .checkRelationshipIntegrity(of: Owner.self)
+                    let targetResult = try verificationContainer.context
+                        .checkRelationshipIntegrity(of: Target.self)
 
                     return try (
                         State.matches(verificationContainer, oldContainer: container)
-                        && ownerResult.didPass
-                        && targetResult.didPass
-                        ) <?> "diverged after save"
+                            && ownerResult.didPass
+                            && targetResult.didPass
+                    ) <?> "diverged after save"
                 }
             XCTAssertTrue(oneOrMoreDidSomething)
         }
