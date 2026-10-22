@@ -40,31 +40,6 @@ extension ManagedObjectContext {
 
         do {
             let result = try connection.prepare(request)
-            
-            var inverses = [String: String]()
-            var inverseInformation = [String: FieldInformation]()
-            
-            for inverse in model._inverseFields.values {
-                for (key, value) in inverse {
-                    // Safe under the assumption that the information is macro generated
-                    // and the generated information is correct.
-                    inverses[value] = key
-                }
-            }
-            
-            for information in relationships {
-                guard let oppositeType = information.relationshipToType else { continue }
-                if
-                    let inversesToThis = oppositeType._inverseFields[model.typeIdentifier],
-                    let key = inversesToThis[information.key]
-                        { inverses[information.key] = key }
-                
-                if let inverse = inverses[information.key] {
-                    inverseInformation[information.key] = oppositeType._fieldInformation.first {
-                        $0.key == inverse
-                    }
-                }
-            }
 
             for row in result {
                 let idStr = row[idExpr]
@@ -80,6 +55,8 @@ extension ManagedObjectContext {
                     )
                     continue
                 }
+
+                let (inverses, inverseInformation) = relationships.inverseMaps(for: model)
 
                 let (localMismatches, inverseMismatches) = try relationships.checkIntegrity(
                     type: model,
@@ -165,6 +142,37 @@ extension ManagedObjectContext {
 }
 
 extension [FieldInformation] {
+    func inverseMaps<M: PersistentModel>(for model: M
+        .Type) -> ([String: String], [String: FieldInformation])
+    {
+        var inverses = [String: String]()
+        var inverseInformation = [String: FieldInformation]()
+
+        for inverse in model._inverseFields.values {
+            for (key, value) in inverse {
+                // Safe under the assumption that the information is macro generated
+                // and the generated information is correct.
+                inverses[value] = key
+            }
+        }
+
+        for information in self {
+            guard let oppositeType = information.relationshipToType else { continue }
+            if
+                let inversesToThis = oppositeType._inverseFields[model.typeIdentifier],
+                let key = inversesToThis[information.key]
+            { inverses[information.key] = key }
+
+            if let inverse = inverses[information.key] {
+                inverseInformation[information.key] = oppositeType._fieldInformation.first {
+                    $0.key == inverse
+                }
+            }
+        }
+
+        return (inverses, inverseInformation)
+    }
+
     fileprivate func checkIntegrity<Model: PersistentModel>(
         type: Model.Type,
         connection: SQLiteDB.Connection,
@@ -179,7 +187,7 @@ extension [FieldInformation] {
         var localMismatches = [String: RelationshipIntegrityReport.Mismatch]()
         var inverseMismatches = [String: [String: RelationshipIntegrityReport.Mismatch]]()
         let idExpr = SQLExpression<String>("id")
-        
+
         for relationship in self
             where inverses[relationship.key] != nil
             && inverseInformation[relationship.key] != nil
