@@ -146,14 +146,6 @@ struct RelationshipIntegrityChecksOneToMany: RelationshipIntegrityCheckHelper {
 
     @Test
     func `many side doesn't contain reference`() async throws {
-        let container = try ModelContainer(
-            V0_0_1.self,
-            migration: Migration.self,
-            at: nil,
-            appID: "de.amethystsoft.vein.test.relationship-integrity-check.onetoone",
-            encryptionEnabled: false
-        )
-
         let owner = Owner(name: "Mia")
         let target = Target(name: "Coral")
 
@@ -180,6 +172,81 @@ struct RelationshipIntegrityChecksOneToMany: RelationshipIntegrityCheckHelper {
             #expect(
                 targetReport.inverseMismatches["owner"]?[owner.id.ulidString]
                     == .inverseCountMismatch(found: 0, expected: 1)
+            )
+        }
+    }
+    
+    @Test
+    func `catches everything wrong`() async throws {
+        let inverseMissingOwner = Owner(name: "Mia")
+        let inverseFoundNilOwner = Owner(name: "Nil, wie der Fluss?")
+        let owner = Owner(name: "boring")
+        let target1 = Target(name: "Coral")
+        let target2 = Target(name: "Coral")
+        let unexpectedCountZeroTarget = Target(name: "Coral")
+        
+        try check(V0_0_1.self, Migration.self) { context in
+            try context.insert(inverseMissingOwner)
+            try context.insert(inverseFoundNilOwner)
+            try context.insert(owner)
+            
+            inverseMissingOwner.targets = [target1]
+            inverseFoundNilOwner.targets = [target2]
+            owner.targets = [unexpectedCountZeroTarget]
+        } corrupt: { connection in
+            let query = Table(Target.schema)
+                .where(SQLExpression<String>("id") == target1.id.ulidString)
+                .delete()
+            _ = try connection.run(query)
+            
+            let query2 = Table(Target.schema)
+                .where(SQLExpression<String>("id") == target2.id.ulidString)
+                .update(SQLExpression<String?>("owner") <- nil)
+            _ = try connection.run(query2)
+            
+            let query3 = Table(Owner.schema)
+                .where(SQLExpression<String>("id") == owner.id.ulidString)
+                .update(SQLExpression<Data>("targets") <- SQLExpression(
+                    "jsonb(?)",
+                    ["[]"]
+                ))
+            _ = try connection.run(query3)
+        } validate: { reports in
+            let ownerReport = reports.first { $0.schema == Owner.schema }!
+            let targetReport = reports.first { $0.schema == Target.schema }!
+            
+            #expect(targetReport.models.count == 1)
+            #expect(ownerReport.models.count == 2)
+            
+            guard
+                let targetReport = targetReport.models.first,
+                let ownerReport1 = ownerReport.models.first(where: { $0.idString == inverseMissingOwner.id.ulidString }),
+                let ownerReport2 = ownerReport.models.first(where: { $0.idString == inverseFoundNilOwner.id.ulidString })
+            else {
+                Issue.record("One or more reports were missing")
+                return
+            }
+            
+            #expect(targetReport.idString == unexpectedCountZeroTarget.id.ulidString)
+            #expect(targetReport.inverseMismatches.count == 1)
+            #expect(targetReport.localMismatches.isEmpty)
+            #expect(
+                targetReport.inverseMismatches["owner"]?[owner.id.ulidString]
+                == .inverseCountMismatch(found: 0, expected: 1)
+            )
+            
+            #expect(ownerReport1.inverseMismatches.count == 1)
+            #expect(ownerReport1.localMismatches.isEmpty)
+            #expect(
+                ownerReport1.inverseMismatches["targets"]?[target1.id.ulidString]
+                == .missingInInverse
+            )
+            
+            #expect(ownerReport2.inverseMismatches.count == 1)
+            #expect(ownerReport2.localMismatches.isEmpty)
+            #expect(
+                ownerReport2.inverseMismatches["targets"]?[target2.id.ulidString]
+                == .inverseMismatch(found: nil, expected: inverseFoundNilOwner.id)
             )
         }
     }
