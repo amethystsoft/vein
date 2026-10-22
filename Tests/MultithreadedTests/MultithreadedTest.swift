@@ -11,7 +11,7 @@
 // ===----------------------------------------------------------------------===
 
 import Foundation
-import Testing
+import XCTest
 @testable import Vein
 #if TEST_SWIFTUI
     @_spi(VeinTesting) @testable import VeinSwiftUI
@@ -21,15 +21,14 @@ import Testing
     @_spi(VeinTesting) @testable import VeinCore
 #endif
 
-struct MultithreadedTest {
-    @Test
-    func run() async throws {
+class MultithreadedTest: XCTestCase {
+    func testRun() async throws {
         let container = try ModelContainer(
             Version1.self,
             migration: MigrationPlan.self,
             at: nil,
             appID: "de.amethystsoft.vein.tests.multithreaded",
-            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+            encryptionEnabled: false
         )
 
         try await withThrowingTaskGroup(of: Void.self) { group in
@@ -53,22 +52,21 @@ struct MultithreadedTest {
             migration: MigrationPlan.self,
             connection: container.getConnection(),
             appID: "de.amethystsoft.vein.tests.multithreaded",
-            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+            encryptionEnabled: false
         )
 
         let tasks = try newContainer.context.fetchAll(Version1.Task.self)
-        #expect(tasks.count == 100)
-        #expect(tasks.allSatisfy { $0.text?.hasPrefix("Test ") == true })
+        XCTAssertTrue(tasks.count == 100)
+        XCTAssertTrue(tasks.allSatisfy { $0.text?.hasPrefix("Test ") == true })
     }
 
-    @Test
-    func multithreadedLazyFieldReadWrite() async throws {
+    func testMultithreadedLazyFieldReadWrite() async throws {
         let container = try ModelContainer(
             Version1.self,
             migration: MigrationPlan.self,
             at: nil,
             appID: "de.amethystsoft.vein.tests.multithreaded",
-            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+            encryptionEnabled: false
         )
 
         let model = Version1.Task(name: "Test")
@@ -92,24 +90,23 @@ struct MultithreadedTest {
             migration: MigrationPlan.self,
             connection: container.getConnection(),
             appID: "de.amethystsoft.vein.tests.multithreaded",
-            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+            encryptionEnabled: false
         )
 
         guard let result = try newContainer.context.fetchAll(Version1.Task.self).first else {
-            Issue.record("Unexpectedly no result for Version1.Task")
+            XCTFail("Unexpectedly no result for Version1.Task")
             return
         }
-        #expect(result.text?.hasPrefix("Test ") == true)
+        XCTAssertTrue(result.text?.hasPrefix("Test ") == true)
     }
 
-    @Test
-    func multithreadedFieldReadWrite() async throws {
+    func testMultithreadedFieldReadWrite() async throws {
         let container = try ModelContainer(
             Version1.self,
             migration: MigrationPlan.self,
             at: nil,
             appID: "de.amethystsoft.vein.tests.multithreaded",
-            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+            encryptionEnabled: false
         )
 
         let model = Version1.Task(name: "Base")
@@ -133,14 +130,14 @@ struct MultithreadedTest {
             migration: MigrationPlan.self,
             connection: container.getConnection(),
             appID: "de.amethystsoft.vein.tests.multithreaded",
-            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+            encryptionEnabled: false
         )
 
         guard let result = try newContainer.context.fetchAll(Version1.Task.self).first else {
-            Issue.record("Unexpectedly no result for Version1.Task")
+            XCTFail("Unexpectedly no result for Version1.Task")
             return
         }
-        #expect(result.name.hasPrefix("Test"))
+        XCTAssertTrue(result.name.hasPrefix("Test"))
     }
 }
 

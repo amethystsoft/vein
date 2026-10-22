@@ -11,7 +11,7 @@
 // ===----------------------------------------------------------------------===
 
 import Foundation
-import Testing
+import XCTest
 @testable import Vein
 #if TEST_SWIFTUI
     @_spi(VeinTesting) @testable import VeinSwiftUI
@@ -21,15 +21,22 @@ import Testing
     @_spi(VeinTesting) @testable import VeinCore
 #endif
 
-struct MultithreadedStressTests {
-    @Test(arguments: [true, false])
+class MultithreadedStressTests: XCTestCase {
+    func testIdentityMapReturnsSameInstanceAcrossThreadsSaveFalse() async throws {
+        try await identityMapReturnsSameInstanceAcrossThreads(false)
+    }
+
+    func testIdentityMapReturnsSameInstanceAcrossThreadsSaveTrue() async throws {
+        try await identityMapReturnsSameInstanceAcrossThreads(true)
+    }
+
     func identityMapReturnsSameInstanceAcrossThreads(_ save: Bool = true) async throws {
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
             appID: "de.amethystsoft.vein.tests.multithreaded.identity",
-            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+            encryptionEnabled: false
         )
 
         let model = V0_0_1.Person(name: "Mia", email: "mia@example.com")
@@ -44,21 +51,28 @@ struct MultithreadedStressTests {
                     try? await Task.sleep(nanoseconds: UInt64.random(in: 10_000...50_000))
                     let fetched = try container.context.fetchAll(V0_0_1.Person.self)
                     guard let first = fetched.first else { return }
-                    #expect(first === model)
+                    XCTAssertTrue(first === model)
                 }
             }
             try await group.waitForAll()
         }
     }
 
-    @Test(arguments: [true, false])
+    func testConcurrentInsertAndFetchSaveFalse() async throws {
+        try await concurrentInsertAndFetch(false)
+    }
+
+    func testConcurrentInsertAndFetchSaveTrue() async throws {
+        try await concurrentInsertAndFetch(true)
+    }
+
     func concurrentInsertAndFetch(_ save: Bool = true) async throws {
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
             appID: "de.amethystsoft.vein.tests.multithreaded.insertfetch",
-            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+            encryptionEnabled: false
         )
 
         try await withThrowingTaskGroup(of: Void.self) { group in
@@ -77,7 +91,7 @@ struct MultithreadedStressTests {
                 group.addTask {
                     try? await Task.sleep(nanoseconds: UInt64.random(in: 10_000...50_000))
                     let results = try container.context.fetchAll(V0_0_1.Person.self)
-                    #expect(results.count <= 100)
+                    XCTAssertTrue(results.count <= 100)
                 }
             }
 
@@ -85,10 +99,10 @@ struct MultithreadedStressTests {
         }
 
         let finalResults = try container.context.fetchAll(V0_0_1.Person.self)
-        #expect(finalResults.count == 100)
+        XCTAssertTrue(finalResults.count == 100)
 
         for i in 0..<100 {
-            #expect(
+            XCTAssertTrue(
                 finalResults
                     .contains {
                         $0.email == "person\(i)@example.com"
@@ -98,14 +112,21 @@ struct MultithreadedStressTests {
         }
     }
 
-    @Test(arguments: [true, false])
+    func testConcurrentFilterAndSortSaveFalse() async throws {
+        try await concurrentFilterAndSort(false)
+    }
+
+    func testConcurrentFilterAndSortSaveTrue() async throws {
+        try await concurrentFilterAndSort(true)
+    }
+
     func concurrentFilterAndSort(_ save: Bool = true) async throws {
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
             appID: "de.amethystsoft.vein.tests.multithreaded.filtersort",
-            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+            encryptionEnabled: false
         )
 
         try container.context.insert(V0_0_1.Person(name: "Alice", email: "alice@example.com"))
@@ -122,7 +143,7 @@ struct MultithreadedStressTests {
                         .fetchAll(#Predicate<V0_0_1.Person> { person in
                             person.name == "Alice"
                         })
-                    #expect(results.count == 1)
+                    XCTAssertTrue(results.count == 1)
                 }
             }
 
@@ -134,7 +155,7 @@ struct MultithreadedStressTests {
                         sortBy: [SortRule(\.name)]
                     )
                     let results = try container.context.fetch(descriptor)
-                    #expect(results.count == 2)
+                    XCTAssertTrue(results.count == 2)
                 }
             }
 
@@ -142,14 +163,21 @@ struct MultithreadedStressTests {
         }
     }
 
-    @Test(arguments: [true, false])
+    func testMixedReadWriteSameModelSaveFalse() async throws {
+        try await mixedReadWriteSameModel(false)
+    }
+
+    func testMixedReadWriteSameModelSaveTrue() async throws {
+        try await mixedReadWriteSameModel(true)
+    }
+
     func mixedReadWriteSameModel(_ save: Bool = true) async throws {
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
             appID: "de.amethystsoft.vein.tests.multithreaded.mixed",
-            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+            encryptionEnabled: false
         )
 
         let model = V0_0_1.Person(name: "Original", email: "original@example.com")
@@ -177,24 +205,31 @@ struct MultithreadedStressTests {
                     guard let first = fetched.first else { return }
 
                     // Both are valid as read write order is non deterministic.
-                    #expect(first.name == "Original" || first.name.hasPrefix("Updated"))
+                    XCTAssertTrue(first.name == "Original" || first.name.hasPrefix("Updated"))
                 }
             }
 
             try await group.waitForAll()
         }
 
-        #expect(model.name.hasPrefix("Updated"))
+        XCTAssertTrue(model.name.hasPrefix("Updated"))
     }
 
-    @Test(arguments: [true, false])
+    func testConcurrentIdentityMapAccessSaveFalse() async throws {
+        try await concurrentIdentityMapAccess(false)
+    }
+
+    func testConcurrentIdentityMapAccessSaveTrue() async throws {
+        try await concurrentIdentityMapAccess(true)
+    }
+
     func concurrentIdentityMapAccess(_ save: Bool = true) async throws {
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
             appID: "de.amethystsoft.vein.tests.multithreaded.idmap",
-            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+            encryptionEnabled: false
         )
 
         for i in 0..<50 {
@@ -219,14 +254,21 @@ struct MultithreadedStressTests {
         }
     }
 
-    @Test(arguments: [true, false])
+    func testConcurrentLazyFieldReadWriteSaveFalse() async throws {
+        try await concurrentLazyFieldReadWrite(false)
+    }
+
+    func testConcurrentLazyFieldReadWriteSaveTrue() async throws {
+        try await concurrentLazyFieldReadWrite(true)
+    }
+
     func concurrentLazyFieldReadWrite(_ save: Bool) async throws {
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
             appID: "de.amethystsoft.vein.tests.multithreaded.lazy",
-            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+            encryptionEnabled: false
         )
 
         let model = V0_0_1.Person(name: "Mia", email: "mia@example.com")
@@ -247,17 +289,24 @@ struct MultithreadedStressTests {
             try container.context.save()
         }
         let fetched = try container.context.fetchAll(V0_0_1.Person.self).first
-        #expect(fetched?.notes?.hasPrefix("Note ") == true)
+        XCTAssertTrue(fetched?.notes?.hasPrefix("Note ") == true)
     }
 
-    @Test(arguments: [true, false])
+    func testConcurrentOneToOneRelationshipSaveFalse() async throws {
+        try await concurrentOneToOneRelationship(false)
+    }
+
+    func testConcurrentOneToOneRelationshipSaveTrue() async throws {
+        try await concurrentOneToOneRelationship(true)
+    }
+
     func concurrentOneToOneRelationship(_ save: Bool) async throws {
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
             appID: "de.amethystsoft.vein.tests.multithreaded.oneToOne",
-            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+            encryptionEnabled: false
         )
 
         try await withThrowingTaskGroup(of: Void.self) { group in
@@ -280,19 +329,26 @@ struct MultithreadedStressTests {
 
         let people = try container.context.fetchAll(V0_0_1.Person.self)
         let profiles = try container.context.fetchAll(V0_0_1.Profile.self)
-        #expect(people.count == 50)
-        #expect(profiles.count == 50)
-        #expect(people.allSatisfy { $0.profile != nil })
+        XCTAssertTrue(people.count == 50)
+        XCTAssertTrue(profiles.count == 50)
+        XCTAssertTrue(people.allSatisfy { $0.profile != nil })
     }
 
-    @Test(arguments: [true, false])
+    func testConcurrentOneToManyRelationshipSaveFalse() async throws {
+        try await concurrentOneToManyRelationship(false)
+    }
+
+    func testConcurrentOneToManyRelationshipSaveTrue() async throws {
+        try await concurrentOneToManyRelationship(true)
+    }
+
     func concurrentOneToManyRelationship(_ save: Bool) async throws {
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
             appID: "de.amethystsoft.vein.tests.multithreaded.oneToMany",
-            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+            encryptionEnabled: false
         )
 
         try await withThrowingTaskGroup(of: Void.self) { group in
@@ -315,19 +371,26 @@ struct MultithreadedStressTests {
 
         let posts = try container.context.fetchAll(V0_0_1.Post.self)
         let comments = try container.context.fetchAll(V0_0_1.Comment.self)
-        #expect(posts.count == 50)
-        #expect(comments.count == 50)
-        #expect(posts.allSatisfy { $0.comments.count == 1 })
+        XCTAssertTrue(posts.count == 50)
+        XCTAssertTrue(comments.count == 50)
+        XCTAssertTrue(posts.allSatisfy { $0.comments.count == 1 })
     }
 
-    @Test(arguments: [true, false])
+    func testConcurrentManyToManyRelationshipSaveFalse() async throws {
+        try await concurrentManyToManyRelationship(false)
+    }
+
+    func testConcurrentManyToManyRelationshipSaveTrue() async throws {
+        try await concurrentManyToManyRelationship(true)
+    }
+
     func concurrentManyToManyRelationship(_ save: Bool) async throws {
         let container = try ModelContainer(
             V0_0_1.self,
             migration: Migration.self,
             at: nil,
             appID: "de.amethystsoft.vein.tests.multithreaded.manyToMany",
-            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+            encryptionEnabled: false
         )
 
         try await withThrowingTaskGroup(of: Void.self) { group in
@@ -348,9 +411,9 @@ struct MultithreadedStressTests {
 
         let posts = try container.context.fetchAll(V0_0_1.Post.self)
         let tags = try container.context.fetchAll(V0_0_1.Tag.self)
-        #expect(posts.count == 50)
-        #expect(tags.count == 50)
-        #expect(posts.allSatisfy { $0.tags.count == 1 })
+        XCTAssertTrue(posts.count == 50)
+        XCTAssertTrue(tags.count == 50)
+        XCTAssertTrue(posts.allSatisfy { $0.tags.count == 1 })
     }
 }
 

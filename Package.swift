@@ -201,6 +201,13 @@ let package = Package(
             swiftSettings: testSwiftSettings
         ),
         .testTarget(
+            name: "MultithreadedTests",
+            dependencies: [
+                "Vein",
+            ] + veinAPIToTestDependencies,
+            swiftSettings: testSwiftSettings
+        ),
+        .testTarget(
             name: "VeinTestingTests",
             dependencies: [
                 "VeinTesting",

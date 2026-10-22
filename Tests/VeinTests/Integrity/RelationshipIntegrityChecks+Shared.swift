@@ -330,7 +330,6 @@ struct RelationshipIntegrityChecks: RelationshipIntegrityCheckHelper {
         try check(RelationshipMetadataTest.self, Migration.self) { context in
             try context.insert(owner)
             owner.reservePictures = [profilePicture]
-            print(profilePicture.isManaged)
         } corrupt: { connection in
             let query = Table(RelationshipMetadataTest.ProfilePicture.schema)
                 .where(SQLExpression<String>("id") == profilePicture.id.ulidString)
