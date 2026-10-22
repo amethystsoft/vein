@@ -4,8 +4,16 @@ Thank you for your interest in contributing to Vein! Please take a moment to rev
 
 ## Communication & Language
 
-- **Self-written:** All issues, PR descriptions, discussions and comments must be written by the contributing author. LLM generated text is not permitted.
+- **Self-written:** All issues, PR descriptions, discussions and comments must be written by the contributing author. LLM generated text is not permitted. The only exception is using it for accessibility reasons and must be disclosed.
 - **Language:** English or German is preferred. If you do not feel fluent enough, please write in your native language rather than using AI translation.
+
+## GenAI usage
+Using generative AI for generating code or documentation for this repository is not permitted.
+Using generative AI in readonly ways is allowed (e.g. code review, rubberducking, debugging).
+All use of generative AI must be disclosed.
+The contributor is fully responsible for all claims or decisions made as well as any contributed code or documentation.
+
+We are aware that enforcing this policy is hard. Pull requests very obviously violating this policy will be closed without further notice. Repeat offenders may be warned or banned from interacting with the project. Good faith looking first offenders may be pointed to the policy while closing the pull request.
 
 ## Ways to Contribute
 
@@ -23,6 +31,8 @@ To prevent maintainer burnout, we limit the scope of accepted PRs:
 - **Bug fixes & Documentation:** Always welcome.
 - **Feature Expansions:** Only accepted if they target an existing issue labeled both `feature` and `open for everyone`.
 - **Linked Issues:** All PRs (except those by the maintainer) must link to an existing issue or reference previous communication with the maintainer.
+
+PRs must explain why decisions were made, how things work and give the reviewer all information they need to review the PR as part of the description.
 
 ## Development & Code Style
 

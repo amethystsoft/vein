@@ -167,6 +167,7 @@ struct ContentView: View {
   - [Migration Testing](#testing-of-migrations)
   - [Save Transaction & Conflicts](#save-transaction-handling-and-conflicts)
   - [Dependency Footprint](#dependency-footprint)
+  - [GenAI use](#genai-use)
 - [Sponsoring, Alternative Licensing & CLA](#sponsoring-alternative-licensing--cla)
 - [Third Party Licenses](#third-party-licenses)
 
@@ -252,6 +253,19 @@ Vein manages its dependencies following strict open-source security and stabilit
 - **Selection:** Dependencies are chosen based on active maintenance, cross-platform compatibility, external footprint, and open-source license compatibility.
 - **Obtaining:** All dependencies are automatically fetched via **Swift Package Manager (SPM)** using the project's `Package.swift` manifest.
 - **Tracking:** Dependency versions are tracked and bounded via semantic version rules (such as `.upToNextMajorFrom`) defined directly in `Package.swift` to ensure compatibility and safe updates for downstream consumers.
+
+### GenAI use
+The project maintainer will not use LLMs for generating any code or documentation going forward. LLMs may be used in a readonly way to find flaws in code or for "rubberducking". An LLM "review" will never replace review by people. I (the maintainer) take pride in making decisions, knowing why I did something and how the project works.
+
+Going forward we require any use of GenAI to be disclosed as part of the PR description. Using LLMs for writing PR/Issue/Discussion descriptions or comments has never been permitted (exceptions for accessibility purposes apply). Please view [CONTRIBUTING.md](/CONTRIBUTING.md) for details.
+
+Historical use:
+- a small amount (<5%) of tests were partially LLM generated and have largely been significantly transformed by hand.
+- no code in the Sources folder was LLM generated.
+- LLM "code review" used to run automatically on every pull request generating descriptions and "reviews". This only affected the maintainers own code and has been disabled for a while.
+- LLMs were used for "rubberducking".
+
+<sub>This section was added in compliance with the [NLnet Foundation's policy on GenAI usage V2.0.](https://nlnet.nl/foundation/policies/generativeAI/2.0/)</sub>
 
 ## Sponsoring, Alternative Licensing & CLA
 
