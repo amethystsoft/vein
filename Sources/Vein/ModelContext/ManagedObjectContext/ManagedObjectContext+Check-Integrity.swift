@@ -40,6 +40,31 @@ extension ManagedObjectContext {
 
         do {
             let result = try connection.prepare(request)
+            
+            var inverses = [String: String]()
+            var inverseInformation = [String: FieldInformation]()
+            
+            for inverse in model._inverseFields.values {
+                for (key, value) in inverse {
+                    // Safe under the assumption that the information is macro generated
+                    // and the generated information is correct.
+                    inverses[value] = key
+                }
+            }
+            
+            for information in relationships {
+                guard let oppositeType = information.relationshipToType else { continue }
+                if
+                    let inversesToThis = oppositeType._inverseFields[model.typeIdentifier],
+                    let key = inversesToThis[information.key]
+                        { inverses[information.key] = key }
+                
+                if let inverse = inverses[information.key] {
+                    inverseInformation[information.key] = oppositeType._fieldInformation.first {
+                        $0.key == inverse
+                    }
+                }
+            }
 
             for row in result {
                 let idStr = row[idExpr]
@@ -60,7 +85,9 @@ extension ManagedObjectContext {
                     type: model,
                     connection: connection,
                     row: row,
-                    id: id
+                    id: id,
+                    inverses: inverses,
+                    inverseInformation: inverseInformation
                 )
 
                 if !localMismatches.isEmpty || !inverseMismatches.isEmpty {
@@ -142,40 +169,17 @@ extension [FieldInformation] {
         type: Model.Type,
         connection: SQLiteDB.Connection,
         row: SQLiteDB.Row,
-        id: ULID
+        id: ULID,
+        inverses: [String: String],
+        inverseInformation: [String: FieldInformation]
     ) throws -> (
         localMismatches: [String: RelationshipIntegrityReport.Mismatch],
         inverseMismatches: [String: [String: RelationshipIntegrityReport.Mismatch]]
     ) {
         var localMismatches = [String: RelationshipIntegrityReport.Mismatch]()
         var inverseMismatches = [String: [String: RelationshipIntegrityReport.Mismatch]]()
-
-        var inverses = [String: String]()
-        var inverseInformation = [String: FieldInformation]()
         let idExpr = SQLExpression<String>("id")
-
-        for inverse in type._inverseFields.values {
-            for (key, value) in inverse {
-                // Safe under the assumption that the information is macro generated
-                // and the generated information is correct.
-                inverses[value] = key
-            }
-        }
-
-        for information in self {
-            guard let oppositeType = information.relationshipToType else { continue }
-            if
-                let inversesToThis = oppositeType._inverseFields[type.typeIdentifier],
-                let key = inversesToThis[information.key]
-            { inverses[information.key] = key }
-
-            if let inverse = inverses[information.key] {
-                inverseInformation[information.key] = oppositeType._fieldInformation.first {
-                    $0.key == inverse
-                }
-            }
-        }
-
+        
         for relationship in self
             where inverses[relationship.key] != nil
             && inverseInformation[relationship.key] != nil
