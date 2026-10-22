@@ -50,7 +50,7 @@ public struct RelationshipIntegrityReport: Codable {
             /// The type of the field declared as relationship didn't fit a relationship.
             case unexpectedlyNotRelationship
             /// The id value of the inverse field doesn't point to the ulid of the current row.
-            case inverseMismatch(found: ULID?, expected: ULID)
+            case inverseMismatch(found: String?, expected: String)
         }
 
         /// The field is corrupted.
@@ -71,8 +71,8 @@ public struct RelationshipIntegrityReport: Codable {
         public static func inverseCountMismatch(found: Int, expected: Int) -> Self {
             Self(kind: .inverseCountMismatch(found: found, expected: expected))
         }
-        /// The id value of the inverse field doesn't point to the ulid of the current row.
-        public static func inverseMismatch(found: ULID?, expected: ULID) -> Self {
+        /// The id value of the inverse field doesn't point to the id of the current row.
+        public static func inverseMismatch(found: String?, expected: String) -> Self {
             Self(kind: .inverseMismatch(found: found, expected: expected))
         }
     }
@@ -99,7 +99,7 @@ extension RelationshipIntegrityReport.Mismatch.Kind {
             case .unexpectedlyNotRelationship:
                 "unexpectedlyNotRelationship"
             case .inverseMismatch(let found, let expected):
-                "inverseMismatch: found: \(found?.ulidString ?? "nil"), expected: \(expected.ulidString)"
+                "inverseMismatch: found: \(found ?? "nil"), expected: \(expected)"
         }
     }
 }

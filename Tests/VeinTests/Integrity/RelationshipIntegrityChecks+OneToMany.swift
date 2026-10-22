@@ -96,7 +96,7 @@ struct RelationshipIntegrityChecksOneToMany: RelationshipIntegrityCheckHelper {
             #expect(ownerReport
                 .inverseMismatches["targets"]?[target.id.ulidString] == .inverseMismatch(
                     found: nil,
-                    expected: owner.id
+                    expected: owner.id.ulidString
                 ))
         }
     }
@@ -132,9 +132,10 @@ struct RelationshipIntegrityChecksOneToMany: RelationshipIntegrityCheckHelper {
             #expect(ownerReport.localMismatches.isEmpty)
             #expect(ownerReport
                 .inverseMismatches["targets"]?[target.id.ulidString] == .inverseMismatch(
-                    found: ulid,
-                    expected: owner.id
-                ))
+                    found: ulid.ulidString,
+                    expected: owner.id.ulidString
+                )
+            )
 
             #expect(targetReport.idString == target.id.ulidString)
             #expect(targetReport.inverseMismatches.count == 1)

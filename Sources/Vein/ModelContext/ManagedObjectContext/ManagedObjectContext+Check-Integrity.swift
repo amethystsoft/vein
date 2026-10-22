@@ -26,13 +26,13 @@ extension ManagedObjectContext {
         let relationships = model._fieldInformation.filter {
             $0.relationshipToType != nil
         }
+        let idExpr = SQLExpression<String>("id")
 
         if relationships.isEmpty {
             return RelationshipIntegrityReport(schema: model.schema, models: [])
         }
 
         var models = [RelationshipIntegrityReport.Model]()
-        let idExpr = SQLExpression<String>("id")
 
         var fieldsToLoad = relationships.map(\.fetchExpressible)
         fieldsToLoad.append(idExpr)
@@ -40,27 +40,17 @@ extension ManagedObjectContext {
 
         do {
             let result = try connection.prepare(request)
+            let (inverses, inverseInformation) = relationships.inverseMaps(for: model)
 
             for row in result {
                 let idStr = row[idExpr]
-                guard let id = ULID(ulidString: idStr) else {
-                    models.append(
-                        RelationshipIntegrityReport.Model(
-                            idString: idStr,
-                            localMismatches: [
-                                "id": .corruptedData
-                            ],
-                            inverseMismatches: [:]
-                        )
-                    )
-                    continue
-                }
-
                 let (localMismatches, inverseMismatches) = try relationships.checkIntegrity(
+                    idStr: idStr,
                     type: model,
                     connection: connection,
                     row: row,
-                    id: id
+                    inverses: inverses,
+                    inverseInformation: inverseInformation
                 )
 
                 if !localMismatches.isEmpty || !inverseMismatches.isEmpty {
@@ -138,23 +128,13 @@ extension ManagedObjectContext {
 }
 
 extension [FieldInformation] {
-    fileprivate func checkIntegrity<Model: PersistentModel>(
-        type: Model.Type,
-        connection: SQLiteDB.Connection,
-        row: SQLiteDB.Row,
-        id: ULID
-    ) throws -> (
-        localMismatches: [String: RelationshipIntegrityReport.Mismatch],
-        inverseMismatches: [String: [String: RelationshipIntegrityReport.Mismatch]]
-    ) {
-        var localMismatches = [String: RelationshipIntegrityReport.Mismatch]()
-        var inverseMismatches = [String: [String: RelationshipIntegrityReport.Mismatch]]()
-
+    func inverseMaps<M: PersistentModel>(
+        for model: M.Type
+    ) -> ([String: String], [String: FieldInformation]) {
         var inverses = [String: String]()
         var inverseInformation = [String: FieldInformation]()
-        let idExpr = SQLExpression<String>("id")
 
-        for inverse in type._inverseFields.values {
+        for inverse in model._inverseFields.values {
             for (key, value) in inverse {
                 // Safe under the assumption that the information is macro generated
                 // and the generated information is correct.
@@ -165,7 +145,7 @@ extension [FieldInformation] {
         for information in self {
             guard let oppositeType = information.relationshipToType else { continue }
             if
-                let inversesToThis = oppositeType._inverseFields[type.typeIdentifier],
+                let inversesToThis = oppositeType._inverseFields[model.typeIdentifier],
                 let key = inversesToThis[information.key]
             { inverses[information.key] = key }
 
@@ -176,10 +156,29 @@ extension [FieldInformation] {
             }
         }
 
-        for relationship in self
-            where inverses[relationship.key] != nil
-            && inverseInformation[relationship.key] != nil
-        {
+        return (inverses, inverseInformation)
+    }
+
+    fileprivate func checkIntegrity<Model: PersistentModel>(
+        idStr: String,
+        type: Model.Type,
+        connection: SQLiteDB.Connection,
+        row: SQLiteDB.Row,
+        inverses: [String: String],
+        inverseInformation: [String: FieldInformation]
+    ) throws -> (
+        localMismatches: [String: RelationshipIntegrityReport.Mismatch],
+        inverseMismatches: [String: [String: RelationshipIntegrityReport.Mismatch]]
+    ) {
+        var localMismatches = [String: RelationshipIntegrityReport.Mismatch]()
+        var inverseMismatches = [String: [String: RelationshipIntegrityReport.Mismatch]]()
+        let idExpr = SQLExpression<String>("id")
+
+        if ULID(ulidString: idStr) == nil {
+            localMismatches["id"] = .corruptedData
+        }
+
+        for relationship in self {
             let value = SQLiteValue(
                 typeName: relationship.typeName,
                 key: relationship.key,
@@ -195,7 +194,13 @@ extension [FieldInformation] {
                 continue
             }
 
-            let inverseInformation = inverseInformation[relationship.key]!
+            let inverseInformation = inverseInformation[relationship.key]
+            let fieldsToFetch: [Expressible]
+            if let inverseInformation {
+                fieldsToFetch = [idExpr, inverseInformation.fetchExpressible]
+            } else {
+                fieldsToFetch = [idExpr]
+            }
 
             if relationship.relationshipType == .many,
                let ulids = [ULID](fromPersistent: SQLiteJSONB(jsonString: string))
@@ -203,7 +208,7 @@ extension [FieldInformation] {
                 let uniqued = Set(ulids)
                 var stringArray = uniqued.map(\.ulidString)
                 let query = Table(relationship.relationshipToType!.schema)
-                    .select([idExpr, inverseInformation.fetchExpressible])
+                    .select(fieldsToFetch)
                     .where(stringArray.contains(idExpr))
 
                 var rows: AnySequence<Row>
@@ -227,13 +232,15 @@ extension [FieldInformation] {
                     let idExpr = SQLExpression<String>("id")
                     let rowIDStr = row[idExpr]
 
-                    if let mismatch = row.checkFieldMatchesRelationship(
-                        id: id,
-                        key: relationship.key,
-                        information: inverseInformation,
-                        ulids,
-                        rowIDStr: rowIDStr,
-                    ) {
+                    if let inverseInformation,
+                       let mismatch = row.checkFieldMatchesRelationship(
+                           id: idStr,
+                           key: relationship.key,
+                           information: inverseInformation,
+                           ulids,
+                           rowIDStr: rowIDStr,
+                       )
+                    {
                         inverseMismatches[relationship.key, default: [:]][rowIDStr] = mismatch
                     }
 
@@ -249,7 +256,7 @@ extension [FieldInformation] {
                 let _ = ULID(fromPersistent: string)
             {
                 let query = Table(relationship.relationshipToType!.schema)
-                    .select([idExpr, inverseInformation.fetchExpressible])
+                    .select(fieldsToFetch)
                     .where(idExpr == string)
                     .limit(1)
 
@@ -270,11 +277,13 @@ extension [FieldInformation] {
 
                 var called = false
                 for row in rows {
-                    if let mismatch = row.checkFieldMatchesRelationship(
-                        id: id,
-                        key: relationship.key,
-                        information: inverseInformation,
-                    ) {
+                    if let inverseInformation,
+                       let mismatch = row.checkFieldMatchesRelationship(
+                           id: idStr,
+                           key: relationship.key,
+                           information: inverseInformation,
+                       )
+                    {
                         inverseMismatches[relationship.key, default: [:]][string] = mismatch
                     }
                     called = true
@@ -295,7 +304,7 @@ extension [FieldInformation] {
 
 extension SQLiteDB.Row {
     fileprivate nonisolated func checkFieldMatchesRelationship(
-        id: ULID,
+        id: String,
         key: String,
         information: FieldInformation,
         _ ulids: [ULID],
@@ -315,11 +324,12 @@ extension SQLiteDB.Row {
             return .inverseUnexpectedlyNotRelationship
         }
 
-        if information.relationshipType == .many,
-           let foundUlids = [ULID](fromPersistent: SQLiteJSONB(jsonString: string))
+        if
+            information.relationshipType == .many,
+            let foundUlids = [ULID](fromPersistent: SQLiteJSONB(jsonString: string))
         {
             let countOfRowInOriginal = ulids.count { $0.ulidString == rowIDStr }
-            let countOfRowInFound = foundUlids.count { $0.ulidString == id.ulidString }
+            let countOfRowInFound = foundUlids.count { $0.ulidString == id }
 
             if countOfRowInOriginal != countOfRowInFound {
                 return .inverseCountMismatch(
@@ -327,11 +337,12 @@ extension SQLiteDB.Row {
                     expected: countOfRowInOriginal
                 )
             }
-        } else if information.relationshipType == .one,
-                  let ulid = ULID(fromPersistent: string)
+        } else if
+            information.relationshipType == .one,
+            let _ = ULID(fromPersistent: string)
         {
-            if ulid != id {
-                return .inverseMismatch(found: ulid, expected: id)
+            if string != id {
+                return .inverseMismatch(found: string, expected: id)
             }
         } else {
             return .corruptedData
@@ -340,7 +351,7 @@ extension SQLiteDB.Row {
     }
 
     fileprivate nonisolated func checkFieldMatchesRelationship(
-        id: ULID,
+        id: String,
         key: String,
         information: FieldInformation
     ) -> RelationshipIntegrityReport.Mismatch? {
@@ -361,16 +372,17 @@ extension SQLiteDB.Row {
         if information.relationshipType == .many,
            let foundUlids = [ULID](fromPersistent: SQLiteJSONB(jsonString: string))
         {
-            let countOfRowInFound = foundUlids.count { $0.ulidString == id.ulidString }
+            let countOfRowInFound = foundUlids.count { $0.ulidString == id }
 
             if countOfRowInFound < 1 {
                 return .inverseCountMismatch(found: 0, expected: 1)
             }
-        } else if information.relationshipType == .one,
-                  let ulid = ULID(fromPersistent: string)
+        } else if
+            information.relationshipType == .one,
+            let _ = ULID(fromPersistent: string)
         {
-            if ulid != id {
-                return .inverseMismatch(found: ulid, expected: id)
+            if string != id {
+                return .inverseMismatch(found: string, expected: id)
             }
         } else {
             return .corruptedData
