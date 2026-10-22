@@ -49,8 +49,9 @@ struct RelationshipIntegrityChecks: RelationshipIntegrityCheckHelper {
             else { return }
 
             #expect(ownerReport.idString == "notAValidULID")
-            #expect(ownerReport.inverseMismatches.isEmpty)
+            #expect(ownerReport.inverseMismatches.count == 1)
             #expect(ownerReport.localMismatches.count == 1)
+            #expect(ownerReport.inverseMismatches["target"]?[target.id.ulidString] == .inverseMismatch(found: owner.id.ulidString, expected: "notAValidULID"))
             #expect(ownerReport.localMismatches["id"] == .corruptedData)
 
             #expect(targetReport.id == target.id)
