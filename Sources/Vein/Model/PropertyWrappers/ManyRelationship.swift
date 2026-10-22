@@ -239,6 +239,21 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
 
         for target in added {
             setObservers(on: target, id: target.id)
+            
+            do {
+                if target.context.isNil {
+                    try context.insert(target)
+                } else if target.context?.identifier != context.identifier {
+                    fatalError("""
+                            Tried set model from different context as relationship.
+                            
+                            Triggered by adding \(target) with id \(target.id.ulidString) \
+                            to \(instanceKey) of \(model._getSchema())
+                            """)
+                }
+            } catch {
+                fatalError(error.localizedDescription)
+            }
 
             guard let _inverseKey else {
                 continue
@@ -259,21 +274,6 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
                     }
                 }
             } block: {
-                do {
-                    if target.context.isNil {
-                        try context.insert(target)
-                    } else if target.context?.identifier != context.identifier {
-                        fatalError("""
-                            Tried set model from different context as relationship.
-
-                            Triggered by adding \(target) with id \(target.id.ulidString) \
-                            to \(instanceKey) of \(model._getSchema())
-                            """)
-                    }
-                } catch {
-                    fatalError(error.localizedDescription)
-                }
-
                 if let manyField = matchingField as? (any ManyRelationship) {
                     manyField._persistableValue.append(model.id)
                     manyField.wasTouched = true

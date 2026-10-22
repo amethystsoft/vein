@@ -35,13 +35,14 @@ extension RelationshipIntegrityCheckHelper {
         let container = try ModelContainer(
             schema,
             migration: migration,
-            at: nil,
+            at: "/Users/miakoring/Downloads/test.db",
             appID: "de.amethystsoft.vein.test.relationship-integrity-check",
             encryptionEnabled: false
         )
 
         try setup(container.context)
         try container.context.save()
+        
         try corrupt(container.getConnection())
 
         let result = try container.context.checkRelationshipIntegrity()

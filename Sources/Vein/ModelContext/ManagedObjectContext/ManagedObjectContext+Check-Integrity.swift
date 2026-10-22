@@ -188,10 +188,7 @@ extension [FieldInformation] {
         var inverseMismatches = [String: [String: RelationshipIntegrityReport.Mismatch]]()
         let idExpr = SQLExpression<String>("id")
 
-        for relationship in self
-            where inverses[relationship.key] != nil
-            && inverseInformation[relationship.key] != nil
-        {
+        for relationship in self {
             let value = SQLiteValue(
                 typeName: relationship.typeName,
                 key: relationship.key,
@@ -206,8 +203,14 @@ extension [FieldInformation] {
                 localMismatches[relationship.key] = .unexpectedlyNotRelationship
                 continue
             }
-
-            let inverseInformation = inverseInformation[relationship.key]!
+            
+            let inverseInformation = inverseInformation[relationship.key]
+            let fieldsToFetch: [Expressible]
+            if let inverseInformation {
+                fieldsToFetch = [idExpr, inverseInformation.fetchExpressible]
+            } else {
+                fieldsToFetch = [idExpr]
+            }
 
             if relationship.relationshipType == .many,
                let ulids = [ULID](fromPersistent: SQLiteJSONB(jsonString: string))
@@ -215,7 +218,7 @@ extension [FieldInformation] {
                 let uniqued = Set(ulids)
                 var stringArray = uniqued.map(\.ulidString)
                 let query = Table(relationship.relationshipToType!.schema)
-                    .select([idExpr, inverseInformation.fetchExpressible])
+                    .select(fieldsToFetch)
                     .where(stringArray.contains(idExpr))
 
                 var rows: AnySequence<Row>
@@ -239,7 +242,8 @@ extension [FieldInformation] {
                     let idExpr = SQLExpression<String>("id")
                     let rowIDStr = row[idExpr]
 
-                    if let mismatch = row.checkFieldMatchesRelationship(
+                    if let inverseInformation,
+                        let mismatch = row.checkFieldMatchesRelationship(
                         id: id,
                         key: relationship.key,
                         information: inverseInformation,
@@ -261,7 +265,7 @@ extension [FieldInformation] {
                 let _ = ULID(fromPersistent: string)
             {
                 let query = Table(relationship.relationshipToType!.schema)
-                    .select([idExpr, inverseInformation.fetchExpressible])
+                    .select(fieldsToFetch)
                     .where(idExpr == string)
                     .limit(1)
 
@@ -282,7 +286,8 @@ extension [FieldInformation] {
 
                 var called = false
                 for row in rows {
-                    if let mismatch = row.checkFieldMatchesRelationship(
+                    if let inverseInformation,
+                        let mismatch = row.checkFieldMatchesRelationship(
                         id: id,
                         key: relationship.key,
                         information: inverseInformation,
