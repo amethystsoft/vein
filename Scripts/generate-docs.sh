@@ -10,6 +10,9 @@ cd "$REPO_ROOT"
 echo "Clearing old output..."
 rm -rf "$OUTPUT_DIR"
 
+echo "selecting swift 6.3.3"
+swiftly use 6.3.3 --global-default
+
 echo "Compiling Unified DocC Archive..."
 # Das Plugin generiert automatisch ein kombiniertes Archiv für alle deine Targets
 swift package \
@@ -25,6 +28,9 @@ swift package \
   --transform-for-static-hosting
 
 echo "Documentation generated at: $OUTPUT_DIR"
+
+echo "re-selecting swift 6.4.1"
+swiftly use 6.4.1 --global-default
 
 echo "Replacing root index.html with a custom documentation hub..."
 
