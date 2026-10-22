@@ -42,7 +42,7 @@ extension RelationshipIntegrityCheckHelper {
 
         try setup(container.context)
         try container.context.save()
-        
+
         try corrupt(container.getConnection())
 
         let result = try container.context.checkRelationshipIntegrity()

@@ -27,7 +27,7 @@ extension ManagedObjectContext {
             $0.relationshipToType != nil
         }
         let idExpr = SQLExpression<String>("id")
-        
+
         if relationships.isEmpty {
             return RelationshipIntegrityReport(schema: model.schema, models: [])
         }
@@ -173,7 +173,7 @@ extension [FieldInformation] {
         var localMismatches = [String: RelationshipIntegrityReport.Mismatch]()
         var inverseMismatches = [String: [String: RelationshipIntegrityReport.Mismatch]]()
         let idExpr = SQLExpression<String>("id")
-        
+
         if ULID(ulidString: idStr) == nil {
             localMismatches["id"] = .corruptedData
         }
@@ -193,7 +193,7 @@ extension [FieldInformation] {
                 localMismatches[relationship.key] = .unexpectedlyNotRelationship
                 continue
             }
-            
+
             let inverseInformation = inverseInformation[relationship.key]
             let fieldsToFetch: [Expressible]
             if let inverseInformation {
@@ -233,13 +233,14 @@ extension [FieldInformation] {
                     let rowIDStr = row[idExpr]
 
                     if let inverseInformation,
-                        let mismatch = row.checkFieldMatchesRelationship(
-                        id: idStr,
-                        key: relationship.key,
-                        information: inverseInformation,
-                        ulids,
-                        rowIDStr: rowIDStr,
-                    ) {
+                       let mismatch = row.checkFieldMatchesRelationship(
+                           id: idStr,
+                           key: relationship.key,
+                           information: inverseInformation,
+                           ulids,
+                           rowIDStr: rowIDStr,
+                       )
+                    {
                         inverseMismatches[relationship.key, default: [:]][rowIDStr] = mismatch
                     }
 
@@ -277,11 +278,12 @@ extension [FieldInformation] {
                 var called = false
                 for row in rows {
                     if let inverseInformation,
-                        let mismatch = row.checkFieldMatchesRelationship(
-                        id: idStr,
-                        key: relationship.key,
-                        information: inverseInformation,
-                    ) {
+                       let mismatch = row.checkFieldMatchesRelationship(
+                           id: idStr,
+                           key: relationship.key,
+                           information: inverseInformation,
+                       )
+                    {
                         inverseMismatches[relationship.key, default: [:]][string] = mismatch
                     }
                     called = true
