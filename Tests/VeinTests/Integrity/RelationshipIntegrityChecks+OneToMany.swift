@@ -176,7 +176,7 @@ struct RelationshipIntegrityChecksOneToMany: RelationshipIntegrityCheckHelper {
             )
         }
     }
-    
+
     @Test
     func `catches everything wrong`() async throws {
         let inverseMissingOwner = V0_0_2.Owner(name: "Mia")
@@ -187,13 +187,13 @@ struct RelationshipIntegrityChecksOneToMany: RelationshipIntegrityCheckHelper {
         let target2 = V0_0_2.Target(name: "Coral")
         let unexpectedCountZeroTarget = V0_0_2.Target(name: "Coral")
         let trollTarget = V0_0_2.Target(name: "Troll")
-        
+
         try check(V0_0_2.self, Migration.self) { context in
             try context.insert(inverseMissingOwner)
             try context.insert(inverseFoundNilOwner)
             try context.insert(owner)
             try context.insert(bothWrongOwner)
-            
+
             inverseMissingOwner.targets = [target1]
             inverseFoundNilOwner.targets = [target2]
             owner.targets = [unexpectedCountZeroTarget]
@@ -204,12 +204,12 @@ struct RelationshipIntegrityChecksOneToMany: RelationshipIntegrityCheckHelper {
                 .where(SQLExpression<String>("id") == target1.id.ulidString)
                 .delete()
             _ = try connection.run(query)
-            
+
             let query2 = Table(V0_0_2.Target.schema)
                 .where(SQLExpression<String>("id") == target2.id.ulidString)
                 .update(SQLExpression<String?>("owner") <- nil)
             _ = try connection.run(query2)
-            
+
             let query3 = Table(V0_0_2.Owner.schema)
                 .where(SQLExpression<String>("id") == owner.id.ulidString)
                 .update(SQLExpression<Data>("targets") <- SQLExpression(
@@ -217,7 +217,7 @@ struct RelationshipIntegrityChecksOneToMany: RelationshipIntegrityCheckHelper {
                     ["[]"]
                 ))
             _ = try connection.run(query3)
-            
+
             let query4 = Table(V0_0_2.Target.schema)
                 .where(SQLExpression<String>("id") == trollTarget.id.ulidString)
                 .update([
@@ -231,10 +231,10 @@ struct RelationshipIntegrityChecksOneToMany: RelationshipIntegrityCheckHelper {
         } validate: { reports in
             let ownerReport = reports.first { $0.schema == V0_0_2.Owner.schema }!
             let targetReport = reports.first { $0.schema == V0_0_2.Target.schema }!
-            
+
             #expect(targetReport.models.count == 2)
             #expect(ownerReport.models.count == 3)
-            
+
             guard
                 let targetReport1 = targetReport.models.first(where: {
                     $0.idString == unexpectedCountZeroTarget.id.ulidString
@@ -255,48 +255,51 @@ struct RelationshipIntegrityChecksOneToMany: RelationshipIntegrityCheckHelper {
                 Issue.record("One or more reports were missing")
                 return
             }
-            
+
             #expect(targetReport1.inverseMismatches.count == 1)
             #expect(targetReport1.localMismatches.isEmpty)
             #expect(
                 targetReport1.inverseMismatches["owner"]?[owner.id.ulidString]
-                == .inverseCountMismatch(found: 0, expected: 1)
+                    == .inverseCountMismatch(found: 0, expected: 1)
             )
-            
+
             #expect(targetReport2.inverseMismatches.count == 2)
             #expect(targetReport2.localMismatches.isEmpty)
             #expect(
                 targetReport2.inverseMismatches["owner"]?[owner.id.ulidString]
-                == .inverseCountMismatch(found: 0, expected: 1)
+                    == .inverseCountMismatch(found: 0, expected: 1)
             )
             #expect(
                 targetReport2.inverseMismatches["owners"]?[owner.id.ulidString]
-                == .inverseMismatch(found: nil, expected: trollTarget.id.ulidString)
+                    == .inverseMismatch(found: nil, expected: trollTarget.id.ulidString)
             )
-            
+
             #expect(ownerReport1.inverseMismatches.count == 1)
             #expect(ownerReport1.localMismatches.isEmpty)
             #expect(
                 ownerReport1.inverseMismatches["targets"]?[target1.id.ulidString]
-                == .missingInInverse
+                    == .missingInInverse
             )
-            
+
             #expect(ownerReport2.inverseMismatches.count == 1)
             #expect(ownerReport2.localMismatches.isEmpty)
             #expect(
                 ownerReport2.inverseMismatches["targets"]?[target2.id.ulidString]
-                == .inverseMismatch(found: nil, expected: inverseFoundNilOwner.id.ulidString)
+                    == .inverseMismatch(found: nil, expected: inverseFoundNilOwner.id.ulidString)
             )
-            
+
             #expect(ownerReport3.inverseMismatches.count == 2)
             #expect(ownerReport3.localMismatches.isEmpty)
             #expect(
                 ownerReport3.inverseMismatches["targets"]?[trollTarget.id.ulidString]
-                == .inverseMismatch(found: owner.id.ulidString, expected: bothWrongOwner.id.ulidString)
+                    == .inverseMismatch(
+                        found: owner.id.ulidString,
+                        expected: bothWrongOwner.id.ulidString
+                    )
             )
             #expect(
                 ownerReport3.inverseMismatches["target"]?[trollTarget.id.ulidString]
-                == .inverseCountMismatch(found: 0, expected: 1)
+                    == .inverseCountMismatch(found: 0, expected: 1)
             )
         }
     }
@@ -355,38 +358,37 @@ fileprivate enum V0_0_1: VersionedSchema {
 fileprivate enum V0_0_2: VersionedSchema {
     static let version = ModelVersion(0, 0, 2)
     static let models: [any Vein.PersistentModel.Type] = [Owner.self, Target.self]
-    
+
     @Model
     final class Owner: Identifiable {
         var name: String
-        
+
         @Relationship(inverse: \Target.owner)
         var targets: [Target]
-        
+
         @Relationship
         var target: Target?
-        
+
         init(name: String) {
             self.name = name
         }
     }
-    
+
     @Model
     final class Target: Identifiable {
         var name: String
-        
+
         @Relationship
         var owner: Owner?
-        
+
         @Relationship(inverse: \Owner.target)
         var owners: [Owner]
-        
+
         init(name: String) {
             self.name = name
         }
     }
 }
-
 
 fileprivate typealias Owner = V0_0_1.Owner
 fileprivate typealias Target = V0_0_1.Target

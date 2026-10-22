@@ -800,7 +800,7 @@ struct MacrosTests {
             }
         )
     }
-    
+
     @Test
     func inverseRelationshipExpansion() async throws {
         assertMacroExpansion(
@@ -815,25 +815,25 @@ struct MacrosTests {
                 final class Test {
                     @Vein._ManyRelationship(inverse: "test")
                     var others: [Other]
-                
+
                     /// The primary ID of the object.
                     /// Gets  used to reference models in relationships.
                     /// Immutable after insertion into the context.
                     @Vein.PrimaryKey
                     var id: Vein.ULID = ULID()
-                
+
                     @Vein.LazyField(suppressUIUpdates: true)
                     var _updatedAt: Foundation.Date?
-                
+
                     @Vein.LazyField(suppressUIUpdates: true)
                     var _clientID: String?
-                
+
                     @Vein.LazyField(suppressUIUpdates: true)
                     var _isDeleted: Bool? = false
-                
+
                     @Vein.LazyField(suppressUIUpdates: true)
                     var _isSynced: Bool? = false
-                
+
                     required init(id: Vein.ULID, fields: [String: Vein.SQLiteValue]) {
                         self.id = id
                         
@@ -844,9 +844,9 @@ struct MacrosTests {
                         )!
                         _setupFields()
                     }
-                
+
                     let _observers = Vein.Mutex(Vein._ReferenceCountedObservers())
-                
+
                     /// Sets required properties for @Field values.
                     /// Gets generated automatically by @Model.
                     public func _setupFields() {
@@ -862,14 +862,14 @@ struct MacrosTests {
                         self._others._key = "others"
                         self._id._model = self
                     }
-                
+
                     let _context = Vein.Mutex<Vein.ManagedObjectContext?>(nil)
-                
+
                     /// Whether a model is prepared to be deleted.
                     ///
                     /// Reading this variable is safe, but it should never be set outside of Vein.
                     var _isPreparedForDeletion = false
-                
+
                     var _fields: [any Vein.FieldBase] {
                         [
                             self._id,
@@ -880,19 +880,19 @@ struct MacrosTests {
                             self._others
                         ]
                     }
-                
+
                     var _relationships: [any Vein.PersistedRelationship] {
                         [
                             self._others
                         ]
                     }
-                
+
                     static let _inverseFields = {
                         var map = [ObjectIdentifier: [String: String]]()
                         map[ObjectIdentifier(Other.self), default: [:]]["test"] = "others"
                         return map
                     }()
-                
+
                     static func _predicateInformation(for keyPath: PartialKeyPath<Test>) -> Vein.FieldInformation? {
                         switch keyPath {
                             case \._clientID: Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false)
@@ -904,7 +904,7 @@ struct MacrosTests {
                             default: nil
                         }
                     }
-                
+
                     static let _fieldInformation: [Vein.FieldInformation] = [
                         Vein.FieldInformation(String?.sqliteTypeName, "_clientID", false),
                         Vein.FieldInformation(Bool?.sqliteTypeName, "_isDeleted", false),
@@ -912,7 +912,7 @@ struct MacrosTests {
                         Vein.FieldInformation(Foundation.Date?.sqliteTypeName, "_updatedAt", false),
                         Vein.FieldInformation([ULID].sqliteTypeName, "others", true, Other.self, .many)
                     ]
-                
+
                     \#(sharedSuffix)
                 """#,
             diagnostics: [
