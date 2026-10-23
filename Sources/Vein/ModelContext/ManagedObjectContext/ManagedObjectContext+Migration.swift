@@ -23,19 +23,19 @@ extension ManagedObjectContext {
             t.column(SystemTable.veinVersionPatch)
             t.column(SystemTable.appliedAutoheals)
         })
-        
+
         let version = Self.veinVersion
         if try _getSystemTable() == nil {
             let insert = SystemTable.systemTable.insert(
                 [
                     SQLExpression<Int64>(SystemTable.veinVersionMajor)
-                    <- SQLExpression<Int64>(value: Int64(version.major)),
+                        <- SQLExpression<Int64>(value: Int64(version.major)),
                     SQLExpression<Int64>(SystemTable.veinVersionMinor)
-                    <- SQLExpression<Int64>(value: Int64(version.minor)),
+                        <- SQLExpression<Int64>(value: Int64(version.minor)),
                     SQLExpression<Int64>(SystemTable.veinVersionPatch)
-                    <- SQLExpression<Int64>(value: Int64(version.patch)),
+                        <- SQLExpression<Int64>(value: Int64(version.patch)),
                     SQLExpression<String>(SystemTable.appliedAutoheals)
-                    <- SQLExpression<String>(value: "[]")
+                        <- SQLExpression<String>(value: "[]")
                 ]
             )
             try connection.run(insert)
@@ -43,11 +43,11 @@ extension ManagedObjectContext {
             let update = SystemTable.systemTable.update(
                 [
                     SQLExpression<Int64>(SystemTable.veinVersionMajor)
-                    <- SQLExpression<Int64>(value: Int64(version.major)),
+                        <- SQLExpression<Int64>(value: Int64(version.major)),
                     SQLExpression<Int64>(SystemTable.veinVersionMinor)
-                    <- SQLExpression<Int64>(value: Int64(version.minor)),
+                        <- SQLExpression<Int64>(value: Int64(version.minor)),
                     SQLExpression<Int64>(SystemTable.veinVersionPatch)
-                    <- SQLExpression<Int64>(value: Int64(version.patch))
+                        <- SQLExpression<Int64>(value: Int64(version.patch))
                 ]
             )
             try connection.run(update)

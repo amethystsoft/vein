@@ -204,7 +204,7 @@ extension RelationshipTest {
             #expect(comments.map(\.author?.id) == [nil])
         }
     }
-    
+
     @Test
     func `cascade deletes all it references on delete`() throws {
         let container = try ModelContainer(
@@ -214,24 +214,24 @@ extension RelationshipTest {
             appID: "de.amethystsoft.vein.RelationshipTests",
             encryptionEnabled: ProcessInfo.shouldEnableEncryption
         )
-        
+
         let user = CommentRelationshipCascade.User(name: "Mia")
         let comment1 = CommentRelationshipCascade.Comment(text: "1")
         let comment2 = CommentRelationshipCascade.Comment(text: "2")
         let comment3 = CommentRelationshipCascade.Comment(text: "3")
-        
+
         try container.context.insert(user)
         user.comments = [comment1, comment2, comment3]
-        
+
         #expect(comment1.author === user)
         #expect(comment2.author === user)
         #expect(comment3.author === user)
         #expect(comment1.isManaged)
         #expect(comment2.isManaged)
         #expect(comment3.isManaged)
-        
+
         try container.context.delete(user)
-        
+
         #expect(!comment1.isManaged)
         #expect(!comment2.isManaged)
         #expect(!comment3.isManaged)

@@ -1,13 +1,25 @@
+// ===----------------------------------------------------------------------===
+//
+// This source file is part of the Amethyst Vein open source project
+//
+// Copyright (c) 2026 Mia Koring.
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+//
+// ===----------------------------------------------------------------------===
+
 import Foundation
 import Testing
 import SQLiteDB
 @testable import Vein
 #if TEST_SWIFTUI
-@_spi(VeinTesting) @testable import VeinSwiftUI
+    @_spi(VeinTesting) @testable import VeinSwiftUI
 #elseif TEST_SCUI
-@_spi(VeinTesting) @testable import VeinSCUI
+    @_spi(VeinTesting) @testable import VeinSCUI
 #else
-@_spi(VeinTesting) @testable import VeinCore
+    @_spi(VeinTesting) @testable import VeinCore
 #endif
 
 // These tests feels insanely stupid. But in theory someone could break
@@ -25,7 +37,7 @@ struct PersistableConformances {
         #expect(true.asPersistentRepresentation == true)
         #expect("4".asPersistentRepresentation == "4")
         #expect("4".data(using: .utf8)?.asPersistentRepresentation == "4".data(using: .utf8))
-        
+
         let jsonB = SQLiteJSONB(jsonString: "[]")
         #expect(jsonB.asPersistentRepresentation == jsonB)
         let ulid = ULID()
@@ -39,7 +51,7 @@ struct PersistableConformances {
         #expect(Int?.none?.asPersistentRepresentation == nil)
         #expect(Int?(4)?.asPersistentRepresentation == 4)
     }
-    
+
     @Test
     func sqliteValue() {
         #expect(Int(4).asPersistentRepresentation.sqliteValue == .integer(4))
@@ -52,7 +64,7 @@ struct PersistableConformances {
         #expect(false.sqliteValue == .integer(0))
         #expect("4".sqliteValue == .text("4"))
         #expect("4".data(using: .utf8)?.sqliteValue == .blob("4".data(using: .utf8)!))
-        
+
         let jsonB = SQLiteJSONB(jsonString: "[]")
         #expect(jsonB.sqliteValue == .text(jsonB.jsonString))
         let ulid = ULID()
@@ -60,14 +72,15 @@ struct PersistableConformances {
         #expect(ulid.asPersistentRepresentation.sqliteValue == .text(ulid.ulidString))
         #expect([ulid].asPersistentRepresentation.sqliteValue == .text(ulidJSONB.jsonString))
         let url = URL(string: "https://vein.amethystsoft.de")
-        #expect(url?.asPersistentRepresentation.sqliteValue == .text("https://vein.amethystsoft.de"))
+        #expect(url?.asPersistentRepresentation
+            .sqliteValue == .text("https://vein.amethystsoft.de"))
         let uuid = UUID()
         #expect(uuid.sqliteValue == .text(uuid.uuidString))
         #expect(Int?.none.asPersistentRepresentation.sqliteValue == .null)
         let int: Int? = 4
         #expect(int.sqliteValue == .integer(4))
     }
-    
+
     @Test
     func decode() throws {
         try #expect(Int64.decode(sqliteValue: .integer(4)) == Int64(4))
@@ -80,7 +93,7 @@ struct PersistableConformances {
         try #expect(String.decode(sqliteValue: .text("4")) == "4")
         let data = "4".data(using: .utf8)!
         try #expect(Data.decode(sqliteValue: .blob(data)) == data)
-        
+
         let jsonB = SQLiteJSONB(jsonString: "[]")
         try #expect(SQLiteJSONB.decode(sqliteValue: .text("[]")) == jsonB)
         let uuid = UUID()
@@ -88,7 +101,7 @@ struct PersistableConformances {
         try #expect(Int?.decode(sqliteValue: .null) == nil)
         try #expect(Int?.decode(sqliteValue: .integer(4)) == 4)
     }
-    
+
     @Test
     func `init(fromPersistent:)`() {
         #expect(Int64(fromPersistent: 4) == 4)
@@ -117,10 +130,13 @@ struct PersistableConformances {
 }
 
 extension SQLiteValue: Comparable {
-    public static func < (lhs: borrowing Vein.SQLiteValue, rhs: borrowing Vein.SQLiteValue) -> Bool {
+    public static func < (
+        lhs: borrowing Vein.SQLiteValue,
+        rhs: borrowing Vein.SQLiteValue
+    ) -> Bool {
         false
     }
-    
+
     public static func == (lhs: SQLiteValue, rhs: SQLiteValue) -> Bool {
         if
             case .integer(let int1) = lhs,

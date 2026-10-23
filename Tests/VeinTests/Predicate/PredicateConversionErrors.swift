@@ -1,13 +1,25 @@
+// ===----------------------------------------------------------------------===
+//
+// This source file is part of the Amethyst Vein open source project
+//
+// Copyright (c) 2026 Mia Koring.
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+//
+// ===----------------------------------------------------------------------===
+
 import Foundation
 import Testing
 import Logging
 @testable import Vein
 #if TEST_SWIFTUI
-@_spi(VeinTesting) @testable import VeinSwiftUI
+    @_spi(VeinTesting) @testable import VeinSwiftUI
 #elseif TEST_SCUI
-@_spi(VeinTesting) @testable import VeinSCUI
+    @_spi(VeinTesting) @testable import VeinSCUI
 #else
-@_spi(VeinTesting) @testable import VeinCore
+    @_spi(VeinTesting) @testable import VeinCore
 #endif
 
 @Suite
@@ -28,7 +40,7 @@ struct PredicateConversionErrorTests {
             throw error
         }
     }
-    
+
     @Test
     func `mssing field information throws`() async throws {
         do {
@@ -42,7 +54,7 @@ struct PredicateConversionErrorTests {
             throw error
         }
     }
-    
+
     @Test
     func `incompatible throws incompatible`() async throws {
         do {
@@ -59,9 +71,9 @@ struct PredicateConversionErrorTests {
 
 fileprivate enum V1: VersionedSchema {
     static let version: Vein.ModelVersion = .init(1, 0, 0)
-    
+
     static let models: [any Vein.PersistentModel.Type] = [Test.self]
-    
+
     @Model
     final class Test: Equatable {
         var foo: String?

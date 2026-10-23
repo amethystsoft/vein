@@ -1,13 +1,25 @@
+// ===----------------------------------------------------------------------===
+//
+// This source file is part of the Amethyst Vein open source project
+//
+// Copyright (c) 2026 Mia Koring.
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+//
+// ===----------------------------------------------------------------------===
+
 import Foundation
 import Testing
 import SQLiteDB
 @testable import Vein
 #if TEST_SWIFTUI
-@_spi(VeinTesting) @testable import VeinSwiftUI
+    @_spi(VeinTesting) @testable import VeinSwiftUI
 #elseif TEST_SCUI
-@_spi(VeinTesting) @testable import VeinSCUI
+    @_spi(VeinTesting) @testable import VeinSCUI
 #else
-@_spi(VeinTesting) @testable import VeinCore
+    @_spi(VeinTesting) @testable import VeinCore
 #endif
 
 @Suite
@@ -21,7 +33,7 @@ struct FieldBaseTests {
             encryptionEnabled: false
         )
     }
-    
+
     @Test
     func decodeNormalAndNil() throws {
         let container = try makeModelContainer()
@@ -34,10 +46,10 @@ struct FieldBaseTests {
             blob: "4".data(using: .utf8)!,
             jsonB: [ulid]
         )
-        
+
         try container.context.insert(test)
         try container.context.save()
-        
+
         let connection = container.getConnection()
         let toFetch = Test._fieldInformation.map(\.fetchExpressible)
         let query = Table(Test.schema)
@@ -57,7 +69,7 @@ struct FieldBaseTests {
             #expect(test.optJsonBField.decode(row) == nil)
         }
     }
-    
+
     @Test
     func decodeOptFilled() throws {
         let container = try makeModelContainer()
@@ -75,10 +87,10 @@ struct FieldBaseTests {
             optBlob: "4".data(using: .utf8)!,
             optJsonB: [ulid]
         )
-        
+
         try container.context.insert(test)
         try container.context.save()
-        
+
         let connection = container.getConnection()
         let toFetch = Test._fieldInformation.map(\.fetchExpressible)
         let query = Table(Test.schema)
@@ -103,7 +115,7 @@ struct FieldBaseTests {
 fileprivate enum V1: VersionedSchema {
     static let version: Vein.ModelVersion = .init(1, 0, 0)
     static let models: [any Vein.PersistentModel.Type] = [Test.self]
-    
+
     @Model
     final class Test {
         var int: Int
@@ -111,13 +123,13 @@ fileprivate enum V1: VersionedSchema {
         var text: String
         var blob: Data
         var jsonB: [ULID]
-        
+
         var optInt: Int?
         var optReal: Double?
         var optText: String?
         var optBlob: Data?
         var optJsonB: [ULID]?
-        
+
         var intField: Field<Int> { _int }
         var realField: Field<Double> { _real }
         var textField: Field<String> { _text }
@@ -128,7 +140,7 @@ fileprivate enum V1: VersionedSchema {
         var optTextField: Field<String?> { _optText }
         var optBlobField: Field<Data?> { _optBlob }
         var optJsonBField: Field<[ULID]?> { _optJsonB }
-        
+
         init(
             int: Int,
             real: Double,
@@ -159,6 +171,6 @@ fileprivate typealias Test = V1.Test
 
 fileprivate enum Migration: SchemaMigrationPlan {
     static let stages: [Vein.MigrationStage] = []
-    
+
     static let schemas: [any Vein.VersionedSchema.Type] = [V1.self]
 }
