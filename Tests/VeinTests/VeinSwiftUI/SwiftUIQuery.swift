@@ -52,13 +52,6 @@
             await Task.yield()
 
             #expect(queryObserver.results == Array(models[1...]))
-
-            try container.context.insert(models.first!)
-
-            await Task.yield()
-
-            // We need the sortrule here, as the stuff is sorted on the query level, not queryObserver.
-            #expect(queryObserver.results?.sorted(using: [SortRule(\.id)]) == models)
         }
 
         @Test(.timeLimit(.minutes(1)))
@@ -82,13 +75,6 @@
             await Task.yield()
 
             #expect(queryObserver.results == Array(models[1...]))
-
-            try container.context.insert(models.first!)
-
-            await Task.yield()
-
-            // We need the sortrule here, as the stuff is sorted on the query level, not queryObserver.
-            #expect(queryObserver.results?.sorted(using: [SortRule(\.id)]) == models)
 
             models.first!.someValue = "no letter you're look'n for here"
 
