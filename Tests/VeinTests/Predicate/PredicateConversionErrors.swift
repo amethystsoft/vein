@@ -48,7 +48,7 @@ struct PredicateConversionErrorTests {
             Issue.record("Unexpectedly didn't throw")
         } catch let error as PredicateConversionError {
             if case .missingFieldInformation(let info) = error {
-                #expect(info == #"\Test.noFieldInformationAboutThisProperty"#)
+                #expect(info == "\(\Test.noFieldInformationAboutThisProperty)")
                 return
             }
             throw error
