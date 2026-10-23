@@ -219,8 +219,8 @@ extension ManagedObjectContext {
 
         model._setupFields()
 
-        // An insert invalidates existing deletes and touches
-        writeCache.mutate { inserts, touches, deletes, _ in
+        // An insert invalidates existing touches
+        writeCache.mutate { inserts, touches, _, _ in
             inserts[
                 model.typeIdentifier,
                 default: [:]
@@ -233,15 +233,6 @@ extension ManagedObjectContext {
 
             if touches[model.typeIdentifier]?.isEmpty ?? false {
                 touches[model.typeIdentifier] = nil
-            }
-
-            deletes[
-                model.typeIdentifier,
-                default: [:]
-            ][model.id] = nil
-
-            if deletes[model.typeIdentifier]?.isEmpty ?? false {
-                deletes[model.typeIdentifier] = nil
             }
         }
         model.context = self

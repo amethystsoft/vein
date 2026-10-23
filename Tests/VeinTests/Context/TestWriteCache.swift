@@ -301,45 +301,6 @@ struct WriteCache {
         #expect(results.contains { $0.id == m2.id })
     }
 
-    @Test("Merging on failed save new insert overrides delete")
-    func mergingOnFailedSaveNewInsertOverridesDelete() throws {
-        var verifyRuns = [Bool](repeating: false, count: 5)
-        let typeID = V0_0_1.Test.typeIdentifier
-        let container = try setupContainer()
-
-        let model = V0_0_1.Test(flag: true, someValue: "Original", randomValue: 1)
-        try container.context.insert(model)
-        try container.context.save()
-
-        try assertWriteCacheMerge(container: container) { context in
-            verifyRuns[0] = true
-            try context.delete(model)
-        } verifyFromSave: { inserts, touches, deletes, _ in
-            verifyRuns[1] = true
-            #expect(inserts[typeID, default: [:]].count == 0)
-            #expect(touches[typeID, default: [:]].count == 0)
-            #expect(deletes[typeID, default: [:]].count == 1)
-            #expect(deletes[typeID, default: [:]].keys.contains(model.id))
-        } performParallelWrite: { context in
-            verifyRuns[2] = true
-            try container.context.insert(model)
-        } verifyFromParallelWrite: { inserts, touches, deletes, _ in
-            verifyRuns[3] = true
-            #expect(inserts[typeID, default: [:]].count == 1)
-            #expect(inserts[typeID, default: [:]].keys.contains(model.id))
-            #expect(touches[typeID, default: [:]].count == 0)
-            #expect(deletes[typeID, default: [:]].count == 0)
-        } verifyMerged: { inserts, touches, deletes, _ in
-            verifyRuns[4] = true
-            #expect(inserts[typeID, default: [:]].count == 1)
-            #expect(inserts[typeID, default: [:]].keys.contains(model.id))
-            #expect(touches[typeID, default: [:]].count == 0)
-            #expect(deletes[typeID, default: [:]].count == 0)
-        }
-
-        #expect(!verifyRuns.contains(false))
-    }
-
     @Test("Merging on failed save new delete overrides insert")
     func mergingOnFailedSaveNewDeleteOverridesInsert() throws {
         var verifyRuns = [Bool](repeating: false, count: 5)
@@ -541,50 +502,6 @@ struct WriteCache {
         #expect(model.someValue == "Original")
 
         #expect(!verifyRuns.contains(false))
-    }
-
-    @Test("Primitive state survives when touch is superseded by insert")
-    func primitiveStateSurvivesSupersedingInsert() throws {
-        var verifyRuns = [Bool](repeating: false, count: 5)
-
-        let typeID = V0_0_1.Test.typeIdentifier
-        let container = try setupContainer()
-        let model = V0_0_1.Test(flag: true, someValue: "Original", randomValue: 1)
-        try container.context.insert(model)
-        try container.context.save()
-
-        try assertWriteCacheMerge(container: container) { context in
-            verifyRuns[0] = true
-            model.someValue = "Changed"
-            try context.delete(model)
-        } verifyFromSave: { _, _, deletes, states in
-            verifyRuns[1] = true
-            #expect(deletes[typeID, default: [:]].count == 1)
-            #expect(deletes[typeID, default: [:]].keys.contains(model.id))
-            let state = states[typeID]?[model.id]
-            #expect(state?.values["someValue"] as? String == "Original")
-        } performParallelWrite: { context in
-            verifyRuns[2] = true
-            try context.insert(model)
-        } verifyFromParallelWrite: { inserts, _, _, states in
-            verifyRuns[3] = true
-            #expect(inserts[typeID, default: [:]].count == 1)
-            #expect(inserts[typeID, default: [:]].keys.contains(model.id))
-        } verifyMerged: { inserts, touches, _, states in
-            verifyRuns[4] = true
-
-            #expect(touches[typeID, default: [:]].count == 0)
-            #expect(inserts[typeID, default: [:]].count == 1)
-            #expect(inserts[typeID, default: [:]].keys.contains(model.id))
-            #expect(states[typeID, default: [:]].count == 1)
-            let state = states[typeID]?[model.id]
-            #expect(state?.values["someValue"] as? String == "Original")
-        }
-
-        #expect(!verifyRuns.contains(false))
-
-        container.context.rollback()
-        #expect(model.someValue == "Original")
     }
 
     private func assertWriteCacheMerge(
