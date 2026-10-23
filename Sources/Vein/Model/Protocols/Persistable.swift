@@ -40,6 +40,8 @@ public struct SQLiteJSONB: ColumnType, Persistable {
     public init?(fromPersistent representation: Self) { self = representation }
 }
 
+extension SQLiteJSONB: Equatable {}
+
 /// To make your types persistable, conform to ``Persistable``!
 public nonisolated protocol Persistable: Sendable {
     associatedtype PersistentRepresentation: ColumnType

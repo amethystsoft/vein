@@ -79,8 +79,6 @@ extension FieldBase {
         WrappedType.sqliteTypeName
     }
 
-    
-
     var instanceSchema: String {
         guard let _model else {
             fatalError(MOCError
