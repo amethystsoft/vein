@@ -235,6 +235,9 @@ extension RelationshipTest {
         #expect(!comment1.isManaged)
         #expect(!comment2.isManaged)
         #expect(!comment3.isManaged)
+        #expect(comment1._isPreparedForDeletion)
+        #expect(comment2._isPreparedForDeletion)
+        #expect(comment3._isPreparedForDeletion)
     }
 }
 
@@ -263,6 +266,10 @@ fileprivate enum CommentRelationshipCascade: VersionedSchema {
     final class Comment: Identifiable {
         @Relationship
         var author: User?
+        
+        var authorField: _OneRelationship<User> {
+            _author
+        }
 
         @Field
         var text: String

@@ -48,6 +48,7 @@ public enum ManagedObjectContextError: Error {
     case dbNewerThanCode(ModelVersion, ModelVersion)
     case notADatabase
     case dbOpenedWithOlderVeinVersion
+    case cannotReInsertDeletedModel
     case other(message: String)
 }
 
@@ -120,6 +121,12 @@ extension ManagedObjectContextError: LocalizedError {
                 return "Unexpected: \(message)"
             case .operationCouldNotBeCompleted(message: let message):
                 return message
+            case .cannotReInsertDeletedModel:
+                return """
+                Re-inserting a model that has been deleted is not permitted.
+                Once a model has been removed from the context,
+                we cannot guarantee data integrity anymore.
+                """
             case .dbOpenedWithOlderVeinVersion:
                 return """
                     The database was last opened with a version newer than your \
@@ -184,6 +191,8 @@ extension ManagedObjectContextError: LocalizedError {
                 return "Something went wrong. If this happened during a scalar query, the table might not exist."
             case .dbOpenedWithOlderVeinVersion:
                 return "To prevent data corruption Vein doesn't allow opening a database with an older version of Vein."
+            case .cannotReInsertDeletedModel:
+                return "Attempted to insert model that has been deleted."
         }
     }
 
@@ -253,6 +262,8 @@ extension ManagedObjectContextError: LocalizedError {
                 return "Use the right key to decrypt the database or check if it is a database."
             case .dbOpenedWithOlderVeinVersion:
                 return "Update Vein to a newer Version."
+            case .cannotReInsertDeletedModel:
+                return "Should you need to re-add a deleted model please create a new instance with it's data."
             case .other, .operationCouldNotBeCompleted:
                 return nil
         }

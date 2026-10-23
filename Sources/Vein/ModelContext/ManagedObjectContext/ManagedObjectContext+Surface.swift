@@ -202,6 +202,9 @@ extension ManagedObjectContext {
     public nonisolated func insert<M: PersistentModel>(
         _ model: M
     ) throws(ManagedObjectContextError) {
+        guard model._isPreparedForDeletion == false else {
+            throw ManagedObjectContextError.cannotReInsertDeletedModel
+        }
         _updateModelMetadata(on: model)
         guard model.context == nil else {
             throw MOCError
@@ -375,7 +378,11 @@ extension ManagedObjectContext {
             }
         }
     }
-
+    
+    @available(*, deprecated, message: """
+        Please use regular deletes for data integrity reasons.
+        This function will be removed in a future release.
+    """)
     /// Delete a batch of models.
     public nonisolated func batchDelete<M: PersistentModel>(
         _ models: [M]
