@@ -239,11 +239,73 @@ extension RelationshipTest {
         #expect(comment2._isPreparedForDeletion)
         #expect(comment3._isPreparedForDeletion)
     }
+    
+    @Test
+    func `cascade is rolled back correctly`() async throws {
+        let container = try ModelContainer(
+            CommentRelationshipCascade.self,
+            migration: CascadeMigration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.RelationshipTests",
+            encryptionEnabled: ProcessInfo.shouldEnableEncryption
+        )
+        
+        let user = CommentRelationshipCascade.User(name: "Mia")
+        let comment1 = CommentRelationshipCascade.Comment(text: "1")
+        let comment2 = CommentRelationshipCascade.Comment(text: "2")
+        let comment3 = CommentRelationshipCascade.Comment(text: "3")
+        let thirdModel = CommentRelationshipCascade.ThirdModel()
+        
+        try container.context.insert(user)
+        user.comments = [comment1, comment2, comment3]
+        comment1.third = thirdModel
+        thirdModel.comments = [comment1, comment2]
+        try container.context.save()
+        
+        #expect(comment1.third === thirdModel)
+        #expect(thirdModel.comment === comment1)
+        #expect(thirdModel.comments.map(\.id) == [comment1, comment2].map(\.id))
+        #expect(comment1.third2 === thirdModel)
+        #expect(comment2.third2 === thirdModel)
+        
+        try container.context.delete(user)
+        
+        #expect(!comment1.isManaged)
+        #expect(!comment2.isManaged)
+        #expect(!comment3.isManaged)
+        #expect(thirdModel.isManaged)
+        #expect(comment1._isPreparedForDeletion)
+        #expect(comment2._isPreparedForDeletion)
+        #expect(comment3._isPreparedForDeletion)
+        #expect(thirdModel.comment == nil)
+        #expect(thirdModel.comments.map(\.id) == [])
+        
+        container.context.rollback()
+        
+        #expect(comment1.isManaged)
+        #expect(comment2.isManaged)
+        #expect(comment3.isManaged)
+        #expect(!comment1._isPreparedForDeletion)
+        #expect(!comment2._isPreparedForDeletion)
+        #expect(!comment3._isPreparedForDeletion)
+        
+        #expect(comment1.third === thirdModel)
+        #expect(thirdModel.comment === comment1)
+        
+        #expect(comment1.author === user)
+        #expect(comment2.author === user)
+        #expect(comment3.author === user)
+        #expect(user.comments.map(\.id) == [comment1, comment2, comment3].map(\.id))
+        
+        #expect(thirdModel.comments.map(\.id) == [comment1, comment2].map(\.id))
+        #expect(comment1.third2 === thirdModel)
+        #expect(comment2.third2 === thirdModel)
+    }
 }
 
 fileprivate enum CommentRelationshipCascade: VersionedSchema {
     static let version = ModelVersion(0, 0, 1)
-    static let models: [any Vein.PersistentModel.Type] = [User.self, Comment.self]
+    static let models: [any Vein.PersistentModel.Type] = [User.self, Comment.self, ThirdModel.self]
 
     @Model
     final class User: Identifiable {
@@ -267,6 +329,12 @@ fileprivate enum CommentRelationshipCascade: VersionedSchema {
         @Relationship
         var author: User?
         
+        @Relationship(inverse: \ThirdModel.comment, deleteRule: .nullify)
+        var third: ThirdModel?
+        
+        @Relationship(inverse: \ThirdModel.comments, deleteRule: .nullify)
+        var third2: ThirdModel?
+        
         var authorField: _OneRelationship<User> {
             _author
         }
@@ -277,6 +345,17 @@ fileprivate enum CommentRelationshipCascade: VersionedSchema {
         init(text: String) {
             self.text = text
         }
+    }
+    
+    @Model
+    final class ThirdModel {
+        @Relationship
+        var comment: Comment?
+        
+        @Relationship
+        var comments: [Comment]
+        
+        init() {}
     }
 }
 
