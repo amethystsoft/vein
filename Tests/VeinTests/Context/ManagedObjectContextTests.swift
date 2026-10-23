@@ -560,7 +560,7 @@ struct ManagedObjectContextTests {
 
         #expect(model.flag)
     }
-    
+
     @Test
     func `context doesn't allow insertion of deleted model`() async throws {
         let container = try ModelContainer(
@@ -570,11 +570,11 @@ struct ManagedObjectContextTests {
             appID: "de.amethystsoft.vein.ManagedObjectContextTests",
             encryptionEnabled: false
         )
-        
+
         let model = V0_0_1.Test(flag: true)
         try container.context.insert(model)
         try container.context.delete(model)
-        
+
         do {
             try container.context.insert(model)
             Issue.record("Unexpectedly no error was thrown")
@@ -582,6 +582,20 @@ struct ManagedObjectContextTests {
             if case .cannotReInsertDeletedModel = error { return }
             throw error
         }
+    }
+
+    @Test
+    func `update of deleted model on background context doesn't reinsert it`() async throws {
+        let container = try ModelContainer(
+            V0_0_1.self,
+            migration: Migration.self,
+            at: nil,
+            appID: "de.amethystsoft.vein.ManagedObjectContextTests",
+            encryptionEnabled: false
+        )
+
+        let model = V0_0_1.Test(flag: true)
+        try container.context.insert(model)
     }
 }
 

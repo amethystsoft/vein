@@ -123,10 +123,10 @@ extension ManagedObjectContextError: LocalizedError {
                 return message
             case .cannotReInsertDeletedModel:
                 return """
-                Re-inserting a model that has been deleted is not permitted.
-                Once a model has been removed from the context,
-                we cannot guarantee data integrity anymore.
-                """
+                    Re-inserting a model that has been deleted is not permitted.
+                    Once a model has been removed from the context,
+                    we cannot guarantee data integrity anymore.
+                    """
             case .dbOpenedWithOlderVeinVersion:
                 return """
                     The database was last opened with a version newer than your \

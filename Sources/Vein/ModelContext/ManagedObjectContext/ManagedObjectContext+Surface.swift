@@ -378,12 +378,12 @@ extension ManagedObjectContext {
             }
         }
     }
-    
-    @available(*, deprecated, message: """
-        Please use regular deletes for data integrity reasons.
-        This function will be removed in a future release.
-    """)
+
     /// Delete a batch of models.
+    @available(*, deprecated, message: """
+            Please use regular deletes for data integrity reasons.
+            This function will be removed in a future release.
+        """)
     public nonisolated func batchDelete<M: PersistentModel>(
         _ models: [M]
     ) throws(ManagedObjectContextError) {
