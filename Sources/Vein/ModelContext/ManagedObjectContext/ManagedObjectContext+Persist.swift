@@ -204,14 +204,4 @@ extension ManagedObjectContext {
 
         return mapped == name
     }
-
-    package nonisolated func runDetached(_ query: String) {
-        Task {
-            do {
-                try self.run(query)
-            } catch {
-                fatalError(error.localizedDescription)
-            }
-        }
-    }
 }

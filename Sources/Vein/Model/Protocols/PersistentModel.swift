@@ -239,22 +239,6 @@ extension PersistentModel {
     }
 }
 
-struct AnyPersistentModelType: Hashable {
-    let type: any PersistentModel.Type
-
-    init<M: PersistentModel>(_ type: M.Type) {
-        self.type = type
-    }
-
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(ObjectIdentifier(type))
-    }
-
-    static func == (lhs: Self, rhs: Self) -> Bool {
-        ObjectIdentifier(lhs.type) == ObjectIdentifier(rhs.type)
-    }
-}
-
 /// An interface for describing a specific version of a schema, including the models it contains.
 public protocol VersionedSchema: Sendable {
     /// The version identifier for this specific schema snapshot.

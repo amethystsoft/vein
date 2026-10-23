@@ -73,10 +73,6 @@ public class PrimaryKey: PersistedField, @unchecked Sendable {
         false
     }
 
-    public static var sqliteTypeName: SQLiteTypeName {
-        UUID.sqliteTypeName
-    }
-
     public weak var _model: (any PersistentModel)?
 
     public init(wrappedValue: ULID) {

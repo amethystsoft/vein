@@ -175,7 +175,7 @@ fileprivate enum MigrationPlan: SchemaMigrationPlan {
         fromVersion: Version0_0_1.self,
         toVersion: Version0_0_2.self,
         willMigrate: { context in
-            try Version0_0_1.BasicModel.unchangedMigration(
+            try Version0_0_1.BasicModel.fieldsAddedMigration(
                 to: Version0_0_2.BasicModel.self,
                 on: context
             )

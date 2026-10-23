@@ -23,19 +23,19 @@ extension ManagedObjectContext {
             t.column(SystemTable.veinVersionPatch)
             t.column(SystemTable.appliedAutoheals)
         })
-
+        
         let version = Self.veinVersion
         if try _getSystemTable() == nil {
             let insert = SystemTable.systemTable.insert(
                 [
                     SQLExpression<Int64>(SystemTable.veinVersionMajor)
-                        <- SQLExpression<Int64>(value: Int64(version.major)),
+                    <- SQLExpression<Int64>(value: Int64(version.major)),
                     SQLExpression<Int64>(SystemTable.veinVersionMinor)
-                        <- SQLExpression<Int64>(value: Int64(version.minor)),
+                    <- SQLExpression<Int64>(value: Int64(version.minor)),
                     SQLExpression<Int64>(SystemTable.veinVersionPatch)
-                        <- SQLExpression<Int64>(value: Int64(version.patch)),
+                    <- SQLExpression<Int64>(value: Int64(version.patch)),
                     SQLExpression<String>(SystemTable.appliedAutoheals)
-                        <- SQLExpression<String>(value: "[]")
+                    <- SQLExpression<String>(value: "[]")
                 ]
             )
             try connection.run(insert)
@@ -43,48 +43,15 @@ extension ManagedObjectContext {
             let update = SystemTable.systemTable.update(
                 [
                     SQLExpression<Int64>(SystemTable.veinVersionMajor)
-                        <- SQLExpression<Int64>(value: Int64(version.major)),
+                    <- SQLExpression<Int64>(value: Int64(version.major)),
                     SQLExpression<Int64>(SystemTable.veinVersionMinor)
-                        <- SQLExpression<Int64>(value: Int64(version.minor)),
+                    <- SQLExpression<Int64>(value: Int64(version.minor)),
                     SQLExpression<Int64>(SystemTable.veinVersionPatch)
-                        <- SQLExpression<Int64>(value: Int64(version.patch))
+                    <- SQLExpression<Int64>(value: Int64(version.patch))
                 ]
             )
             try connection.run(update)
         }
-    }
-
-    internal nonisolated func updateExecutedAutoheals(adding heals: [String]) throws {
-        guard !heals.isEmpty else { return }
-        guard let table = try _getSystemTable() else {
-            let serialized = heals.map { #""\#($0)""# }.joined(separator: ",")
-            let insert = SystemTable.systemTable.insert(
-                [
-                    SQLExpression<Int64>(SystemTable.veinVersionMajor)
-                        <- SQLExpression<Int64>(value: Int64(Self.veinVersion.major)),
-                    SQLExpression<Int64>(SystemTable.veinVersionMinor)
-                        <- SQLExpression<Int64>(value: Int64(Self.veinVersion.minor)),
-                    SQLExpression<Int64>(SystemTable.veinVersionPatch)
-                        <- SQLExpression<Int64>(value: Int64(Self.veinVersion.patch)),
-                    SQLExpression<String>(SystemTable.appliedAutoheals)
-                        <- SQLExpression<String>(value: "[\(serialized)]")
-                ]
-            )
-            try connection.run(insert)
-            return
-        }
-
-        var autoheals = table.appliedAutheals
-        autoheals.append(contentsOf: heals)
-        let serialized = String(
-            decoding: try JSONEncoder().encode(autoheals),
-            as: UTF8.self
-        )
-
-        let update = SystemTable.systemTable.filter(SQLExpression<Bool>(value: true))
-            .update(SQLExpression<String>(SystemTable.appliedAutoheals)
-                <- SQLExpression<String>(value: serialized))
-        try connection.run(update)
     }
 
     internal nonisolated func _getSystemTable() throws -> SystemTable.DTO? {

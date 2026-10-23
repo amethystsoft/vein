@@ -37,61 +37,15 @@ public enum SQLiteTypeName: Sendable, Hashable {
             return type
         }
     }
-
-    var castTypeString: String {
-        switch self {
-            case .integer:
-                return "INTEGER"
-            case .real:
-                return "REAL"
-            case .text:
-                return "TEXT"
-            case .blob, .jsonb:
-                return "BLOB"
-            case .null(let inner):
-                return inner.castTypeString
-        }
-    }
 }
 
 /// A container for values transported to and from the SQLite database driver.
-public enum SQLiteValue: Sendable, Hashable {
+public enum SQLiteValue: Sendable {
     case integer(Int64)
     case real(Double)
     case text(String)
     case blob(Data)
     case null
-
-    var intval: Int {
-        switch self {
-            case .integer:
-                1
-            case .real:
-                2
-            case .text:
-                3
-            case .blob:
-                4
-            case .null:
-                6
-        }
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(self.intval)
-        switch self {
-            case .integer(let int64):
-                hasher.combine(int64.hashValue)
-            case .real(let double):
-                hasher.combine(double.hashValue)
-            case .text(let string):
-                hasher.combine(string.hashValue)
-            case .blob(let data):
-                hasher.combine(data.hashValue)
-            case .null:
-                hasher.combine("NULL".hashValue)
-        }
-    }
 
     init(typeName: SQLiteTypeName, key: String, row: SQLiteDB.Row) {
         if typeName.isNull {
