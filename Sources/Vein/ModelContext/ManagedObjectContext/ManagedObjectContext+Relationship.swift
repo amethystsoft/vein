@@ -56,10 +56,10 @@ extension ManagedObjectContext {
                 target._observers.value.addObserver(
                     id: requestingModel.id,
                     key: fieldKey,
-                    observer: {
+                    observer: { [weak requestingModel] in
                         guard !VeinNotificationGuard.isProcessing else { return }
                         VeinNotificationGuard.$isProcessing.withValue(true) {
-                            requestingModel.notifyOfChanges()
+                            requestingModel?.notifyOfChanges()
                         }
                     }
                 )
