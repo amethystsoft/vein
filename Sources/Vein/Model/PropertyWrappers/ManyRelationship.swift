@@ -368,6 +368,10 @@ public final class _ManyRelationship<T: PersistentModel>: ManyRelationship, @unc
         else { return }
 
         for target in wrappedValue {
+            target._observers.mutate { observers in
+                observers.removeObserver(id: model.id, key: instanceKey)
+            }
+            
             _withObservationNotification({ target.notifyOfChanges() }) {
                 switch deleteRule {
                     case .nullify:

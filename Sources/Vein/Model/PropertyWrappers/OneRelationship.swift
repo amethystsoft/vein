@@ -324,6 +324,10 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
             let _inverseKey,
             let target = wrappedValue
         else { return }
+        
+        target._observers.mutate { observers in
+            observers.removeObserver(id: model.id, key: instanceKey)
+        }
 
         _withObservationNotification({ target.notifyOfChanges() }) {
             switch deleteRule {
