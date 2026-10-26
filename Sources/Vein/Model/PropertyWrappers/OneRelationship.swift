@@ -240,20 +240,21 @@ public final class _OneRelationship<T: PersistentModel>: OneRelationship, @unche
     }
 
     private func setObservers(on target: T?, id: ULID) {
-        guard let model else { return }
+        guard let model, let target else { return }
         lock.withLock {
             if _inverseKey == nil {
                 _inverseKey = T._inverseFields[model.typeIdentifier]?[instanceKey]
             }
         }
 
-        target?._observers.value.addObserver(
+        target._observers.value.addObserver(
             id: model.id,
             key: instanceKey,
             observer: { [weak model, weak self] in
                 guard !VeinNotificationGuard.isProcessing else { return }
                 VeinNotificationGuard.$isProcessing.withValue(true) {
                     model?.notifyOfChanges()
+
                     #if VeinSCUI
                         self?.didChange.mutate { $0.send() }
                     #endif

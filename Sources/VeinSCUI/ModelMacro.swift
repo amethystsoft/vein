@@ -36,7 +36,8 @@
         named(_updatedAt),
         named(_clientID),
         named(_isDeleted),
-        named(_isSynced)
+        named(_isSynced),
+        named(didChange)
     )
     @attached(
         extension,

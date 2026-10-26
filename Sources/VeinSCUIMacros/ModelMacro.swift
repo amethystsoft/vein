@@ -37,6 +37,7 @@ public struct ModelMacro: MemberMacro, ExtensionMacro, MemberAttributeMacro {
         )
 
         let specific = """
+            let didChange: SwiftCrossUI.Publisher = SwiftCrossUI.Publisher()
             var notifyOfChanges: () -> Void {
                 { [weak self] in
                     guard let self else { return }

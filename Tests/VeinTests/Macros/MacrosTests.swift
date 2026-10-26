@@ -31,11 +31,10 @@ fileprivate let testMacros: [String: MacroSpec] = [
 struct MacrosTests {
     #if TEST_SCUI
         let sharedSuffix: String = #"""
-            var notifyOfChanges: () -> Void {
+            let didChange: SwiftCrossUI.Publisher = SwiftCrossUI.Publisher()
+                var notifyOfChanges: () -> Void {
                     { [weak self] in
-                        guard let self else {
-                            return
-                        }
+                        guard let self else { return }
                         if Thread.isMainThread {
                             self._observers.value.notifyAll()
                             self.didChange.send()
