@@ -3,19 +3,20 @@ import SQLiteDB
 @testable import Vein
 
 extension Connection {
-    func removeWhereNameMatches(names: [String], schema: String) throws -> [String] {
+    func removeWhereIDMatches(idsToRemove: [String], schema: String) throws -> [String] {
+        let idExpr = SQLExpression<String>("id")
         let query = Table(schema)
-            .filter(names.contains(SQLExpression<String>("name")))
-            .select(SQLExpression<String>("id"))
+            .filter(idsToRemove.contains(idExpr))
+            .select(idExpr)
         var ids = [String]()
         do {
             let rows = try prepare(query)
             ids = rows.map {
-                $0[SQLExpression<String>("id")]
+                $0[idExpr]
             }
             
             let deleteQuery = Table(schema)
-                .filter(ids.contains(SQLExpression<String>("id")))
+                .filter(ids.contains(idExpr))
                 .delete()
             try run(deleteQuery)
         } catch let error as SQLiteDB.Result {
