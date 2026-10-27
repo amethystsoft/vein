@@ -16,28 +16,50 @@ class StaleReferenceCleanup: XCTestCase {
         let args = CheckerArguments(maxTestCaseSize: 20)
         property("State matches local reference after random operations", arguments: args) <-
         forAll { (stable: [Stable], unstable: [Unstable]) in
-            if stable.count == 0 && unstable.count == 0 { return true }
+            var removedSet = Set<String>()
+            
             return try self.test() { context in
                 for element in stable {
                     try element.create(in: context)
                 }
                 
-                var removedULIDs: Set<String> = []
-                
                 for element in unstable {
                     let removed = try element.create(in: context)
                     
                     for remove in removed {
-                        removedULIDs.insert(remove)
+                        removedSet.insert(remove)
                     }
                 }
                 
-                if !removedULIDs.isEmpty {
+                if !removedSet.isEmpty {
                     hadULIDsRemoved = true
                 }
                 
-                return removedULIDs
+                return removedSet
             } checkCleaned: { context in
+                let parents = try context.fetchAll(Parent.self)
+                
+                for stab in stable {
+                    guard parents.contains (where: {
+                        $0.id == stab.parent.id
+                        && $0.one == stab.parent.child
+                        && $0.many == stab.parent.children
+                    }) else { return false }
+                }
+                
+                for unst in unstable {
+                    guard parents.contains(where: {
+                        $0.id == unst.parent.id
+                        && ($0.one == unst.parent.child.withRemoved(removedSet))
+                        && $0.many == unst.parent.children.withRemoved(removedSet)
+                    }) else { return false }
+                }
+                
+                let children = try context.fetchAll(Child.self)
+                guard !children.contains(where: {
+                    removedSet.contains($0.id.ulidString)
+                }) else { return false }
+                
                 return true
             }
         }
@@ -117,27 +139,28 @@ fileprivate enum V1: VersionedSchema {
 
     @Model
     final class Parent {
-        var name: String
         @Relationship(inverse: \Child.parent)
         var child: Child?
         @Relationship(inverse: \Child.parent1)
         var children: [Child]
         
-        init(name: String) {
-            self.name = name
+        init(id: ULID) {
+            self.id = id
         }
+        
+        var one: ULID? { _child._persistableValue }
+        var many: [ULID] { _children._persistableValue }
     }
     
     @Model
     final class Child {
-        var name: String
         @Relationship
         var parent: Parent?
         @Relationship
         var parent1: Parent?
         
-        init(name: String) {
-            self.name = name
+        init(id: ULID) {
+            self.id = id
         }
     }
 }
@@ -151,9 +174,9 @@ fileprivate enum Migration: SchemaMigrationPlan {
 }
 
 fileprivate struct ParentDTO {
-    let name: String
-    let children: [String]
-    let child: String?
+    let id: ULID
+    let children: [ULID]
+    let child: ULID?
 }
 
 fileprivate struct Stable {
@@ -162,14 +185,52 @@ fileprivate struct Stable {
 
 fileprivate struct Unstable {
     let parent: ParentDTO
-    let removeChildren: Set<String>
+    let removeChildren: Set<ULID>
+}
+
+extension Array where Element == ULID {
+    fileprivate func withRemoved(_ toRemove: Set<String>) -> Self {
+        var editable = self
+        editable.removeAll {
+            toRemove.contains($0.ulidString)
+        }
+        return editable
+    }
+}
+
+extension Optional where Wrapped == ULID {
+    fileprivate func withRemoved(_ toRemove: Set<String>) -> Self {
+        if let self, toRemove.contains(self.ulidString) {
+            return nil
+        }
+        return self
+    }
+}
+
+extension ULID: Arbitrary {
+    public static var arbitrary: Gen<ULID> {
+        // Crockford's Base32 alphabet (excluding I, L, O, and U to avoid confusion)
+        let crockfordBase32Chars = Array("0123456789ABCDEFGHJKMNPQRSTVWXYZ")
+        
+        // Pick one character randomly out of the alphabet
+        let randomCharGen = Gen<Character>.fromElements(of: crockfordBase32Chars)
+        
+        // Generate an array of 26 random characters and convert it into a String
+        let proliferatedGen = randomCharGen.proliferate(withSize: 26)
+        
+        return Gen<ULID>.compose { gen in
+            let chars: [Character] = gen.generate(using: proliferatedGen)
+            let string = chars.reduce(into: "") { $0 += String($1) }
+            return ULID(ulidString: string)!
+        }
+    }
 }
 
 extension Stable: Arbitrary {
     static var arbitrary: Gen<Stable> {
         return Gen<Stable>.compose { gen in
             let parent = ParentDTO(
-                name: gen.generate(),
+                id: gen.generate(),
                 children: gen.generate(),
                 child: gen.generate()
             )
@@ -180,17 +241,17 @@ extension Stable: Arbitrary {
 
 extension Stable {
     func create(in context: ManagedObjectContext) throws {
-        let parent = Parent(name: self.parent.name)
+        let parent = Parent(id: self.parent.id)
         try context.insert(parent)
         
         var children = [Child]()
         for child in self.parent.children {
-            children.append(Child(name: child))
+            children.append(Child(id: child))
         }
         parent.children = children
         
         if let child = self.parent.child {
-            let newChild = Child(name: child)
+            let newChild = Child(id: child)
             parent.child = newChild
         }
     }
@@ -199,8 +260,8 @@ extension Stable {
 extension Unstable: Arbitrary {
     static var arbitrary: Gen<Unstable> {
         return Gen<Unstable>.compose { gen in
-            let addedChildren: [String] = gen.generate()
-            let addedChild: String? = gen.generate()
+            let addedChildren: [ULID] = gen.generate()
+            let addedChild: ULID? = gen.generate()
             
             var total = addedChildren
             if let addedChild {
@@ -208,14 +269,14 @@ extension Unstable: Arbitrary {
             }
             
             let parent = ParentDTO(
-                name: gen.generate(),
+                id: gen.generate(),
                 children: addedChildren,
                 child: addedChild
             )
             
             if total.count >= 1 {
-                let stringGen = Gen<String>.fromElements(of: total)
-                var toRemove = [String]()
+                let stringGen = Gen<ULID>.fromElements(of: total)
+                var toRemove = [ULID]()
                 
                 for _ in 0..<total.count {
                     let add: Bool = gen.generate()
@@ -240,8 +301,8 @@ extension Unstable {
         try context.save()
         
         let connection = context.connection
-        return try connection.removeWhereNameMatches(
-            names: Array(self.removeChildren),
+        return try connection.removeWhereIDMatches(
+            idsToRemove: self.removeChildren.map(\.ulidString),
             schema: Child.schema
         )
     }
