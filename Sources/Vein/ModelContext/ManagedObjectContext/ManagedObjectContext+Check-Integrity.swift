@@ -15,7 +15,8 @@ import SQLiteDB
 
 extension ManagedObjectContext {
     nonisolated func _checkRelationshipIntegrity<Model: PersistentModel>(
-        of model: Model.Type
+        of model: Model.Type,
+        _ removingStaleReferences: Bool
     ) throws (MOCError) -> RelationshipIntegrityReport {
         guard modelContainer.versionedSchema.models.contains(where: {
             ObjectIdentifier($0) == ObjectIdentifier(model)
@@ -50,7 +51,8 @@ extension ManagedObjectContext {
                     connection: connection,
                     row: row,
                     inverses: inverses,
-                    inverseInformation: inverseInformation
+                    inverseInformation: inverseInformation,
+                    removingStaleReferences: removingStaleReferences
                 )
 
                 if !localMismatches.isEmpty || !inverseMismatches.isEmpty {
@@ -81,49 +83,87 @@ extension ManagedObjectContext {
 
     /// Checks the plausibility for all relationships of a row for each row for all schemas this context manages.
     ///
+    /// - Parameters:
+    ///   - removingStaleReferences: Whether to remove stale relationship references in the process.
+    ///
     /// Saves will be locked while running the integrity check.
-    public nonisolated func checkRelationshipIntegrity() throws(MOCError)
-        -> [RelationshipIntegrityReport]
-    {
-        saveLock.lock()
-        defer {
-            saveLock.unlock()
-        }
-        var reports = [RelationshipIntegrityReport]()
-        for model in modelContainer.versionedSchema.models {
-            try reports.append(_checkRelationshipIntegrity(of: model))
-        }
-        return reports
+    public nonisolated func checkRelationshipIntegrity(
+        removingStaleReferences: Bool = false
+    ) throws(MOCError) -> [RelationshipIntegrityReport] {
+        try checkRelationshipIntegrity(
+            for: modelContainer.versionedSchema.models,
+            removingStaleReferences: removingStaleReferences
+        )
     }
 
     /// Checks the plausibility for all relationships of a row for each row for all specified schemas.
     ///
+    /// - Parameters:
+    ///   - models: The model types to check integrity of.
+    ///   - removingStaleReferences: Whether to remove stale relationship references in the process.
+    ///
     /// Saves will be locked while running the integrity check.
     public nonisolated func checkRelationshipIntegrity(
-        for models: [any PersistentModel.Type]
+        for models: [any PersistentModel.Type],
+        removingStaleReferences: Bool = false
     ) throws(MOCError) -> [RelationshipIntegrityReport] {
         saveLock.lock()
         defer {
             saveLock.unlock()
         }
         var reports = [RelationshipIntegrityReport]()
-        for model in models {
-            try reports.append(_checkRelationshipIntegrity(of: model))
+        do {
+            for model in models {
+                if removingStaleReferences {
+                    try transaction {
+                        try reports.append(
+                            self._checkRelationshipIntegrity(of: model, removingStaleReferences)
+                        )
+                    }
+                }
+                try reports.append(_checkRelationshipIntegrity(of: model, removingStaleReferences))
+            }
+        } catch let error as SQLiteDB.Result {
+            throw error.parse()
+        } catch let error as ManagedObjectContextError {
+            throw error
+        } catch {
+            throw ManagedObjectContextError.other(message: error.localizedDescription)
         }
         return reports
     }
 
     /// Checks the plausibility for all relationships of a row for each row currently in the specified table.
     ///
+    /// - Parameters:
+    ///   - model: The model type to check integrity of.
+    ///   - removingStaleReferences: Whether to remove stale relationship references in the process.
+    ///
     /// Saves will be locked while running the integrity check.
     public nonisolated func checkRelationshipIntegrity<Model: PersistentModel>(
-        of model: Model.Type
+        of model: Model.Type,
+        removingStaleReferences: Bool = false
     ) throws(MOCError) -> RelationshipIntegrityReport {
         saveLock.lock()
         defer {
             saveLock.unlock()
         }
-        return try _checkRelationshipIntegrity(of: model)
+        do {
+            if removingStaleReferences {
+                var result: RelationshipIntegrityReport? = nil
+                try transaction {
+                    result = try self._checkRelationshipIntegrity(of: model, removingStaleReferences)
+                }
+                return result!
+            }
+            return try _checkRelationshipIntegrity(of: model, removingStaleReferences)
+        } catch let error as SQLiteDB.Result {
+            throw error.parse()
+        } catch let error as ManagedObjectContextError {
+            throw error
+        } catch {
+            throw ManagedObjectContextError.other(message: error.localizedDescription)
+        }
     }
 }
 
@@ -165,7 +205,8 @@ extension [FieldInformation] {
         connection: SQLiteDB.Connection,
         row: SQLiteDB.Row,
         inverses: [String: String],
-        inverseInformation: [String: FieldInformation]
+        inverseInformation: [String: FieldInformation],
+        removingStaleReferences: Bool
     ) throws -> (
         localMismatches: [String: RelationshipIntegrityReport.Mismatch],
         inverseMismatches: [String: [String: RelationshipIntegrityReport.Mismatch]]
@@ -177,6 +218,8 @@ extension [FieldInformation] {
         if ULID(ulidString: idStr) == nil {
             localMismatches["id"] = .corruptedData
         }
+        
+        var setters = [Setter]()
 
         for relationship in self {
             let value = SQLiteValue(
@@ -217,11 +260,17 @@ extension [FieldInformation] {
                 } catch let error as SQLiteDB.Result {
                     let parsed = error.parse()
                     if case .noSuchTable = parsed {
-                        for ulid in ulids {
-                            inverseMismatches[
-                                relationship.key,
-                                default: [:]
-                            ][ulid.ulidString] = .missingInInverse
+                        if !removingStaleReferences {
+                            for ulid in ulids {
+                                inverseMismatches[
+                                    relationship.key,
+                                    default: [:]
+                                ][ulid.ulidString] = .missingInInverse
+                            }
+                        } else {
+                            setters.append(
+                                SQLiteJSONB(jsonString: "[]").sqliteSetter(key: relationship.key)
+                            )
                         }
                         continue
                     }
@@ -240,16 +289,25 @@ extension [FieldInformation] {
                            ulids,
                            rowIDStr: rowIDStr,
                        )
-                    {
-                        inverseMismatches[relationship.key, default: [:]][rowIDStr] = mismatch
-                    }
+                    { inverseMismatches[relationship.key, default: [:]][rowIDStr] = mismatch }
 
                     let index = stringArray.firstIndex(of: rowIDStr)!
                     stringArray.remove(at: index)
                 }
-
-                for string in stringArray {
-                    inverseMismatches[relationship.key, default: [:]][string] = .missingInInverse
+                
+                if !removingStaleReferences {
+                    for string in stringArray {
+                        inverseMismatches[relationship.key, default: [:]][string] = .missingInInverse
+                    }
+                } else {
+                    var strings = ulids.map(\.ulidString)
+                    strings.removeAll {
+                        stringArray.contains($0)
+                    }
+                    let string = strings.map { "\"\($0)\""}.joined(separator: ",")
+                    setters.append(
+                        SQLiteJSONB(jsonString: "[" + string + "]").sqliteSetter(key: relationship.key)
+                    )
                 }
             } else if
                 relationship.relationshipType == .one,
@@ -266,10 +324,15 @@ extension [FieldInformation] {
                 } catch let error as SQLiteDB.Result {
                     let parsed = error.parse()
                     if case .noSuchTable = parsed {
-                        inverseMismatches[
-                            relationship.key,
-                            default: [:]
-                        ][string] = .missingInInverse
+                        if !removingStaleReferences {
+                            inverseMismatches[
+                                relationship.key,
+                                default: [:]
+                            ][string] = .missingInInverse
+                        } else {
+                            let str: String? = nil
+                            setters.append(str.sqliteSetter(key: relationship.key))
+                        }
                         continue
                     }
                     throw error
@@ -290,11 +353,23 @@ extension [FieldInformation] {
                 }
 
                 if !called {
-                    inverseMismatches[relationship.key, default: [:]][string] = .missingInInverse
+                    if !removingStaleReferences {
+                        inverseMismatches[relationship.key, default: [:]][string] = .missingInInverse
+                    } else {
+                        let str: String? = nil
+                        setters.append(str.sqliteSetter(key: relationship.key))
+                    }
                 }
             } else {
                 localMismatches[relationship.key] = .corruptedData
                 continue
+            }
+            
+            if !setters.isEmpty {
+                let update = Table(type.schema)
+                    .filter(SQLExpression<String>("id") == idStr)
+                    .update(setters)
+                try connection.run(update)
             }
         }
 
