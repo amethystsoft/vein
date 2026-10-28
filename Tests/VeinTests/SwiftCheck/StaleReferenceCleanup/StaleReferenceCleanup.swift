@@ -1,310 +1,324 @@
+// ===----------------------------------------------------------------------===
+//
+// This source file is part of the Amethyst Vein open source project
+//
+// Copyright (c) 2026 Mia Koring.
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+//
+// ===----------------------------------------------------------------------===
+
 #if canImport(SwiftCheck)
-import SwiftCheck
-import Foundation
-import XCTest
-@testable import Vein
-#if TEST_SWIFTUI
-@_spi(VeinTesting) @testable import VeinSwiftUI
-#elseif TEST_SCUI
-@_spi(VeinTesting) @testable import VeinSCUI
-#else
-@_spi(VeinTesting) @testable import VeinCore
-#endif
-class StaleReferenceCleanup: XCTestCase {
-    func testCleanup() {
-        var hadULIDsRemoved = false
-        let args = CheckerArguments(maxTestCaseSize: 20)
-        property("State matches local reference after random operations", arguments: args) <-
-        forAll { (stable: [Stable], unstable: [Unstable]) in
-            var removedSet = Set<String>()
-            
-            return try self.test() { context in
-                for element in stable {
-                    try element.create(in: context)
-                }
-                
-                for element in unstable {
-                    let removed = try element.create(in: context)
-                    
-                    for remove in removed {
-                        removedSet.insert(remove)
-                    }
-                }
-                
-                if !removedSet.isEmpty {
-                    hadULIDsRemoved = true
-                }
-                
-                return removedSet
-            } checkCleaned: { context in
-                let parents = try context.fetchAll(Parent.self)
-                
-                for stab in stable {
-                    guard parents.contains (where: {
-                        $0.id == stab.parent.id
-                        && $0.one == stab.parent.child
-                        && $0.many == stab.parent.children
-                    }) else { return false }
-                }
-                
-                for unst in unstable {
-                    guard parents.contains(where: {
-                        $0.id == unst.parent.id
-                        && ($0.one == unst.parent.child.withRemoved(removedSet))
-                        && $0.many == unst.parent.children.withRemoved(removedSet)
-                    }) else { return false }
-                }
-                
-                let children = try context.fetchAll(Child.self)
-                guard !children.contains(where: {
-                    removedSet.contains($0.id.ulidString)
-                }) else { return false }
-                
-                return true
-            }
-        }
-        
-        XCTAssertTrue(hadULIDsRemoved)
-    }
-    
-    func test(
-        setup: (ManagedObjectContext) throws -> Set<String>,
-        checkCleaned: (ManagedObjectContext) throws -> Bool
-    ) throws -> Bool {
-        let container = try ModelContainer(
-            V1.self,
-            migration: Migration.self,
-            at: nil,
-            appID: "de.amethystsoft.vein.test.StaleReferenceCleanup",
-            encryptionEnabled: false
-        )
-        
-        let removed = try setup(container.context)
-        try container.context.save()
-        
-        let newContainer = try ModelContainer(
-            V1.self,
-            migration: Migration.self,
-            connection: container.getConnection(),
-            appID: "de.amethystsoft.vein.test.StaleReferenceCleanup",
-            encryptionEnabled: false
-        )
-        
-        let precheck = try newContainer.context.checkRelationshipIntegrity()
-        guard let precheckParentReport = precheck.first(where: { $0.schema == Parent.schema }) else {
-            return false
-        }
-        for remove in removed {
-            var found = false
-            for model in precheckParentReport.models {
-                found = model.inverseMismatches.contains { (_, value) in
-                    value.contains { (id, mismatch) in
-                        if case .missingInInverse = mismatch {
-                            return id == remove
+    import SwiftCheck
+    import Foundation
+    import XCTest
+    @testable import Vein
+    #if TEST_SWIFTUI
+        @_spi(VeinTesting) @testable import VeinSwiftUI
+    #elseif TEST_SCUI
+        @_spi(VeinTesting) @testable import VeinSCUI
+    #else
+        @_spi(VeinTesting) @testable import VeinCore
+    #endif
+    class StaleReferenceCleanup: XCTestCase {
+        func testCleanup() {
+            var hadULIDsRemoved = false
+            let args = CheckerArguments(maxTestCaseSize: 20)
+            property("State matches local reference after random operations", arguments: args) <-
+                forAll { (stable: [Stable], unstable: [Unstable]) in
+                    var removedSet = Set<String>()
+
+                    return try self.test() { context in
+                        for element in stable {
+                            try element.create(in: context)
                         }
-                        return false
+
+                        for element in unstable {
+                            let removed = try element.create(in: context)
+
+                            for remove in removed {
+                                removedSet.insert(remove)
+                            }
+                        }
+
+                        if !removedSet.isEmpty {
+                            hadULIDsRemoved = true
+                        }
+
+                        return removedSet
+                    } checkCleaned: { context in
+                        let parents = try context.fetchAll(Parent.self)
+
+                        for stab in stable {
+                            guard parents.contains (where: {
+                                $0.id == stab.parent.id
+                                    && $0.one == stab.parent.child
+                                    && $0.many == stab.parent.children
+                            }) else { return false }
+                        }
+
+                        for unst in unstable {
+                            guard parents.contains(where: {
+                                $0.id == unst.parent.id
+                                    && ($0.one == unst.parent.child.withRemoved(removedSet))
+                                    && $0.many == unst.parent.children.withRemoved(removedSet)
+                            }) else { return false }
+                        }
+
+                        let children = try context.fetchAll(Child.self)
+                        guard !children.contains(where: {
+                            removedSet.contains($0.id.ulidString)
+                        }) else { return false }
+
+                        return true
                     }
                 }
-                if found { break }
-            }
-            
-            if !found {
+
+            XCTAssertTrue(hadULIDsRemoved)
+        }
+
+        func test(
+            setup: (ManagedObjectContext) throws -> Set<String>,
+            checkCleaned: (ManagedObjectContext) throws -> Bool
+        ) throws -> Bool {
+            let container = try ModelContainer(
+                V1.self,
+                migration: Migration.self,
+                at: nil,
+                appID: "de.amethystsoft.vein.test.StaleReferenceCleanup",
+                encryptionEnabled: false
+            )
+
+            let removed = try setup(container.context)
+            try container.context.save()
+
+            let newContainer = try ModelContainer(
+                V1.self,
+                migration: Migration.self,
+                connection: container.getConnection(),
+                appID: "de.amethystsoft.vein.test.StaleReferenceCleanup",
+                encryptionEnabled: false
+            )
+
+            let precheck = try newContainer.context.checkRelationshipIntegrity()
+            guard let precheckParentReport = precheck.first(where: { $0.schema == Parent.schema })
+            else {
                 return false
             }
-        }
-        
-        let result = try newContainer.context.checkRelationshipIntegrity(removingStaleReferences: true)
-        
-        let childReport = result.first { $0.schema == Child.schema }
-        if childReport?.didPass != true {
-            return false
-        }
-        let parentReport = result.first { $0.schema == Parent.schema }
-        if parentReport?.didPass != true {
-            return false
-        }
-        
-        let afterCleanup = try newContainer.context.checkRelationshipIntegrity()
-        let checkPassed = try checkCleaned(newContainer.context)
-        
-        return checkPassed && !afterCleanup.contains {
-            $0.didPass == false
-        }
-    }
-}
-
-fileprivate enum V1: VersionedSchema {
-    static let version: Vein.ModelVersion = .init(1, 0, 0)
-    static let models: [any Vein.PersistentModel.Type] = [ Parent.self, Child.self ]
-
-    @Model
-    final class Parent {
-        @Relationship(inverse: \Child.parent)
-        var child: Child?
-        @Relationship(inverse: \Child.parent1)
-        var children: [Child]
-        
-        init(id: ULID) {
-            self.id = id
-        }
-        
-        var one: ULID? { _child._persistableValue }
-        var many: [ULID] { _children._persistableValue }
-    }
-    
-    @Model
-    final class Child {
-        @Relationship
-        var parent: Parent?
-        @Relationship
-        var parent1: Parent?
-        
-        init(id: ULID) {
-            self.id = id
-        }
-    }
-}
-
-fileprivate typealias Parent = V1.Parent
-fileprivate typealias Child = V1.Child
-
-fileprivate enum Migration: SchemaMigrationPlan {
-    static let stages: [Vein.MigrationStage] = []
-    static let schemas: [any Vein.VersionedSchema.Type] = [V1.self]
-}
-
-fileprivate struct ParentDTO {
-    let id: ULID
-    let children: [ULID]
-    let child: ULID?
-}
-
-fileprivate struct Stable {
-    let parent: ParentDTO
-}
-
-fileprivate struct Unstable {
-    let parent: ParentDTO
-    let removeChildren: Set<ULID>
-}
-
-extension Array where Element == ULID {
-    fileprivate func withRemoved(_ toRemove: Set<String>) -> Self {
-        var editable = self
-        editable.removeAll {
-            toRemove.contains($0.ulidString)
-        }
-        return editable
-    }
-}
-
-extension Optional where Wrapped == ULID {
-    fileprivate func withRemoved(_ toRemove: Set<String>) -> Self {
-        if let self, toRemove.contains(self.ulidString) {
-            return nil
-        }
-        return self
-    }
-}
-
-extension ULID: Arbitrary {
-    public static var arbitrary: Gen<ULID> {
-        // Crockford's Base32 alphabet (excluding I, L, O, and U to avoid confusion)
-        let crockfordBase32Chars = Array("0123456789ABCDEFGHJKMNPQRSTVWXYZ")
-        
-        // Pick one character randomly out of the alphabet
-        let randomCharGen = Gen<Character>.fromElements(of: crockfordBase32Chars)
-        
-        // Generate an array of 26 random characters and convert it into a String
-        let proliferatedGen = randomCharGen.proliferate(withSize: 26)
-        
-        return Gen<ULID>.compose { gen in
-            let chars: [Character] = gen.generate(using: proliferatedGen)
-            let string = chars.reduce(into: "") { $0 += String($1) }
-            return ULID(ulidString: string)!
-        }
-    }
-}
-
-extension Stable: Arbitrary {
-    static var arbitrary: Gen<Stable> {
-        return Gen<Stable>.compose { gen in
-            let parent = ParentDTO(
-                id: gen.generate(),
-                children: gen.generate(),
-                child: gen.generate()
-            )
-            return Stable(parent: parent)
-        }
-    }
-}
-
-extension Stable {
-    func create(in context: ManagedObjectContext) throws {
-        let parent = Parent(id: self.parent.id)
-        try context.insert(parent)
-        
-        var children = [Child]()
-        for child in self.parent.children {
-            children.append(Child(id: child))
-        }
-        parent.children = children
-        
-        if let child = self.parent.child {
-            let newChild = Child(id: child)
-            parent.child = newChild
-        }
-    }
-}
-
-extension Unstable: Arbitrary {
-    static var arbitrary: Gen<Unstable> {
-        return Gen<Unstable>.compose { gen in
-            let addedChildren: [ULID] = gen.generate()
-            let addedChild: ULID? = gen.generate()
-            
-            var total = addedChildren
-            if let addedChild {
-                total.append(addedChild)
-            }
-            
-            let parent = ParentDTO(
-                id: gen.generate(),
-                children: addedChildren,
-                child: addedChild
-            )
-            
-            if total.count >= 1 {
-                let stringGen = Gen<ULID>.fromElements(of: total)
-                var toRemove = [ULID]()
-                
-                for _ in 0..<total.count {
-                    let add: Bool = gen.generate()
-                    if add {
-                        toRemove.append(gen.generate(using: stringGen))
+            for remove in removed {
+                var found = false
+                for model in precheckParentReport.models {
+                    found = model.inverseMismatches.contains { (_, value) in
+                        value.contains { (id, mismatch) in
+                            if case .missingInInverse = mismatch {
+                                return id == remove
+                            }
+                            return false
+                        }
                     }
+                    if found { break }
                 }
-                
-                return Unstable(parent: parent, removeChildren: Set(toRemove))
+
+                if !found {
+                    return false
+                }
             }
-            
-            return Unstable(parent: parent, removeChildren: [])
+
+            let result = try newContainer.context
+                .checkRelationshipIntegrity(removingStaleReferences: true)
+
+            let childReport = result.first { $0.schema == Child.schema }
+            if childReport?.didPass != true {
+                return false
+            }
+            let parentReport = result.first { $0.schema == Parent.schema }
+            if parentReport?.didPass != true {
+                return false
+            }
+
+            let afterCleanup = try newContainer.context.checkRelationshipIntegrity()
+            let checkPassed = try checkCleaned(newContainer.context)
+
+            return checkPassed && !afterCleanup.contains {
+                $0.didPass == false
+            }
         }
     }
-}
 
-extension Unstable {
-    func create(in context: ManagedObjectContext) throws -> [String] {
-        let stable = Stable(parent: self.parent)
-        try stable.create(in: context)
-        
-        try context.save()
-        
-        let connection = context.connection
-        return try connection.removeWhereIDMatches(
-            idsToRemove: self.removeChildren.map(\.ulidString),
-            schema: Child.schema
-        )
+    fileprivate enum V1: VersionedSchema {
+        static let version: Vein.ModelVersion = .init(1, 0, 0)
+        static let models: [any Vein.PersistentModel.Type] = [ Parent.self, Child.self ]
+
+        @Model
+        final class Parent {
+            @Relationship(inverse: \Child.parent)
+            var child: Child?
+            @Relationship(inverse: \Child.parent1)
+            var children: [Child]
+
+            init(id: ULID) {
+                self.id = id
+            }
+
+            var one: ULID? { _child._persistableValue }
+            var many: [ULID] { _children._persistableValue }
+        }
+
+        @Model
+        final class Child {
+            @Relationship
+            var parent: Parent?
+            @Relationship
+            var parent1: Parent?
+
+            init(id: ULID) {
+                self.id = id
+            }
+        }
     }
-}
+
+    fileprivate typealias Parent = V1.Parent
+    fileprivate typealias Child = V1.Child
+
+    fileprivate enum Migration: SchemaMigrationPlan {
+        static let stages: [Vein.MigrationStage] = []
+        static let schemas: [any Vein.VersionedSchema.Type] = [V1.self]
+    }
+
+    fileprivate struct ParentDTO {
+        let id: ULID
+        let children: [ULID]
+        let child: ULID?
+    }
+
+    fileprivate struct Stable {
+        let parent: ParentDTO
+    }
+
+    fileprivate struct Unstable {
+        let parent: ParentDTO
+        let removeChildren: Set<ULID>
+    }
+
+    extension Array where Element == ULID {
+        fileprivate func withRemoved(_ toRemove: Set<String>) -> Self {
+            var editable = self
+            editable.removeAll {
+                toRemove.contains($0.ulidString)
+            }
+            return editable
+        }
+    }
+
+    extension Optional where Wrapped == ULID {
+        fileprivate func withRemoved(_ toRemove: Set<String>) -> Self {
+            if let self, toRemove.contains(self.ulidString) {
+                return nil
+            }
+            return self
+        }
+    }
+
+    extension ULID: Arbitrary {
+        public static var arbitrary: Gen<ULID> {
+            // Crockford's Base32 alphabet (excluding I, L, O, and U to avoid confusion)
+            let crockfordBase32Chars = Array("0123456789ABCDEFGHJKMNPQRSTVWXYZ")
+
+            // Pick one character randomly out of the alphabet
+            let randomCharGen = Gen<Character>.fromElements(of: crockfordBase32Chars)
+
+            // Generate an array of 26 random characters and convert it into a String
+            let proliferatedGen = randomCharGen.proliferate(withSize: 26)
+
+            return Gen<ULID>.compose { gen in
+                let chars: [Character] = gen.generate(using: proliferatedGen)
+                let string = chars.reduce(into: "") { $0 += String($1) }
+                return ULID(ulidString: string)!
+            }
+        }
+    }
+
+    extension Stable: Arbitrary {
+        static var arbitrary: Gen<Stable> {
+            return Gen<Stable>.compose { gen in
+                let parent = ParentDTO(
+                    id: gen.generate(),
+                    children: gen.generate(),
+                    child: gen.generate()
+                )
+                return Stable(parent: parent)
+            }
+        }
+    }
+
+    extension Stable {
+        func create(in context: ManagedObjectContext) throws {
+            let parent = Parent(id: self.parent.id)
+            try context.insert(parent)
+
+            var children = [Child]()
+            for child in self.parent.children {
+                children.append(Child(id: child))
+            }
+            parent.children = children
+
+            if let child = self.parent.child {
+                let newChild = Child(id: child)
+                parent.child = newChild
+            }
+        }
+    }
+
+    extension Unstable: Arbitrary {
+        static var arbitrary: Gen<Unstable> {
+            return Gen<Unstable>.compose { gen in
+                let addedChildren: [ULID] = gen.generate()
+                let addedChild: ULID? = gen.generate()
+
+                var total = addedChildren
+                if let addedChild {
+                    total.append(addedChild)
+                }
+
+                let parent = ParentDTO(
+                    id: gen.generate(),
+                    children: addedChildren,
+                    child: addedChild
+                )
+
+                if total.count >= 1 {
+                    let stringGen = Gen<ULID>.fromElements(of: total)
+                    var toRemove = [ULID]()
+
+                    for _ in 0..<total.count {
+                        let add: Bool = gen.generate()
+                        if add {
+                            toRemove.append(gen.generate(using: stringGen))
+                        }
+                    }
+
+                    return Unstable(parent: parent, removeChildren: Set(toRemove))
+                }
+
+                return Unstable(parent: parent, removeChildren: [])
+            }
+        }
+    }
+
+    extension Unstable {
+        func create(in context: ManagedObjectContext) throws -> [String] {
+            let stable = Stable(parent: self.parent)
+            try stable.create(in: context)
+
+            try context.save()
+
+            let connection = context.connection
+            return try connection.removeWhereIDMatches(
+                idsToRemove: self.removeChildren.map(\.ulidString),
+                schema: Child.schema
+            )
+        }
+    }
 #endif

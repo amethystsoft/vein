@@ -120,8 +120,12 @@ extension ManagedObjectContext {
                             self._checkRelationshipIntegrity(of: model, removingStaleReferences)
                         )
                     }
+                } else {
+                    try reports.append(_checkRelationshipIntegrity(
+                        of: model,
+                        removingStaleReferences
+                    ))
                 }
-                try reports.append(_checkRelationshipIntegrity(of: model, removingStaleReferences))
             }
         } catch let error as SQLiteDB.Result {
             throw error.parse()
@@ -152,7 +156,10 @@ extension ManagedObjectContext {
             if removingStaleReferences {
                 var result: RelationshipIntegrityReport? = nil
                 try transaction {
-                    result = try self._checkRelationshipIntegrity(of: model, removingStaleReferences)
+                    result = try self._checkRelationshipIntegrity(
+                        of: model,
+                        removingStaleReferences
+                    )
                 }
                 return result!
             }
@@ -218,7 +225,7 @@ extension [FieldInformation] {
         if ULID(ulidString: idStr) == nil {
             localMismatches["id"] = .corruptedData
         }
-        
+
         var setters = [Setter]()
 
         for relationship in self {
@@ -294,10 +301,13 @@ extension [FieldInformation] {
                     let index = stringArray.firstIndex(of: rowIDStr)!
                     stringArray.remove(at: index)
                 }
-                
+
                 if !removingStaleReferences {
                     for string in stringArray {
-                        inverseMismatches[relationship.key, default: [:]][string] = .missingInInverse
+                        inverseMismatches[
+                            relationship.key,
+                            default: [:]
+                        ][string] = .missingInInverse
                     }
                 } else {
                     var strings = ulids.map(\.ulidString)
@@ -306,7 +316,8 @@ extension [FieldInformation] {
                     }
                     let string = strings.map { "\"\($0)\""}.joined(separator: ",")
                     setters.append(
-                        SQLiteJSONB(jsonString: "[" + string + "]").sqliteSetter(key: relationship.key)
+                        SQLiteJSONB(jsonString: "[" + string + "]")
+                            .sqliteSetter(key: relationship.key)
                     )
                 }
             } else if
@@ -354,7 +365,10 @@ extension [FieldInformation] {
 
                 if !called {
                     if !removingStaleReferences {
-                        inverseMismatches[relationship.key, default: [:]][string] = .missingInInverse
+                        inverseMismatches[
+                            relationship.key,
+                            default: [:]
+                        ][string] = .missingInInverse
                     } else {
                         let str: String? = nil
                         setters.append(str.sqliteSetter(key: relationship.key))
@@ -364,13 +378,13 @@ extension [FieldInformation] {
                 localMismatches[relationship.key] = .corruptedData
                 continue
             }
-            
-            if !setters.isEmpty {
-                let update = Table(type.schema)
-                    .filter(SQLExpression<String>("id") == idStr)
-                    .update(setters)
-                try connection.run(update)
-            }
+        }
+
+        if !setters.isEmpty {
+            let update = Table(type.schema)
+                .filter(SQLExpression<String>("id") == idStr)
+                .update(setters)
+            try connection.run(update)
         }
 
         return (localMismatches, inverseMismatches)
