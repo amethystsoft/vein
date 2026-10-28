@@ -229,7 +229,7 @@
 
             let randomCharGen = Gen<Character>.fromElements(of: crockfordBase32Chars)
             let proliferatedGen = randomCharGen.proliferate(withSize: 26)
-            
+
             return Gen<ULID>.compose { gen in
                 let chars: [Character] = gen.generate(using: proliferatedGen)
                 let string = chars.reduce(into: "") { $0 += String($1) }
