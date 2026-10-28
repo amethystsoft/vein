@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 100;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -25,11 +25,9 @@
 /* Begin PBXFrameworksBuildPhase section */
 		A61D8ADA3036648200DBC48A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				A61D8AF3303664BB00DBC48A /* VeinSwiftUI in Frameworks */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
@@ -62,8 +60,6 @@
 				A61D8ADB3036648200DBC48A /* Resources */,
 			);
 			buildRules = (
-			);
-			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
 				A61D8ADF3036648200DBC48A /* BasicExample */,
@@ -116,25 +112,21 @@
 /* Begin PBXResourcesBuildPhase section */
 		A61D8ADB3036648200DBC48A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		A61D8AD93036648200DBC48A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		A61D8AE63036648300DBC48A /* Debug */ = {
+		A61D8AE63036648300DBC48A /* Debug configuration for PBXProject "BasicExample" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -196,7 +188,7 @@
 			};
 			name = Debug;
 		};
-		A61D8AE73036648300DBC48A /* Release */ = {
+		A61D8AE73036648300DBC48A /* Release configuration for PBXProject "BasicExample" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -250,7 +242,7 @@
 			};
 			name = Release;
 		};
-		A61D8AE93036648300DBC48A /* Debug */ = {
+		A61D8AE93036648300DBC48A /* Debug configuration for PBXNativeTarget "BasicExample" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -294,7 +286,7 @@
 			};
 			name = Debug;
 		};
-		A61D8AEA3036648300DBC48A /* Release */ = {
+		A61D8AEA3036648300DBC48A /* Release configuration for PBXNativeTarget "BasicExample" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -344,19 +336,17 @@
 		A61D8AD83036648200DBC48A /* Build configuration list for PBXProject "BasicExample" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				A61D8AE63036648300DBC48A /* Debug */,
-				A61D8AE73036648300DBC48A /* Release */,
+				A61D8AE63036648300DBC48A /* Debug configuration for PBXProject "BasicExample" */,
+				A61D8AE73036648300DBC48A /* Release configuration for PBXProject "BasicExample" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		A61D8AE83036648300DBC48A /* Build configuration list for PBXNativeTarget "BasicExample" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				A61D8AE93036648300DBC48A /* Debug */,
-				A61D8AEA3036648300DBC48A /* Release */,
+				A61D8AE93036648300DBC48A /* Debug configuration for PBXNativeTarget "BasicExample" */,
+				A61D8AEA3036648300DBC48A /* Release configuration for PBXNativeTarget "BasicExample" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
@@ -365,6 +355,9 @@
 		A61D8AF1303664BB00DBC48A /* XCLocalSwiftPackageReference "../../../vein" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../../../vein;
+			traits = (
+				SwiftDataCompat,
+			);
 		};
 /* End XCLocalSwiftPackageReference section */
 

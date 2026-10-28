@@ -12,10 +12,11 @@
 
 import SwiftUI
 import VeinSwiftUI
+import SwiftData
 
 @main
 struct VeinTestEnvironmentApp: App {
-    let modelContainer: ModelContainer
+    let modelContainer: Vein.ModelContainer
 
     init() {
         do {
