@@ -6,6 +6,8 @@
     @Section(title: "Entrypoint") {
         @ContentAndMedia {
             To use Vein in your SwiftUI app, you need to wrap the Views using a `ModelContainer` in ``VeinContainer``. This can be the root of your app or something down the viewgraph.
+            
+            > Info: If you need to use SwiftData in the same app, add the 'SwiftDataCompat' trait. Where you'd otherwise use 'modelContainer' or 'modelContext' just use 'veinContainer' and 'veinContext'. To disambiguate Query either use 'VeinSwiftUI.Query' or create a typealias.
         }
         
         @Steps {

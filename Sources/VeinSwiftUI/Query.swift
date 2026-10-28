@@ -23,9 +23,9 @@
         public typealias WrappedType = [M]
         @StateObject var queryObserver: QueryObserver<M>
         #if SwiftDataCompat
-        @Environment(\.veinContext) var context
+            @Environment(\.veinContext) var context
         #else
-        @Environment(\.modelContext) var context
+            @Environment(\.modelContext) var context
         #endif
 
         let sortDescriptors: [SortRule<M>]
@@ -222,49 +222,49 @@
 
     extension EnvironmentValues {
         #if SwiftDataCompat
-        public var veinContainer: Vein.ModelContainer? {
-            get {
-                self[ContainerKey.self]
+            public var veinContainer: Vein.ModelContainer? {
+                get {
+                    self[ContainerKey.self]
+                }
+                set { self[ContainerKey.self] = newValue }
             }
-            set { self[ContainerKey.self] = newValue }
-        }
         #else
-        public var modelContainer: Vein.ModelContainer? {
-            get {
-                self[ContainerKey.self]
+            public var modelContainer: Vein.ModelContainer? {
+                get {
+                    self[ContainerKey.self]
+                }
+                set { self[ContainerKey.self] = newValue }
             }
-            set { self[ContainerKey.self] = newValue }
-        }
         #endif
     }
 
     extension EnvironmentValues {
         #if SwiftDataCompat
-        public var veinContext: ManagedObjectContext {
-            guard let container = veinContainer else {
-                fatalError(
-                    "Tried to access 'EnvironmentValues.modelContainer' without it being set in the environment."
-                )
+            public var veinContext: ManagedObjectContext {
+                guard let container = veinContainer else {
+                    fatalError(
+                        "Tried to access 'EnvironmentValues.modelContainer' without it being set in the environment."
+                    )
+                }
+                return container.context
             }
-            return container.context
-        }
         #else
-        public var modelContext: ManagedObjectContext {
-            guard let container = modelContainer else {
-                fatalError(
-                    "Tried to access 'EnvironmentValues.modelContainer' without it being set in the environment."
-                )
+            public var modelContext: ManagedObjectContext {
+                guard let container = modelContainer else {
+                    fatalError(
+                        "Tried to access 'EnvironmentValues.modelContainer' without it being set in the environment."
+                    )
+                }
+                return container.context
             }
-            return container.context
-        }
         #endif
     }
 
     public struct VeinContainer<Content: View>: View {
         #if SwiftDataCompat
-        @Environment(\.veinContainer) private var container
+            @Environment(\.veinContainer) private var container
         #else
-        @Environment(\.modelContainer) private var container
+            @Environment(\.modelContainer) private var container
         #endif
         @State private var isInitialized: Bool = false
         @State var error: Error?
@@ -321,9 +321,9 @@
     extension VeinContainer {
         public func modelContainer(_ container: Vein.ModelContainer) -> some View {
             #if SwiftDataCompat
-            self.environment(\.veinContainer, container)
+                self.environment(\.veinContainer, container)
             #else
-            self.environment(\.modelContainer, container)
+                self.environment(\.modelContainer, container)
             #endif
         }
     }
