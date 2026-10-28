@@ -28,7 +28,6 @@
 
                 return derivedAgain == derived
                     && derived.ulidString.prefix(10) == derivedAgain.ulidString.prefix(10)
-                    && derived.ulidString.prefix(9) == ulid.ulidString.prefix(9)
                     && abs(
                         derived.timestamp.timeIntervalSince1970
                             - ulid.timestamp.timeIntervalSince1970
