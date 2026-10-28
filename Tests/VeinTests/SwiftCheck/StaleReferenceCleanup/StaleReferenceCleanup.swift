@@ -222,16 +222,14 @@
     }
 
     extension ULID: Arbitrary {
+        // Generates 26 crockford base32 chars and reduces them into a string.
+        // Results in a random, but valid ULID.
         public static var arbitrary: Gen<ULID> {
-            // Crockford's Base32 alphabet (excluding I, L, O, and U to avoid confusion)
             let crockfordBase32Chars = Array("0123456789ABCDEFGHJKMNPQRSTVWXYZ")
 
-            // Pick one character randomly out of the alphabet
             let randomCharGen = Gen<Character>.fromElements(of: crockfordBase32Chars)
-
-            // Generate an array of 26 random characters and convert it into a String
             let proliferatedGen = randomCharGen.proliferate(withSize: 26)
-
+            
             return Gen<ULID>.compose { gen in
                 let chars: [Character] = gen.generate(using: proliferatedGen)
                 let string = chars.reduce(into: "") { $0 += String($1) }
