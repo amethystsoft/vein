@@ -49,6 +49,10 @@ public enum ManagedObjectContextError: Error {
     case notADatabase
     case dbOpenedWithOlderVeinVersion
     case cannotReInsertDeletedModel
+    case dbLocked
+    case dbFull(message: String)
+    case tableLocked(message: String)
+    case sqliteTooBig(message: String)
     case other(message: String)
 }
 
@@ -132,6 +136,14 @@ extension ManagedObjectContextError: LocalizedError {
                     The database was last opened with a version newer than your \
                     current one. Please update your vein version to prevent data loss.
                     """
+            case .dbLocked:
+                return "The database is locked"
+            case .tableLocked(let message):
+                return "A table in the database is locked: \(message)"
+            case .dbFull(let message):
+                return "Failed to insert; DB is full: \(message)"
+            case .sqliteTooBig(let message):
+                return "String or BLOB exceeds size limit: \(message)"
         }
     }
 
@@ -193,6 +205,14 @@ extension ManagedObjectContextError: LocalizedError {
                 return "To prevent data corruption Vein doesn't allow opening a database with an older version of Vein."
             case .cannotReInsertDeletedModel:
                 return "Attempted to insert model that has been deleted."
+            case .dbLocked:
+                return "Database is locked."
+            case .tableLocked:
+                return "Tried to access a table that is locked."
+            case .dbFull:
+                return "Tried to insert but the db is full."
+            case .sqliteTooBig:
+                return "Tried to insert or update a field exceeding the size limit."
         }
     }
 
@@ -264,7 +284,8 @@ extension ManagedObjectContextError: LocalizedError {
                 return "Update Vein to a newer Version."
             case .cannotReInsertDeletedModel:
                 return "Should you need to re-add a deleted model please create a new instance with it's data."
-            case .other, .operationCouldNotBeCompleted:
+            case .dbLocked, .tableLocked: return "Try again later."
+            case .other, .operationCouldNotBeCompleted, .sqliteTooBig, .dbFull:
                 return nil
         }
     }

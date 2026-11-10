@@ -11,6 +11,7 @@
 // ===----------------------------------------------------------------------===
 
 import SQLiteDB
+import SQLCipher
 
 package extension SQLiteDB.Result {
     func parse() -> ManagedObjectContextError {
@@ -23,18 +24,29 @@ package extension SQLiteDB.Result {
     }
 
     private func mapCode(_ code: Int32, msg: String) -> ManagedObjectContextError {
-        switch code {
-            case 0: .operationCouldNotBeCompleted(message: msg)
-            case 1:
+        return switch code {
+            case SQLITE_OK: .operationCouldNotBeCompleted(message: msg)
+            case SQLITE_ERROR:
+                // Technically no such table is not always no such table
+                // but as vein abstracts syntax errors, non-existing fields,...
+                // it's pretty much guaranteed to be no such table.
                 .noSuchTable(message: msg)
-            case 3: // PERM
+            case SQLITE_PERM:
                 .insufficientPermissions(message: msg)
-            case 8: // READONLY
+            case SQLITE_READONLY:
                 .writeInReadonly(message: msg)
-            case 10: // IOERR
+            case SQLITE_IOERR:
                 .io(message: msg, code: code)
-            case 26:
+            case SQLITE_NOTADB:
                 .notADatabase
+            case SQLITE_BUSY:
+                .dbLocked
+            case SQLITE_LOCKED:
+                .tableLocked(message: msg)
+            case SQLITE_FULL:
+                .dbFull(message: msg)
+            case SQLITE_TOOBIG:
+                    .sqliteTooBig(message: msg)
             default:
                 .unknownSQLite(message: msg, code: code)
         }
