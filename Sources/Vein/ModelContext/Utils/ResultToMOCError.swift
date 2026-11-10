@@ -46,7 +46,7 @@ package extension SQLiteDB.Result {
             case SQLITE_FULL:
                 .dbFull(message: msg)
             case SQLITE_TOOBIG:
-                    .sqliteTooBig(message: msg)
+                .sqliteTooBig(message: msg)
             default:
                 .unknownSQLite(message: msg, code: code)
         }
