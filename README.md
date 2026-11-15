@@ -166,6 +166,7 @@ struct ContentView: View {
   - [Serialization & Codable](#serialization-and-codable)
   - [Migration Testing](#testing-of-migrations)
   - [Save Transaction & Conflicts](#save-transaction-handling-and-conflicts)
+  - [Diagnostics](#diagnostics)
   - [Dependency Footprint](#dependency-footprint)
   - [GenAI use](#genai-use)
 - [Sponsoring, Alternative Licensing & CLA](#sponsoring-alternative-licensing--cla)
@@ -197,6 +198,8 @@ Vein is backed by the exact same SQLite + SQLCipher database engine across every
 
 This architectural consistency guarantees the exact same behavior, performance, and migration stability no matter where you're running it.
 
+Vein models are represented 1:1 in tables. Tables and properties get named the same as specified in the @Model declarations and there is just one table sper model, making it easy to look at what's actually happening should you run into an issue.
+
 ### The Mission: Platform-Independent Sync
 Vein's long-term goal is to fill the void left by Realm's deprecation. We aim to construct a **platform-independent sync engine** that provides the same seamless device-to-cloud experience, but with privacy at its core via **end-to-end encryption (E2EE)** and selfhostability.
 
@@ -214,19 +217,21 @@ Vein provides a lightweight transaction API that directly wraps SQL transactions
 * **In-Memory State:** SQL transactions do not automatically revert in-memory Swift object mutated states. To sync your in-memory objects back to the database state after a failed transaction (if you wish to do so), simply call `context.rollback()`.
 
 ### Thread Safety & Concurrency
-Unlike Core Data or SwiftData, which enforce strict thread-confinement rules, **Vein models are thread-safe and can be shared and mutated freely across threads.**
+Unlike Core Data or SwiftData, which enforce strict thread-confinement rules, **Vein models are thread-safe for reads and value field writes.** Concurrent writes to relationships are not yet recommended.
 
-Vein achieves thread agnosticism synchronously through the heavy use of unfair locks:
-* **Field-Level Locking:** Each individual model property has its own lock, minimizing lock contention.
-* **Context Synchronization:** Access to the `ManagedObjectContext` identity map and `context.save()` operations are synchronized via locks.
+Vein achieves thread agnosticism synchronously through the heavy use of locks (not guaranteeing order):
+* **Field-Level Locking:** Each individual model property has its own lock on each model instance, minimizing lock contention.
+* **Context Synchronization:** Access to Vein's `ManagedObjectContext` identity map and `context.save()` operations are synchronized via locks.
+
+Vein only guarantees thread safety within a single context. Vein does not yet update in memory models in reaction to on disk changes. You can use background contexts for heavier write operations, just keep in mind that a different thread may overwrite changes if saved later.
 
 > [!IMPORTANT]
-> **Performance Tip:** Because saving is blocking and synchronized, calling `context.save()` on the main thread while a background save is already in progress on the same context **will block the main thread** until the background save completes. For heavy concurrent write operations, we recommend using dedicated, short-lived child contexts.
+> **Performance Tip:** Because saving is blocking and synchronized, calling `context.save()` on the main thread while a background save is already in progress on the same context **will block the main thread** until the background save completes.
 
 * **UI Updates:** While model mutation is thread-safe, any resulting UI updates must still be dispatched to the main thread, as is standard.
 
 ### Relationships
-Relationships only eager load the `ULID`s. Model instances will be resolved on access through the context. That ensures both low initial load times and prevents memory leaks while still keeping use easy.
+Relationships only eager load the `ULID`s. Model instances will be resolved on access through the context. That ensures both low initial load times and prevents memory leaks while still keeping use easy. If you need a relationship of a model more than once consider holding a reference until it's no longer needed.
 
 ### Serialization and Codable
 Vein models do not conform to `Codable`. Since Vein knows all fields at compile time via the `@Model` macro, it bypasses `Codable` entirely.
@@ -238,6 +243,11 @@ You can create an in memory database by passing `nil` as path to a `ModelContain
 Each `context.save()` is atomic per context and happens inside an SQL transaction.
 
 We generally recommend not to save the same models on multiple threads concurrently, for error handling becoming annoying alone.
+
+### Diagnostics
+You can diagnose the integrity of it's graph and optionally remove dangling references using the `checkRelationshipIntegrity()` functions. You will recieve a report of mismatches. We recommend using this feature during testing.
+
+You can configure what kind's of logs you want, including logging each query. (make sure to choose something not exposing user data in production)
 
 ### Dependency Footprint
 Vein is designed to be highly portable, relying on standard Swift Evolution tools, cross platform wrappers and platform specific tools (for storing encryption keys), to make usage as seemless as possible for you.
