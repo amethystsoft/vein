@@ -1,22 +1,20 @@
-name: SwiftFormat lint
+name: Check formatting; Run './Scripts/format.sh' if this fails.
 
 on:
   pull_request:
     branches: [main]
-    
-permissions:
-  contents: read
 
 jobs:
-  test:
-    runs-on: macos-26
+  check:
+    name: "check-formatted"
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #6.0.2
         with:
           persist-credentials: false
+      - name: Set up Homebrew
+        run: echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
       - name: Install SwiftFormat
-        run: |
-          brew update
-          brew install swiftformat || brew upgrade swiftformat
+        run: brew install swiftformat
       - name: Check formatting
-        run: ./Scripts/swiftformat-lint.sh
+        run: LINT=1 ./Scripts/format-lint.sh
