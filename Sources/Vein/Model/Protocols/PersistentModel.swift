@@ -17,6 +17,10 @@ import SQLiteDB
 /// A protocol that defines the structure and behavior of a class as a persistable entity.
 ///
 /// It's recommended to not conform to this yourself, the `@Model` macro will generate conformance.
+///
+/// Vein models are thread-safe for reads and value field writes.
+/// Concurrent writes to relationships are not yet recommended.
+/// Vein does not yet update in memory models in reaction to on disk changes.
 public protocol PersistentModel: AnyObject, Sendable {
     /// The name of the SQLite table associated with this model.
     static var schema: String { get }

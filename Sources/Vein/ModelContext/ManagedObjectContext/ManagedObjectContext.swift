@@ -29,6 +29,11 @@ public typealias Connection = SQLiteDB.Connection
 /// and deleting data. It coordinates between the in-memory identity map,
 /// write-through caches, and the underlying SQLite storage.
 ///
+/// Vein only guarantees thread safety within a single context.
+/// Each context uses it's own identity map and model instances.
+/// Models from different contexts don't stay in sync in memory.
+/// Concurrently writing on mutiple contexts may lead to inconsistent data on disk, changes may get overwritten.
+///
 /// Although declared as an actor, the API is designed for high-concurrency
 /// access through internal synchronization.
 public actor ManagedObjectContext {
