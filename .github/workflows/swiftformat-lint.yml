@@ -17,4 +17,4 @@ jobs:
       - name: Install SwiftFormat
         run: brew install swiftformat
       - name: Check formatting
-        run: LINT=1 ./Scripts/format-lint.sh
+        run: LINT=1 ./Scripts/swiftformat-lint.sh
