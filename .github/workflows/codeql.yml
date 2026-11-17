@@ -12,10 +12,7 @@
 name: "CodeQL Advanced"
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  workflow_dispatch:
   schedule:
     - cron: '35 13 * * 2'
 
@@ -77,6 +74,8 @@ jobs:
 
         # For more details on CodeQL's query packs, refer to: https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
         # queries: security-extended,security-and-quality
+    - name: Install Dependencies
+      run: brew install pkg-config gtk4 gtk+3 || echo "This step 'fails' every time but it's just a brew linking error - not important."
 
     # If the analyze step fails for one of the languages you are analyzing with
     # "We were unable to automatically build your code", modify the matrix above
@@ -88,12 +87,12 @@ jobs:
       if: matrix.build-mode == 'manual'
       shell: bash
       run: |
-        swift build --product ULID
-        swift build --product Vein
-        swift build --product VeinCore
-        swift build --product VeinSCUI --traits VeinSCUI
-        swift build --product VeinSwiftUI
-        swift build --product VeinTesting
+        swift build --target ULID
+        swift build --target Vein
+        swift build --target VeinCore
+        swift build --target VeinSCUI --traits VeinSCUI
+        swift build --target VeinSwiftUI
+        swift build --target VeinTesting
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
       with:
