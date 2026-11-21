@@ -44,6 +44,7 @@ PRs must explain why decisions were made, how things work and give the reviewer 
 - **File Headers:** Every Swift source file must start with the standard header. This is automatically appended by the formatting script.
 - **No Attribution:** To keep the codebase clean, do not add your name, initials, or personal copyright notes inside source files. Using your name inside a unit test string you wrote is allowed if you want to leave a little easter egg ;).
 - **Test Easter Eggs:** Fun references to pop culture, memes, or games are highly welcome within test targets. Please explain these references in your PR description, and ensure they fully align with our Code of Conduct and don't impact the comprehensiveness of the test negatively.
+- **Test File Names:** all files containing Swift Testing or XCTest tests must end in Tests.swift to work with the neotest nvim plugin.
 
 The required header:
 ```swift
